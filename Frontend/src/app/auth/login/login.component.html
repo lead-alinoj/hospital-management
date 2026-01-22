@@ -1,0 +1,55 @@
+<div class="login-container" >
+    <mat-card class="login-card">
+     <button mat-icon-button class="close-btn" (click)="closeLogin()">
+    <mat-icon>close</mat-icon>
+  </button>
+    <mat-card-header>
+      <mat-card-title>Hospital Management System</mat-card-title>
+      <mat-card-subtitle>Login to your account</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="Enter your email">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="email?.hasError('required')">
+            Email is required
+          </mat-error>
+          <mat-error *ngIf="email?.hasError('email')">
+            Please enter a valid email address
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" 
+                 [type]="hidePassword ? 'password' : 'text'"
+                 placeholder="Enter your password">
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword = !hidePassword"
+                  [attr.aria-label]="'Hide password'"
+                  [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="password?.hasError('required')">
+            Password is required
+          </mat-error>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" class="full-width" 
+                type="submit" [disabled]="loginForm.invalid || loading">
+          <span *ngIf="!loading">Login</span>
+          <mat-spinner diameter="20" *ngIf="loading"></mat-spinner>
+        </button>
+
+        <!-- <div class="register-link">
+          <p>Don't have an account? 
+            <a routerLink="/register" mat-button color="accent">Register here</a>
+          </p>
+        </div> -->
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

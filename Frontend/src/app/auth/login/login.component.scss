@@ -1,0 +1,135 @@
+:host-context(.mat-dialog-container).login-container {
+ min-height: unset;
+  height: auto;
+  background: transparent;
+  padding: 0; }
+
+/* Flyer-style Card */
+.login-card {
+    position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 30px;
+  border-radius: 20px;
+  background: #ffffff; /* Clean white card */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
+  position: relative;
+  overflow: hidden;
+
+  /* Gradient top bar (optional, can be subtle) */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 6px;
+    width: 100%;
+    background: linear-gradient(90deg, #ff416c, #ff4b2b); /* Subtle accent */
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+  }
+.close-btn {
+  position: absolute;       /* absolute inside login-card */
+  top: 10px;                /* distance from top */
+  right: 10px;              /* distance from right */
+  z-index: 20;              /* above everything else */
+  
+  width: 36px;              /* circle size */
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;       /* makes it round */
+  background: #ffffff;      /* white background */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* subtle shadow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s ease;
+
+  &:hover {
+    background: #ff416c;   /* gradient color on hover */
+    color: #fff;
+
+    mat-icon {
+      color: #fff;
+    }
+  }
+
+  mat-icon {
+    font-size: 20px;
+    color: #ff416c;          /* matches your gradient */
+    transition: 0.3s ease;
+  }
+}
+
+
+  mat-card-header {
+    margin-bottom: 30px;
+    text-align: center;
+
+    mat-card-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a1a1a;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    mat-card-subtitle {
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 20px;
+
+    mat-form-field {
+      background: #f7f7f7;
+      border-radius: 10px;
+    }
+  }
+
+  button[type="submit"] {
+    height: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 20px;
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    color: #fff;
+    transition: 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 8px 20px rgba(255, 75, 43, 0.5);
+    }
+  }
+
+  .register-link {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px dashed #ccc;
+
+    p {
+      color: #333;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+
+    a {
+      font-weight: 700;
+      color: #ff416c;
+      text-decoration: none;
+      transition: 0.2s;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+mat-spinner {
+  margin: 0 auto;
+}

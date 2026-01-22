@@ -1,0 +1,21 @@
+.main-content {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+// Make sure login/register pages are centered
+:host ::ng-deep .login-container,
+:host ::ng-deep .register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+// Style for placeholder components
+:host ::ng-deep .placeholder-container {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}

@@ -1,0 +1,159 @@
+<!-- Top Info Bar -->
+<!-- Top Info Bar -->
+<div class="top-bar">
+  <div class="ticker-wrapper">
+    <div class="ticker-content">
+      MediCare Hospital &nbsp;&nbsp;|&nbsp;&nbsp;
+      123 Main Street, Nagercoil, Tamil Nadu &nbsp;&nbsp;|&nbsp;&nbsp;
+      Call: 98765 43210 &nbsp;&nbsp;|&nbsp;&nbsp;
+      Book Appointments Online &nbsp;&nbsp;|&nbsp;&nbsp;
+      Excellence in Healthcare & Patient Care &nbsp;&nbsp;|&nbsp;&nbsp;
+      <!-- 🏥 MediCare Hospital &nbsp;&nbsp;|&nbsp;&nbsp;
+      123 Main Street, Nagercoil, Tamil Nadu &nbsp;&nbsp;|&nbsp;&nbsp;
+      Call: 98765 43210 &nbsp;&nbsp;|&nbsp;&nbsp;
+      Book Appointments Online &nbsp;&nbsp;|&nbsp;&nbsp;
+      Excellence in Healthcare & Patient Care -->
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Header -->
+<mat-toolbar class="main-header">
+  <div class="logo">
+    <span class="hospital-name">MediCare</span>
+    <span class="sub">Multi Speciality Hospital</span>
+  </div>
+
+  <span class="spacer"></span>
+
+  <nav class="menu">
+    <a>About Us</a>
+    <a>Departments</a>
+    <a>Doctors</a>
+    <a>Contact</a>
+    <button mat-raised-button color="warn" class="book-btn">
+      Book Appointment
+    </button>
+<button
+  mat-icon-button
+  [matMenuTriggerFor]="authMenu"
+  class="login-btn"
+  matTooltip="Account"
+>
+  <mat-icon>person</mat-icon>
+</button>
+
+<mat-menu #authMenu="matMenu">
+  <button mat-menu-item (click)="openAuthDialog('login')">
+    <mat-icon>login</mat-icon>
+    <span>Login</span>
+  </button>
+
+  <button mat-menu-item (click)="openAuthDialog('register')">
+    <mat-icon>person_add</mat-icon>
+    <span>Register</span>
+  </button>
+</mat-menu>
+
+
+  </nav>
+</mat-toolbar>
+
+<!-- Hero Section -->
+<section class="hero">
+  <!-- Left: Image -->
+  <div class="hero-image">
+    <img src="assets/images/dd.png" alt="Patient">
+  </div>
+
+  <!-- Right: Appointment Form -->
+  <div class="appointment-card">
+      <div class="appointment-header">
+    <h2>Book an Appointment</h2>
+    <p>Fill the details below to schedule your visit</p>
+  </div>
+    <form [formGroup]="appointmentForm" (ngSubmit)="submitAppointment()">
+
+      <!-- Patient Name -->
+      <mat-form-field appearance="outline">
+        <mat-label>Patient Name *</mat-label>
+        <input matInput formControlName="patientName">
+        <mat-error *ngIf="appointmentForm.get('patientName')?.hasError('required')">
+          Patient Name is required
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Contact Number -->
+      <mat-form-field appearance="outline">
+        <mat-label>Contact Number *</mat-label>
+        <input matInput formControlName="contactNumber">
+        <mat-error *ngIf="appointmentForm.get('contactNumber')?.hasError('required')">
+          Contact Number is required
+        </mat-error>
+        <mat-error *ngIf="appointmentForm.get('contactNumber')?.hasError('pattern')">
+          Enter a valid 10-digit number
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Email (Optional) -->
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email">
+        <mat-error *ngIf="appointmentForm.get('email')?.hasError('email')">
+          Enter a valid email
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Description -->
+      <mat-form-field appearance="outline">
+        <mat-label>Short Description *</mat-label>
+        <input matInput formControlName="description">
+        <mat-error *ngIf="appointmentForm.get('description')?.hasError('required')">
+          Description is required
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Appointment Date -->
+      <mat-form-field appearance="outline">
+        <mat-label>Appointment Date *</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="appointmentDate">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error *ngIf="appointmentForm.get('appointmentDate')?.hasError('required')">
+          Appointment date is required
+        </mat-error>
+      </mat-form-field>
+
+<!-- Appointment Time -->
+<div class="time-picker" style="display: flex; flex-direction: column; gap: 5px;">
+  <label style="font-weight: 500;">Time</label> <!-- Optional label -->
+
+  <div style="display: flex; gap: 10px;">
+    <!-- Hour -->
+    <mat-form-field appearance="outline" style="width: 100px; margin: 0;">
+      <mat-select formControlName="hour">
+        <mat-option *ngFor="let h of hours" [value]="h">{{ h }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- AM/PM -->
+    <mat-form-field appearance="outline" style="width: 100px; margin: 0;">
+      <mat-select formControlName="ampm">
+        <mat-option value="AM">AM</mat-option>
+        <mat-option value="PM">PM</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+
+
+
+
+      <button mat-raised-button color="primary" type="submit">
+        Confirm Appointment
+      </button>
+    </form>
+  </div>
+</section>

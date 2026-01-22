@@ -1,0 +1,292 @@
+/* Global font */
+:host {
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+.top-bar {
+  width: 100%;
+  background: linear-gradient(90deg, #c62828, #e53935);
+  color: #fff;
+  font-weight: 500;
+  font-size: 14px;
+  overflow: hidden;
+  position: relative;
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-wrapper {
+  display: flex;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+}
+
+.ticker-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: ticker 30s linear infinite;
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Optional: hover pause effect */
+.ticker-content:hover {
+  animation-play-state: paused;
+}
+
+
+/* Header */
+.main-header {
+  background: #ffffff;
+  padding: 0 60px;
+  height: 72px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.logo {
+  line-height: 1.1;
+
+  .hospital-name {
+    font-size: 30px;
+    font-weight: 700;
+    color: #c62828;
+  }
+
+  .sub {
+    font-size: 16px;
+    color: #373b42;
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+
+  a {
+    margin-right: 26px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    position: relative;
+
+    &:hover {
+      color: #c62828;
+    }
+  }
+
+  .book-btn {
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-weight: 600;
+  }
+}
+/* Apply only to login dialog popup */
+.custom-login-dialog .login-container {
+  display: block; /* Remove full-screen flex centering */
+  min-height: auto; /* No full viewport height */
+  padding: 0;
+  background: transparent; /* Let dialog background show */
+}
+
+.custom-login-dialog .login-card {
+  width: 100%;
+  max-width: 400px; /* Keep card width */
+  padding: 30px 25px; /* Reduce padding slightly */
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  background: #ffffff; /* White card */
+  overflow: hidden;
+}
+
+/* Optional: keep gradient top bar */
+// .custom-login-dialog .login-card::before {
+//   height: 6px;
+//   border-top-left-radius: 20px;
+//   border-top-right-radius: 20px;
+// }
+
+
+/* Hero Layout */
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+  gap: 60px;
+  padding: 80px;
+  background: linear-gradient(to right, #f9fafb, #ffffff);
+}
+
+/* Image Wrapper */
+.hero-image {
+  width: 100%;
+}
+
+/* Image */
+.hero-image img {
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  object-fit: cover;
+  border-radius: 22px;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+}
+
+/* Appointment Card */
+.appointment-card {
+  max-width: 460px;
+  width: 100%;
+  justify-self: center;
+}
+
+/* ============================= */
+/* TABLET (≤1024px) */
+/* ============================= */
+@media (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 60px 40px;
+  }
+
+  .hero-image img {
+    max-height: 420px;
+  }
+
+  .appointment-card {
+    margin-top: 30px;
+  }
+}
+
+/* ============================= */
+/* MOBILE (≤600px) */
+/* ============================= */
+@media (max-width: 600px) {
+  .hero {
+    padding: 40px 20px;
+    gap: 30px;
+  }
+
+  .hero-image img {
+    max-height: 300px;
+    border-radius: 14px;
+  }
+
+  .appointment-card {
+    padding: 24px;
+  }
+}
+.appointment-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.appointment-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #c62828; /* Hospital red */
+  margin-bottom: 6px;
+}
+
+.appointment-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+  h2 {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1f2937;
+  }
+
+  .sub-text {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 24px;
+  }
+
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 14px;
+  }
+
+
+/* Button */
+.submit-btn {
+  width: 100%;
+  height: 48px;
+  font-weight: 600;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  a {
+    margin-right: 18px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+
+    &:hover {
+      color: #c62828;
+    }
+  }
+}
+
+.login-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb !important;
+  background-color: #ffffff !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 !important;
+  line-height: 1 !important;
+  transition: all 0.3s ease;
+}
+
+.login-btn mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  color: #374151 !important;
+}
+
+.login-btn:hover {
+  background-color: #c62828 !important;
+  border-color: #c62828 !important;
+}
+
+.login-btn:hover mat-icon {
+  color: #ffffff !important;
+}
+.appointment-card {
+  max-width: 460px;
+  width: 100%;
+  justify-self: center;
+
+  background: #ffffff;
+  padding: 32px 28px;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+}

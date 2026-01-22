@@ -1,0 +1,251 @@
+<!-- Unauthorized Warning Banner -->
+<div class="unauthorized-warning" *ngIf="showUnauthorizedWarning">
+  <div class="warning-content">
+    <mat-icon class="warning-icon">warning</mat-icon>
+    <div class="warning-text">
+      <strong>Access Restricted</strong>
+      <p>{{ unauthorizedMessage }}</p>
+      <p>Redirecting to your dashboard in 5 seconds...</p>
+    </div>
+    <div class="warning-actions">
+      <button mat-button color="warn" (click)="redirectToDashboard()">
+        <mat-icon>dashboard</mat-icon>
+        Go to Dashboard Now
+      </button>
+      <button mat-icon-button (click)="closeWarning()" class="close-warning">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Header -->
+<mat-toolbar color="primary" class="hms-header">
+  <div class="container">
+    <!-- Logo and Hospital Name -->
+    <div class="logo-section">
+      <button mat-button (click)="navigateToDashboard()" class="logo-button">
+        <mat-icon>local_hospital</mat-icon>
+        <span class="hospital-name">MediCare HMS</span>
+      </button>
+      
+      <!-- Mobile Menu Toggle -->
+      <button mat-icon-button (click)="toggleMenu()" class="mobile-menu-button">
+        <mat-icon>{{ isMenuOpen ? 'close' : 'menu' }}</mat-icon>
+      </button>
+    </div>
+
+    <!-- Navigation Links - Different for each role -->
+    <div class="nav-links" [class.nav-links-open]="isMenuOpen">
+      
+      <!-- Admin Navigation (Simplified) -->
+    <div class="role-navigation" *ngIf="isAdmin()">
+
+  <button mat-button routerLink="/admin/dashboard"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>dashboard</mat-icon>
+    Dashboard
+  </button>
+
+ 
+
+  <button mat-button routerLink="/admin/appointments"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>event</mat-icon>
+    Appointments
+  </button>
+  <button mat-button
+        routerLink="/admin/hospital"
+        (click)="closeMobileMenuOnNavigation()">
+  <mat-icon>settings</mat-icon>
+  Hospital Settings
+</button>
+
+
+  <!-- 🔽 Medicine Dropdown -->
+  <button mat-button
+          [matMenuTriggerFor]="medicineMenu"
+          class="dropdown-button">
+    <mat-icon>medical_services</mat-icon>
+    Management
+    <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+  </button>
+
+  <mat-menu #medicineMenu="matMenu">
+
+    <button mat-menu-item routerLink="/admin/users"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>manage_accounts</mat-icon>
+    User Management
+  </button>
+
+    <button mat-menu-item
+            routerLink="/pharmacy/medicines"
+            (click)="closeMobileMenuOnNavigation()">
+      <mat-icon>inventory_2</mat-icon>
+      Medicine Management
+    </button>
+
+    <button mat-menu-item
+            routerLink="/pharmacy/categories"
+            (click)="closeMobileMenuOnNavigation()">
+      <mat-icon>category</mat-icon>
+      Category Management
+    </button>
+  </mat-menu>
+
+</div>
+
+      <!-- Doctor Navigation (Simplified) -->
+      <div class="role-navigation" *ngIf="isDoctor()">
+        <button mat-button routerLink="/doctor/dashboard" (click)="closeMobileMenuOnNavigation()">
+          <mat-icon>dashboard</mat-icon>
+          Dashboard
+        </button>
+        
+        <button mat-button routerLink="/doctor/patients" (click)="closeMobileMenuOnNavigation()">
+          <mat-icon>people</mat-icon>
+          My Patients
+        </button>
+      </div>
+
+      <!-- Nurse Navigation (Simplified) -->
+<div class="role-navigation" *ngIf="isNurse()">
+  <button mat-button routerLink="/nurse/dashboard" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>dashboard</mat-icon>
+    Dashboard
+  </button>
+  
+  <button mat-button routerLink="/nurse/vitals" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>monitor_heart</mat-icon>
+    Vitals
+  </button>
+  
+  <button mat-button routerLink="/nurse/ward" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>hotel</mat-icon>
+    Ward Management
+  </button>
+</div>
+
+      <!-- Reception Navigation (Simplified) -->
+      <div class="role-navigation" *ngIf="isReception()">
+        <button mat-button routerLink="/reception/dashboard" (click)="closeMobileMenuOnNavigation()">
+          <mat-icon>dashboard</mat-icon>
+          Dashboard
+        </button>
+      </div>
+
+   <!-- Pharmacy Navigation (Simplified) -->
+<div class="role-navigation" *ngIf="isPharmacy()">
+  <button mat-button routerLink="/pharmacy/dashboard" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>dashboard</mat-icon>
+    Dashboard
+  </button>
+  
+  <button mat-button routerLink="/pharmacy/medicines" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>inventory_2</mat-icon>
+    Medicine Management
+  </button>
+  
+  <!-- Add Category Management Link -->
+  <button mat-button routerLink="/pharmacy/categories" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>category</mat-icon>
+    Category Management
+  </button>
+</div>
+
+      <!-- Common Navigation (Visible to all logged-in users) -->
+      <div class="common-navigation" *ngIf="isLoggedIn()">
+        <!-- <button mat-button (click)="openNotifications()" class="notification-button">
+          <mat-icon [matBadge]="3" matBadgeColor="warn">notifications</mat-icon>
+        </button>
+        
+        <button mat-button (click)="openMessages()" class="message-button">
+          <mat-icon [matBadge]="5" matBadgeColor="warn">message</mat-icon>
+        </button> -->
+      </div>
+    </div>
+
+    <!-- Right Section (User Menu & Actions) -->
+    <div class="right-section" [class.right-section-open]="isMenuOpen">
+      <!-- User Profile Menu -->
+      <ng-container *ngIf="isLoggedIn(); else authButtons">
+        <button mat-button [matMenuTriggerFor]="userMenu" class="user-profile-button">
+          <mat-icon [color]="userRole ? getRoleColor(userRole) : ''">
+            {{ userRole ? getRoleIcon(userRole) : 'person' }}
+          </mat-icon>
+          <span class="user-info">
+            <span class="user-name">{{ userName }}</span>
+            <span class="user-role" [ngClass]="getRoleBadgeClass(userRole)">{{ userRole }}</span>
+          </span>
+          <mat-icon>arrow_drop_down</mat-icon>
+        </button>
+
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item (click)="openProfile()">
+            <mat-icon>person</mat-icon>
+            My Profile
+          </button>
+          
+          <button mat-menu-item (click)="openSettings()">
+            <mat-icon>settings</mat-icon>
+            Settings
+          </button>
+          
+          <mat-divider></mat-divider>
+          
+          <!-- Role-specific quick links -->
+          <ng-container *ngIf="isAdmin()">
+            <button mat-menu-item routerLink="/admin/users" (click)="closeMobileMenuOnNavigation()">
+              <mat-icon>people</mat-icon>
+              User Management
+            </button>
+            <button mat-menu-item routerLink="/admin/reports" (click)="closeMobileMenuOnNavigation()">
+              <mat-icon>analytics</mat-icon>
+              Reports
+            </button>
+          </ng-container>
+          
+          <ng-container *ngIf="isDoctor()">
+            <button mat-menu-item routerLink="/doctor/patients" (click)="closeMobileMenuOnNavigation()">
+              <mat-icon>people</mat-icon>
+              My Patients
+            </button>
+          </ng-container>
+          
+          <ng-container *ngIf="isNurse()">
+            <!-- Nurse specific links if needed -->
+          </ng-container>
+          
+          <ng-container *ngIf="isReception()">
+            <!-- Reception specific links if needed -->
+          </ng-container>
+          
+          <ng-container *ngIf="isPharmacy()">
+            <!-- Pharmacy specific links if needed -->
+          </ng-container>
+          
+          <mat-divider></mat-divider>
+          
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Logout
+          </button>
+        </mat-menu>
+      </ng-container>
+
+      <!-- Login/Register Buttons (when not logged in) -->
+      <ng-template #authButtons>
+        <button mat-button routerLink="/login" (click)="closeMobileMenuOnNavigation()" class="login-button">
+          <mat-icon>login</mat-icon>
+          Login
+        </button>
+        
+        <button mat-raised-button color="accent" routerLink="/register" (click)="closeMobileMenuOnNavigation()" class="register-button">
+          <mat-icon>person_add</mat-icon>
+          Register
+        </button>
+      </ng-template>
+    </div>
+  </div>
+</mat-toolbar>
