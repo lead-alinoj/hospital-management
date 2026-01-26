@@ -7,17 +7,28 @@ const {
 } = require('../controllers/hospital.controller');
 
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
-// Multer storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/hospital/');
+    const uploadPath = path.join(__dirname, '..', '..', 'uploads', 'hospital');
+
+    // Create folder if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    cb(null, uploadPath);
   },
+
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'logo-' + uniqueSuffix + '.' + file.mimetype.split('/')[1]);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `logo-${uniqueSuffix}${ext}`);
   }
 });
+
 
 const upload = multer({ storage });
 

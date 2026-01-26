@@ -46,20 +46,24 @@ export const uploadLogo = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    
+
     const logoPath = `/uploads/hospital/${req.file.filename}`;
-    
+
     let hospital = await Hospital.findOne();
-    
+
     if (!hospital) {
-      hospital = await Hospital.create({ logo: logoPath });
-    } else {
-      hospital.logo = logoPath;
-      await hospital.save();
+      return res.status(400).json({
+        success: false,
+        message: 'Hospital details must be saved before uploading logo'
+      });
     }
-    
+
+    hospital.logo = logoPath;
+    await hospital.save();
+
     res.json({ success: true, data: { logo: logoPath } });
   } catch (error) {
+    console.error('Upload logo error:', error);
     res.status(500).json({ success: false, message: 'Error uploading logo' });
   }
 };

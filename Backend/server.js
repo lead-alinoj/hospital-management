@@ -22,16 +22,31 @@ const medicineRoutes = require('./routes/medicine.routes');
 const prescriptionRoutes = require('./routes/prescription.routes');
 const categoryRoutes = require('./routes/category.routes');
 const appointmentRoutes = require('./routes/appointments');
+const staffRoutes = require('./routes/staff.routes');
+const attendanceRoutes = require('./routes/attendance.routes');
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/vitals', vitalsRoutes);
 app.use('/api/hospital', hospitalRoutes);
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+  },
+  express.static(path.join(__dirname, 'uploads'))
+);
+
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/attendance', attendanceRoutes);
 // Example route
 app.get('/', (req, res) => {
   res.send('HMS Backend Running');

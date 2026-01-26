@@ -146,10 +146,11 @@ import { PrescriptionViewDialogComponent } from './prescription-view-dialog.comp
                               <mat-icon>badge</mat-icon>
                               OP: {{ prescription.patientId?.opNumber }}
                             </span>
-                            <span class="meta-item">
-                              <mat-icon>schedule</mat-icon>
-                              {{ prescription.createdAt | date:'shortTime' }}
-                            </span>
+                           <span class="meta-item">
+  <mat-icon>event</mat-icon>
+  {{ prescription.visitId?.visitDate | date:'mediumDate' }}
+</span>
+
                           </div>
                         </div>
                         <mat-chip color="primary" highlighted>
@@ -189,7 +190,15 @@ import { PrescriptionViewDialogComponent } from './prescription-view-dialog.comp
                           <div *ngFor="let med of prescription.medicines" class="medicine-item">
                             <div class="medicine-info">
                               <span class="medicine-name">{{ med.medicineName || med.name }}</span>
-                              <span class="medicine-details">{{ med.strength }} | Qty: {{ med.quantity }} | ₹{{ med.unitPrice || med.price || 0 }}</span>
+<div class="medicine-details">
+  {{ med.strength }} |
+  Qty: {{ med.quantity }} |
+  ₹{{ med.isOutOfStock ? 0 : (med.unitPrice || med.price || 0) }}
+
+  <span *ngIf="med.isOutOfStock" style="color:#f44336; font-weight:600">
+    (Out of stock)
+  </span>
+</div>
                             </div>
                             <div class="medicine-instructions">
                               <span class="frequency">{{ med.take || 'After Food' }}</span>
@@ -202,10 +211,19 @@ import { PrescriptionViewDialogComponent } from './prescription-view-dialog.comp
                               </div>
                             </div>
                             <div class="medicine-status">
-                              <mat-icon [color]="checkMedicineStock(med.medicineId || med._id) ? 'primary' : 'warn'"
-                                [matTooltip]="getStockTooltip(med.medicineId || med._id)">
-                                {{ getStockIcon(med.medicineId || med._id) }}
-                              </mat-icon>
+                             <mat-icon
+  *ngIf="med.medicineId; else manualIcon"
+  [color]="checkMedicineStock(med.medicineId) ? 'primary' : 'warn'"
+  [matTooltip]="getStockTooltip(med.medicineId)">
+  {{ getStockIcon(med.medicineId) }}
+</mat-icon>
+
+<ng-template #manualIcon>
+  <mat-icon color="warn" matTooltip="Outside purchase">
+    open_in_new
+  </mat-icon>
+</ng-template>
+
                             </div>
                           </div>
                         </div>
@@ -219,13 +237,13 @@ import { PrescriptionViewDialogComponent } from './prescription-view-dialog.comp
                       </div>
 
                       <!-- Billing Summary -->
-                      <div class="billing-section">
+                      <!-- <div class="billing-section">
                         <h4>Billing Summary</h4>
                         <div class="billing-grid">
                           <span>Medicine Amount: ₹{{ prescription.totalAmount || 0 }}</span>
                           <span>Total: ₹{{ prescription.totalAmount || 0 }}</span>
                         </div>
-                      </div>
+                      </div> -->
                     </mat-card-content>
                     
                     <mat-card-actions>
@@ -233,16 +251,22 @@ import { PrescriptionViewDialogComponent } from './prescription-view-dialog.comp
                         <mat-icon>visibility</mat-icon>
                         View Details
                       </button>
-                      <button mat-raised-button color="primary" 
-                        [disabled]="!canDispensePrescription(prescription)"
-                        (click)="dispensePrescriptionWithBilling(prescription)">
+         <button mat-button color="primary"
+    (click)="printPrescription(prescription)">
+    <mat-icon>print</mat-icon>
+    Print Prescription
+  </button>               
+<button mat-raised-button color="primary"
+  [disabled]="!hasAnyStockMedicine(prescription)"
+  (click)="dispensePrescriptionWithBilling(prescription)">
+
                         <mat-icon>local_shipping</mat-icon>
                         Dispense
                       </button>
-                      <button mat-button color="warn" (click)="printPrescription(prescription)">
+                      <!-- <button mat-button color="warn" (click)="printPrescription(prescription)">
                         <mat-icon>print</mat-icon>
                         Print
-                      </button>
+                      </button> -->
                     </mat-card-actions>
                   </mat-card>
                 </div>
@@ -880,22 +904,36 @@ export class PharmacyDashboardComponent implements OnInit {
   });
 }
 
+hasAnyStockMedicine(prescription: any): boolean {
+  return prescription.medicines?.some(
+    (m: any) => m.medicineId && !m.isOutOfStock
+  );
+}
 
-  dispensePrescriptionWithBilling(prescription: any): void {
-    const dialogRef = this.dialog.open(PrescriptionDispenseDialog, {
-      width: '500px',
-      data: {
-        prescription: prescription,
-        totalAmount: prescription.totalAmount || 0
-      }
-    });
 
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result) {
-        this.completeDispensing(prescription._id, result);
-      }
-    });
-  }
+dispensePrescriptionWithBilling(prescription: any): void {
+
+  // ✅ Calculate billable amount FIRST
+  const billableAmount =
+    prescription.medicines
+      ?.filter((m: any) => m.medicineId && !m.isOutOfStock)
+      .reduce((sum: number, m: any) => sum + (m.unitPrice * m.quantity), 0) || 0;
+
+  // ✅ Open dialog with correct data
+  const dialogRef = this.dialog.open(PrescriptionDispenseDialog, {
+    width: '500px',
+    data: {
+      prescription,
+      totalAmount: billableAmount
+    }
+  });
+
+  dialogRef.afterClosed().subscribe((result: any) => {
+    if (result) {
+      this.completeDispensing(prescription._id, result);
+    }
+  });
+}
 
   completeDispensing(prescriptionId: string, paymentData: any): void {
     this.isLoading = true;
@@ -949,11 +987,11 @@ export class PharmacyDashboardComponent implements OnInit {
     const prescriptionWithBilling = {
       ...prescription,
       billing: {
-        medicineAmount: prescription.totalAmount || 0,
+medicineAmount: billingData.medicineAmount || 0,
         labCharges: billingData.labCharges || 0,
         consultationFee: billingData.consultationFee || 0,
         otherCharges: billingData.otherCharges || 0,
-        totalAmount: billingData.paymentAmount || prescription.totalAmount || 0
+  totalAmount: billingData.paymentAmount || 0
       }
     };
     
@@ -969,15 +1007,42 @@ export class PharmacyDashboardComponent implements OnInit {
       });
   }
 
-  printPrescription(prescription: any): void {
-  this.pdfService.generateHospitalVisitPDF(
-    prescription,
-    prescription.vitals || null,
-    prescription.billing || null
-  ).then(pdf => {
-    pdf.save(`Prescription_${prescription.patientId.fullName}_${Date.now()}.pdf`);
-  });
+async printPrescription(prescription: any) {
+  // Create a copy of prescription with filtered medicines for printing
+  const printCopy = {
+    ...prescription,
+    // Filter out out-of-stock medicines from display
+    medicines: prescription.medicines.map((med: any) => ({
+      ...med,
+      // Show price as 0 if out of stock
+      unitPrice: med.isOutOfStock ? 0 : med.unitPrice,
+      totalPrice: med.isOutOfStock ? 0 : (med.unitPrice || 0) * (med.quantity || 0)
+    })),
+    // Recalculate total amount for display (excluding out-of-stock)
+    totalAmount: prescription.medicines
+      .filter((m: any) => m.medicineId && !m.isOutOfStock && m.unitPrice)
+      .reduce((sum: number, m: any) => sum + (m.unitPrice * (m.quantity || 0)), 0)
+  };
+  
+  const pdf = await this.pdfService.generatePrescriptionPDF(printCopy);
+  pdf.save(`Prescription_${prescription.patientId.fullName}.pdf`);
 }
+getBillableAmount(prescription: any): number {
+  return prescription.medicines
+    ?.filter((m: any) => m.medicineId && !m.isOutOfStock && m.unitPrice)
+    .reduce((sum: number, m: any) => sum + (m.unitPrice * m.quantity), 0) || 0;
+}
+
+async printInvoice(prescription: any) {
+  const pdf = await this.pdfService.generateHospitalVisitPDF(
+    prescription,
+    prescription.vitals,
+    prescription.billing
+  );
+
+  pdf.save(`Invoice_${prescription.patientId.fullName}.pdf`);
+}
+
 
   private showSuccess(message: string): void {
     this.snackBar.open(message, 'Close', {

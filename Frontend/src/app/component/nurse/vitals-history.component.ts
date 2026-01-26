@@ -26,13 +26,21 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
   template: `
     <div class="vitals-history-container">
       <mat-card>
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>history</mat-icon>
-            Vitals History
-          </mat-card-title>
-          <mat-card-subtitle>Patient: {{ patientName }}</mat-card-subtitle>
-        </mat-card-header>
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>history</mat-icon>
+      Vitals History
+    </mat-card-title>
+
+    <mat-card-subtitle>
+      Patient: {{ patientName }}
+    </mat-card-subtitle>
+
+    <mat-card-subtitle>
+      Showing all vitals history (all visits)
+    </mat-card-subtitle>
+
+  </mat-card-header>
 
         <mat-card-content>
           <div class="table-container" *ngIf="vitalsHistory.length > 0">
@@ -193,27 +201,31 @@ export class VitalsHistoryComponent implements OnInit {
     this.loadVitalsHistory();
   }
 
-  loadVitalsHistory(): void {
-    const patientId = this.route.snapshot.paramMap.get('patientId');
-    if (patientId) {
-      this.isLoading = true;
-      this.vitalsService.getPatientVitalsHistory(patientId, this.currentPage, this.pageSize)
-        .subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.vitalsHistory = response.data;
-              this.totalItems = response.pagination.total;
-              this.patientName = this.vitalsHistory[0]?.patient?.fullName || 'Patient';
-            }
-            this.isLoading = false;
-          },
-          error: (error) => {
-            console.error('Error loading vitals history:', error);
-            this.isLoading = false;
-          }
-        });
-    }
-  }
+loadVitalsHistory(): void {
+  const patientId = this.route.snapshot.paramMap.get('patientId');
+
+  if (!patientId) return;
+
+  this.isLoading = true;
+
+  this.vitalsService
+    .getPatientVitalsHistory(patientId, this.currentPage, this.pageSize)
+    .subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.vitalsHistory = response.data; // ALL HISTORY
+          this.totalItems = response.pagination?.total || response.data.length;
+          this.patientName =
+            response.data[0]?.patient?.fullName || 'Patient';
+        }
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      }
+    });
+}
+
 
   isBPAbnormal(bp: any): boolean {
     return bp?.systolic > 140 || bp?.diastolic > 90;

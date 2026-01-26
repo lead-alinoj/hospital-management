@@ -16,7 +16,13 @@ exports.createPatient = async (req, res) => {
       ...req.body,
       createdBy: req.user.id
     };
-
+if (
+  patientData.idProof &&
+  !patientData.idProof.type &&
+  !patientData.idProof.number
+) {
+  delete patientData.idProof;
+}
     const patient = await Patient.create(patientData);
 
     res.status(201).json({

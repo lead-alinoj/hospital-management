@@ -153,6 +153,10 @@ import { environment } from '../../../environments/environment';
               <mat-card class="letterhead-preview">
                 <div class="letterhead-content">
                   <div class="hospital-header">
+                      <img *ngIf="logoPreview"
+       [src]="logoPreview"
+       class="letterhead-logo"
+       alt="Hospital Logo">
                     <h2>{{ hospitalForm.value.name }}</h2>
                     <p>{{ hospitalForm.value.address }}</p>
                     <p>{{ hospitalForm.value.city }}, {{ hospitalForm.value.state }} - {{ hospitalForm.value.pincode }}</p>
@@ -210,6 +214,13 @@ import { environment } from '../../../environments/environment';
         grid-template-columns: 1fr;
       }
     }
+    .letterhead-logo {
+  max-width: 120px;
+  max-height: 120px;
+  margin-bottom: 10px;
+  object-fit: contain;
+}
+
     .form-section {
       padding: 20px;
       background: #f9f9f9;
@@ -347,7 +358,7 @@ export class HospitalSettingsComponent implements OnInit {
       phone: ['', Validators.required],
       email: ['', [Validators.email]],
       registrationNumber: [''],
-      logo: ['']
+      // logo: ['']
     });
   }
 
@@ -373,7 +384,7 @@ export class HospitalSettingsComponent implements OnInit {
 
           // Set logo preview if exists
           if (hospital.logo) {
-            this.logoPreview = `${environment.apiUrl}${hospital.logo}`;
+this.logoPreview = `${this.getServerBaseUrl()}${hospital.logo}`;
           }
         }
         this.isLoading = false;
@@ -412,6 +423,9 @@ export class HospitalSettingsComponent implements OnInit {
     };
     reader.readAsDataURL(file);
   }
+private getServerBaseUrl(): string {
+  return environment.apiUrl.replace('/api', '');
+}
 
   saveHospital(): void {
     if (this.hospitalForm.invalid) {
@@ -426,6 +440,9 @@ export class HospitalSettingsComponent implements OnInit {
       this.hospitalService.uploadLogo(this.selectedFile).subscribe({
         next: (response) => {
           if (response.success) {
+            const timestamp = Date.now();
+this.logoPreview = `${this.getServerBaseUrl()}${response.data.logo}?t=${timestamp}`;
+
             // Continue with saving hospital data
             this.saveHospitalData();
           } else {

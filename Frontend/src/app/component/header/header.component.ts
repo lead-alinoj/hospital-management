@@ -65,13 +65,12 @@ ngOnInit(): void {
   });
 
   // Fix this subscription:
-  this.router.events
-    .pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
-    )
-    .subscribe((event: NavigationEnd) => {
-      this.checkRouteAuthorization(event.urlAfterRedirects);
-    });
+this.router.events
+  .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+  .subscribe((event: NavigationEnd) => {
+    if (!this.userRole) return;   // 🔑 ADD THIS LINE
+    this.checkRouteAuthorization(event.urlAfterRedirects);
+  });
 }
 
   @HostListener('window:resize')
@@ -122,7 +121,10 @@ ngOnInit(): void {
         /^\/admin\/.*$/,
         /^\/reports\/.*$/,
         /^\/management\/.*$/,
-         /^\/pharmacy\/.*$/
+         /^\/pharmacy\/.*$/,
+          /^\/admin\/staff$/,          // Add this line
+      /^\/admin\/attendance$/,     // Add this line
+      /^\/admin\/attendance\/history$/  // Add this line
       ],
       'Doctor': [
         /^\/doctor\/.*$/,
@@ -141,6 +143,8 @@ ngOnInit(): void {
           /^\/patients\/register.*$/,
         /^\/appointments\/book.*$/,
         /^\/billing\/.*$/,
+         /^\/reception\/staff$/,      // Add this line
+      /^\/reception\/attendance$/  // Add this line
      
       ],
       'Pharmacy': [

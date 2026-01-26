@@ -47,6 +47,13 @@ router.get('/:id/with-vitals',
     }
   }
 );
+router.get(
+  '/doctor/consulted',
+  authorize('Doctor', 'Admin'),
+  visitController.getDoctorConsultedPatients
+);
+
+
 // Role-specific routes
 router.get('/pending-vitals',
   authorize('Nurse', 'Admin'),

@@ -1,0 +1,352 @@
+<div class="history-container">
+  <mat-card class="history-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Attendance History & Reports
+      </mat-card-title>
+      <mat-card-subtitle>View, filter, and export attendance records</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <h3>Filter Records</h3>
+        
+        <form [formGroup]="filterForm" (ngSubmit)="loadAttendance()">
+          <div class="filter-row">
+            <!-- Date Range -->
+          <!-- Date Range -->
+<mat-form-field appearance="outline" class="filter-field">
+  <mat-label>From Date</mat-label>
+  <input matInput 
+         [matDatepicker]="startPicker" 
+         formControlName="startDate"
+         [value]="filterForm.get('startDate')?.value | date:'yyyy-MM-dd'">
+  <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+  <mat-datepicker #startPicker></mat-datepicker>
+</mat-form-field>
+
+<mat-form-field appearance="outline" class="filter-field">
+  <mat-label>To Date</mat-label>
+  <input matInput 
+         [matDatepicker]="endPicker" 
+         formControlName="endDate"
+         [value]="filterForm.get('endDate')?.value | date:'yyyy-MM-dd'">
+  <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+  <mat-datepicker #endPicker></mat-datepicker>
+</mat-form-field>
+
+            <!-- Staff Filter -->
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Staff Member</mat-label>
+              <mat-select formControlName="staffId">
+                <mat-option value="">All Staff</mat-option>
+                <mat-option *ngFor="let staff of staffList" [value]="staff.staffId">
+  {{ staff.name }} ({{ staff.staffId }})
+</mat-option>
+
+              </mat-select>
+              <mat-icon matSuffix>person</mat-icon>
+            </mat-form-field>
+
+            <!-- Role Filter -->
+        <!-- In the HTML template, ensure the select control name is jobRole -->
+<mat-form-field appearance="outline" class="filter-field">
+  <mat-label>Role</mat-label>
+  <mat-select formControlName="jobRole">  <!-- Changed from 'role' to 'jobRole' -->
+    <mat-option value="">All Roles</mat-option>
+    <mat-option *ngFor="let role of roles" [value]="role">
+      {{ role }}
+    </mat-option>
+  </mat-select>
+  <mat-icon matSuffix>work</mat-icon>
+</mat-form-field>
+          </div>
+
+          <div class="filter-actions">
+            <button mat-raised-button 
+                    color="primary" 
+                    type="submit"
+                    [disabled]="isLoading">
+              <mat-icon *ngIf="isLoading" class="spinner-icon">
+                <mat-spinner diameter="20"></mat-spinner>
+              </mat-icon>
+              <mat-icon *ngIf="!isLoading">search</mat-icon>
+              Search Records
+            </button>
+              <button mat-button 
+                    type="button" 
+                    (click)="clearFilters()"
+                    [disabled]="isLoading">
+              <mat-icon>clear_all</mat-icon>
+              Clear Filters
+            </button>
+            <!-- <button mat-button 
+        type="button" 
+        (click)="resetDateRange()"
+        [disabled]="isLoading"
+        color="accent">
+  <mat-icon>today</mat-icon>
+  This Month
+</button> -->
+          
+            
+            <div class="export-buttons">
+              <button mat-button 
+                      color="accent" 
+                      (click)="exportData('excel')"
+                      [disabled]="isLoading || attendanceData.length === 0">
+                <mat-icon>download</mat-icon>
+                Export Excel
+              </button>
+              
+              <button mat-button 
+                      color="warn" 
+                      (click)="exportData('pdf')"
+                      [disabled]="isLoading || attendanceData.length === 0">
+                <mat-icon>picture_as_pdf</mat-icon>
+                Export PDF
+              </button>
+              
+              <button mat-button 
+                      color="primary" 
+                      (click)="printReport()"
+                      [disabled]="isLoading || attendanceData.length === 0">
+                <mat-icon>print</mat-icon>
+                Print
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Active Filters Chips -->
+        <div class="filter-chips" *ngIf="selectedFilters.length > 0">
+          <mat-chip-set>
+            <mat-chip *ngFor="let filter of selectedFilters" [removable]="true" (removed)="removeFilter(filter)">
+              {{ filter }}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+
+      <!-- Results Summary -->
+      <div class="summary-section" *ngIf="attendanceData.length > 0">
+        <div class="summary-cards">
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>people</mat-icon>
+                Total Records
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-value">{{ totalRecords }}</div>
+              <div class="summary-label">Attendance Entries</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>check_circle</mat-icon>
+                Present
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-value present">
+{{ presentCount }}
+              </div>
+              <div class="summary-label">Staff Members</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>cancel</mat-icon>
+                Absent
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-value absent">
+{{ absentCount }}
+              </div>
+              <div class="summary-label">Staff Members</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>schedule</mat-icon>
+                Half Day
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-value half-day">
+{{ halfDayCount }}
+              </div>
+              <div class="summary-label">Staff Members</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Attendance Records Table -->
+      <div class="records-section">
+        <div class="section-header">
+          <h3>Attendance Records ({{ filteredData.length }})</h3>
+          <div class="records-info">
+          <span *ngIf="filteredData.length > 0 && paginator">
+  Showing {{ paginator.pageSize * paginator.pageIndex + 1 }} -
+  {{ paginator.pageSize * (paginator.pageIndex + 1) > filteredData.length
+      ? filteredData.length
+      : paginator.pageSize * (paginator.pageIndex + 1) }}
+  of {{ filteredData.length }}
+</span>
+
+          </div>
+        </div>
+
+        <div class="records-table-container" *ngIf="!isLoading; else loading">
+          <table mat-table 
+                 [dataSource]="dataSource" 
+                 matSort 
+                 class="mat-elevation-z1">
+            
+            <!-- Date Column -->
+      <!-- Update the Date Column in the table to show proper date format -->
+<ng-container matColumnDef="date">
+  <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+  <td mat-cell *matCellDef="let record">
+    <div class="date-cell">
+      <div class="date-day">{{ record.date | date:'dd' }}</div>
+      <div class="date-details">
+        <div class="date-month">{{ record.date | date:'MMM' | uppercase }}</div>
+        <div class="date-year">{{ record.date | date:'yyyy' }}</div>
+      </div>
+      <div class="date-weekday">{{ record.date | date:'EEE' }}</div>
+    </div>
+  </td>
+</ng-container>
+
+            <!-- Staff Details Column -->
+            <ng-container matColumnDef="staffDetails">
+              <th mat-header-cell *matHeaderCellDef>Staff Details</th>
+              <td mat-cell *matCellDef="let record">
+                <div class="staff-details">
+                  <mat-icon class="staff-icon">{{ getRoleIcon(record.jobRole) }}</mat-icon>
+                  <div class="staff-info">
+                    <div class="staff-name">{{ record.staffName }}</div>
+                    <div class="staff-meta">
+                      <span class="staff-id">{{ record.staffId }}</span>
+                      <span class="staff-role">{{ record.jobRole }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Shift Details Column -->
+            <ng-container matColumnDef="shiftDetails">
+              <th mat-header-cell *matHeaderCellDef>Shift</th>
+              <td mat-cell *matCellDef="let record">
+                <div class="shift-details">
+                  <mat-icon>{{ getShiftIcon(record.shift) }}</mat-icon>
+                  <div class="shift-info">
+                    <div class="shift-type">{{ record.shift }}</div>
+                    <div class="shift-times">
+                      <span class="in-time">
+                        <mat-icon>login</mat-icon>
+                        {{ record.inTime }}
+                      </span>
+                      <span *ngIf="record.outTime" class="out-time">
+                        <mat-icon>logout</mat-icon>
+                        {{ record.outTime }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Duration Column -->
+            <ng-container matColumnDef="duration">
+              <th mat-header-cell *matHeaderCellDef>Duration</th>
+              <td mat-cell *matCellDef="let record">
+                <div class="duration-cell" [class.ongoing]="!record.outTime">
+                  <mat-icon>timer</mat-icon>
+                  <span>{{ getDuration(record.totalMinutes, record.outTime) }}
+
+</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let record">
+                <span class="status-badge" [class]="getStatusClass(record.status)">
+                  <mat-icon>{{ getStatusIcon(record.status) }}</mat-icon>
+                  {{ record.status }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Entered By Column -->
+            <ng-container matColumnDef="enteredBy">
+              <th mat-header-cell *matHeaderCellDef>Marked By</th>
+              <td mat-cell *matCellDef="let record">
+                <div class="entered-by">
+                  <mat-icon>person</mat-icon>
+                  <span>{{ record.enteredBy }}</span>
+                  <div class="entered-time">{{ record.createdTime | date:'shortTime' }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Remarks Column -->
+            <ng-container matColumnDef="remarks">
+              <th mat-header-cell *matHeaderCellDef>Remarks</th>
+              <td mat-cell *matCellDef="let record">
+                <div class="remarks-cell" *ngIf="record.remarks; else noRemarks">
+                  {{ record.remarks }}
+                </div>
+                <ng-template #noRemarks>
+                  <span class="no-remarks">-</span>
+                </ng-template>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+
+          <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                         showFirstLastButtons
+                         [length]="filteredData.length"
+                         #paginator></mat-paginator>
+        </div>
+
+        <ng-template #loading>
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading attendance records...</p>
+          </div>
+        </ng-template>
+
+        <div *ngIf="!isLoading && filteredData.length === 0" class="empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h4>No attendance records found</h4>
+          <p>Try adjusting your filters or select a different date range</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

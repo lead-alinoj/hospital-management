@@ -23,6 +23,9 @@ import { CategoryManagementComponent } from './component/management/category-man
 import { PatientSearchComponent } from './component/reception/patient-search.component';
 import { LandingComponent } from './pages/landing/landing.component';
 import { AdminAppointmentsComponent } from './pages/appointments/appointments.component';
+import { AttendanceHistoryComponent } from './component/Staff/attendance-history/attendance-history.component';
+import { AttendanceEntryComponent } from './component/Staff/attendance-entry/attendance-entry.component';
+import { StaffMasterComponent } from './component/Staff/staff-master/staff-master.component';
 
 export const routes: Routes = [
   // Empty path redirects to login
@@ -77,7 +80,45 @@ export const routes: Routes = [
   canActivate: [authGuard, adminGuard], // Only accessible by admin
   data: { title: 'Appointments' }
 },
+  {
+    path: 'admin/staff',
+    component: StaffMasterComponent,
+    canActivate: [authGuard, adminGuard],
+    data: { title: 'Staff Master' }
+  },
+  {
+    path: 'reception/staff',
+    component: StaffMasterComponent,
+    canActivate: [authGuard, receptionGuard],
+    data: { title: 'Staff Master' }
+  },
   
+  // Attendance Routes
+  {
+    path: 'admin/attendance',
+    component: AttendanceEntryComponent,
+    canActivate: [authGuard, adminGuard],
+    data: { title: 'Attendance Entry' }
+  },
+  {
+    path: 'reception/attendance',
+    component: AttendanceEntryComponent,
+    canActivate: [authGuard, receptionGuard],
+    data: { title: 'Attendance Entry' }
+  },
+  {
+    path: 'admin/attendance/history',
+    component: AttendanceHistoryComponent,
+    canActivate: [authGuard, adminGuard],
+    data: { title: 'Attendance History' }
+  },
+  // {
+  //   path: 'admin/attendance/reports',
+  //   component: AttendanceReportsComponent,
+  //   canActivate: [authGuard, adminGuard],
+  //   data: { title: 'Attendance Reports' }
+  // },
+
   // Doctor routes
 {
   path: 'doctor/dashboard',

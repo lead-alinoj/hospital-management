@@ -178,23 +178,29 @@ exports.getLowStockMedicines = async (req, res) => {
   }
 };
 
+// ✅ FIXED: getDoctorMedicines
 exports.getDoctorMedicines = async (req, res) => {
   try {
-    const medicines = await Medicine.find({
-      stockQty: { $gt: 0 }
-    })
-    .populate({
-      path: 'category',
-      match: { type: 'Medicine' }  // Only populate if category type is Medicine
-    })
-    .where('category').ne(null)  // Exclude documents where category didn't match
-    .sort({ name: 1 });
+    const medicines = await Medicine.find({ isActive: true })
+      .populate({
+        path: 'category',
+        match: { type: 'Medicine' }
+      })
+      .where('category').ne(null)
+      .sort({ name: 1 });
 
-    res.json({ success: true, data: medicines });
+    res.json({
+      success: true,
+      data: medicines
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
+
 // Search medicines
 exports.searchMedicines = async (req, res) => {
   try {

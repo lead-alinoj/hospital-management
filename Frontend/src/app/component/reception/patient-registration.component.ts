@@ -350,6 +350,13 @@ age: [null, [Validators.min(0), Validators.max(120)]],
           .filter(Boolean)
       }
     };
+// ✅ REMOVE empty idProof (VERY IMPORTANT)
+if (
+  !patientData.idProof?.type &&
+  !patientData.idProof?.number
+) {
+  delete patientData.idProof;
+}
 
     const response = await this.patientService.createPatient(patientData).toPromise();
 

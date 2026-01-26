@@ -11,14 +11,24 @@ import { MatButtonModule } from '@angular/material/button';
 
     <mat-dialog-content>
       <p><b>Patient:</b> {{ data.patientId?.fullName }}</p>
+      <p><b>Visit Date:</b> {{ data.visitId?.visitDate | date:'mediumDate' }}</p>
+
       <p><b>Doctor:</b> Dr. {{ data.doctorId?.name }}</p>
       <p><b>Diagnosis:</b> {{ data.diagnosis }}</p>
 
       <h4>Medicines</h4>
       <ul>
-        <li *ngFor="let m of data.medicines">
-          {{ m.medicineName }} — {{ m.quantity }} × ₹{{ m.unitPrice }}
-        </li>
+<li *ngFor="let m of data.medicines">
+  {{ m.medicineName }}
+  — {{ m.quantity }} ×
+  ₹{{ m.isOutOfStock ? 0 : m.unitPrice }}
+
+  <span *ngIf="m.isOutOfStock" style="color:red">
+    (Out of stock)
+  </span>
+</li>
+
+
       </ul>
 
       <p><b>Total:</b> ₹{{ data.totalAmount }}</p>

@@ -47,7 +47,31 @@
     Dashboard
   </button>
 
- 
+ <button mat-button
+        [matMenuTriggerFor]="staffAttendanceMenu"
+        class="dropdown-button">
+  <mat-icon>people</mat-icon>
+  Staff & Attendance
+  <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+</button>
+
+<mat-menu #staffAttendanceMenu="matMenu">
+  <button mat-menu-item routerLink="/admin/staff"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>manage_accounts</mat-icon>
+    Staff Master
+  </button>
+  <button mat-menu-item routerLink="/admin/attendance"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>check_circle</mat-icon>
+    Mark Attendance
+  </button>
+  <button mat-menu-item routerLink="/admin/attendance/history"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>history</mat-icon>
+    Attendance History
+  </button>
+</mat-menu>
 
   <button mat-button routerLink="/admin/appointments"
           (click)="closeMobileMenuOnNavigation()">
@@ -141,7 +165,26 @@
     <mat-icon>dashboard</mat-icon>
     Dashboard
   </button>
-  
+  <button mat-button
+        [matMenuTriggerFor]="receptionStaffMenu"
+        class="dropdown-button">
+  <mat-icon>people</mat-icon>
+  Staff & Attendance
+  <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+</button>
+
+<mat-menu #receptionStaffMenu="matMenu">
+  <button mat-menu-item routerLink="/reception/staff"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>manage_accounts</mat-icon>
+    Staff Master
+  </button>
+  <button mat-menu-item routerLink="/reception/attendance"
+          (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>check_circle</mat-icon>
+    Mark Attendance
+  </button>
+</mat-menu>
   <button mat-button routerLink="/pharmacy/medicines" (click)="closeMobileMenuOnNavigation()">
     <mat-icon>inventory_2</mat-icon>
     Medicine Management
@@ -204,6 +247,14 @@
               <mat-icon>analytics</mat-icon>
               Reports
             </button>
+             <button mat-menu-item routerLink="/admin/staff" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>people</mat-icon>
+    Staff Master
+  </button>
+  <button mat-menu-item routerLink="/admin/attendance" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>check_circle</mat-icon>
+    Mark Attendance
+  </button>
           </ng-container>
           
           <ng-container *ngIf="isDoctor()">
@@ -219,6 +270,14 @@
           
           <ng-container *ngIf="isReception()">
             <!-- Reception specific links if needed -->
+              <button mat-menu-item routerLink="/reception/staff" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>people</mat-icon>
+    Staff Master
+  </button>
+  <button mat-menu-item routerLink="/reception/attendance" (click)="closeMobileMenuOnNavigation()">
+    <mat-icon>check_circle</mat-icon>
+    Mark Attendance
+  </button>
           </ng-container>
           
           <ng-container *ngIf="isPharmacy()">

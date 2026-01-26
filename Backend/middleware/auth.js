@@ -55,13 +55,17 @@ exports.authorize = (...roles) => {
         error: 'User not authenticated'
       });
     }
-    
-    if (!roles.includes(req.user.role)) {
+
+    const userRole = req.user.role.toLowerCase();
+    const allowedRoles = roles.map(r => r.toLowerCase());
+
+    if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         error: `User role ${req.user.role} is not authorized to access this route`
       });
     }
+
     next();
   };
 };

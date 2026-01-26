@@ -1,4 +1,4 @@
-<!-- Top Info Bar -->
+<!-- landing.component.html - Updated with compact layout -->
 <!-- Top Info Bar -->
 <div class="top-bar">
   <div class="ticker-wrapper">
@@ -7,23 +7,23 @@
       123 Main Street, Nagercoil, Tamil Nadu &nbsp;&nbsp;|&nbsp;&nbsp;
       Call: 98765 43210 &nbsp;&nbsp;|&nbsp;&nbsp;
       Book Appointments Online &nbsp;&nbsp;|&nbsp;&nbsp;
-      Excellence in Healthcare & Patient Care &nbsp;&nbsp;|&nbsp;&nbsp;
-      <!-- 🏥 MediCare Hospital &nbsp;&nbsp;|&nbsp;&nbsp;
-      123 Main Street, Nagercoil, Tamil Nadu &nbsp;&nbsp;|&nbsp;&nbsp;
-      Call: 98765 43210 &nbsp;&nbsp;|&nbsp;&nbsp;
-      Book Appointments Online &nbsp;&nbsp;|&nbsp;&nbsp;
-      Excellence in Healthcare & Patient Care -->
+      Excellence in Healthcare & Patient Care
     </div>
   </div>
 </div>
 
-
-
 <!-- Header -->
 <mat-toolbar class="main-header">
   <div class="logo">
-    <span class="hospital-name">MediCare</span>
-    <span class="sub">Multi Speciality Hospital</span>
+    <img
+      src="assets/images/logo.png"
+      alt="MediCare Hospital Logo"
+      class="hospital-logo"
+    />
+    <div class="logo-text">
+      <span class="hospital-name">MediCare</span>
+      <span class="sub">Multi Speciality Hospital</span>
+    </div>
   </div>
 
   <span class="spacer"></span>
@@ -36,52 +36,81 @@
     <button mat-raised-button color="warn" class="book-btn">
       Book Appointment
     </button>
-<button
-  mat-icon-button
-  [matMenuTriggerFor]="authMenu"
-  class="login-btn"
-  matTooltip="Account"
->
-  <mat-icon>person</mat-icon>
-</button>
+    <button
+      mat-icon-button
+      [matMenuTriggerFor]="authMenu"
+      class="login-btn"
+      matTooltip="Account"
+    >
+      <mat-icon>person</mat-icon>
+    </button>
 
-<mat-menu #authMenu="matMenu">
-  <button mat-menu-item (click)="openAuthDialog('login')">
-    <mat-icon>login</mat-icon>
-    <span>Login</span>
-  </button>
-
-  <button mat-menu-item (click)="openAuthDialog('register')">
-    <mat-icon>person_add</mat-icon>
-    <span>Register</span>
-  </button>
-</mat-menu>
-
-
+    <mat-menu #authMenu="matMenu">
+      <button mat-menu-item (click)="openAuthDialog('login')">
+        <mat-icon>login</mat-icon>
+        <span>Login</span>
+      </button>
+      <button mat-menu-item (click)="openAuthDialog('register')">
+        <mat-icon>person_add</mat-icon>
+        <span>Register</span>
+      </button>
+    </mat-menu>
   </nav>
 </mat-toolbar>
 
 <!-- Hero Section -->
 <section class="hero">
-  <!-- Left: Image -->
-  <div class="hero-image">
-    <img src="assets/images/dd.png" alt="Patient">
+  <!-- Left: Content -->
+  <div class="hero-content">
+    <h1 class="hero-title">
+      Quality Care for <span class="highlight">You & Your Family</span>
+    </h1>
+    <p class="hero-subtitle">
+      Expert medical care with compassion. Your health is our priority.
+    </p>
+      <!-- Hero Image -->
+  <div class="hero-image-wrapper">
+    <img
+      src="assets/images/dd.png"
+      alt="Quality healthcare for family"
+      class="hero-main-image"
+    />
+  </div>
+
+    <div class="hero-features">
+      <div class="feature">
+        <mat-icon class="feature-icon">verified</mat-icon>
+        <span>Expert Doctors</span>
+      </div>
+      <div class="feature">
+        <mat-icon class="feature-icon">emergency</mat-icon>
+        <span>24/7 Emergency</span>
+      </div>
+      <div class="feature">
+        <mat-icon class="feature-icon">medication</mat-icon>
+        <span>Pharmacy</span>
+      </div>
+      <div class="feature">
+        <mat-icon class="feature-icon">groups</mat-icon>
+        <span>Multi-speciality</span>
+      </div>
+    </div>
   </div>
 
   <!-- Right: Appointment Form -->
   <div class="appointment-card">
-      <div class="appointment-header">
-    <h2>Book an Appointment</h2>
-    <p>Fill the details below to schedule your visit</p>
-  </div>
+    <div class="appointment-header">
+      <h2>Book Appointment</h2>
+      <p>Quick & easy online booking</p>
+    </div>
+    
     <form [formGroup]="appointmentForm" (ngSubmit)="submitAppointment()">
-
       <!-- Patient Name -->
       <mat-form-field appearance="outline">
         <mat-label>Patient Name *</mat-label>
         <input matInput formControlName="patientName">
         <mat-error *ngIf="appointmentForm.get('patientName')?.hasError('required')">
-          Patient Name is required
+          Required
         </mat-error>
       </mat-form-field>
 
@@ -90,70 +119,136 @@
         <mat-label>Contact Number *</mat-label>
         <input matInput formControlName="contactNumber">
         <mat-error *ngIf="appointmentForm.get('contactNumber')?.hasError('required')">
-          Contact Number is required
+          Required
         </mat-error>
         <mat-error *ngIf="appointmentForm.get('contactNumber')?.hasError('pattern')">
-          Enter a valid 10-digit number
+          10-digit number
         </mat-error>
       </mat-form-field>
 
       <!-- Email (Optional) -->
       <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
+        <mat-label>Email (Optional)</mat-label>
         <input matInput formControlName="email">
-        <mat-error *ngIf="appointmentForm.get('email')?.hasError('email')">
-          Enter a valid email
-        </mat-error>
       </mat-form-field>
 
       <!-- Description -->
       <mat-form-field appearance="outline">
-        <mat-label>Short Description *</mat-label>
+        <mat-label>Description *</mat-label>
         <input matInput formControlName="description">
-        <mat-error *ngIf="appointmentForm.get('description')?.hasError('required')">
-          Description is required
-        </mat-error>
       </mat-form-field>
 
       <!-- Appointment Date -->
       <mat-form-field appearance="outline">
-        <mat-label>Appointment Date *</mat-label>
+        <mat-label>Date *</mat-label>
         <input matInput [matDatepicker]="picker" formControlName="appointmentDate">
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
-        <mat-error *ngIf="appointmentForm.get('appointmentDate')?.hasError('required')">
-          Appointment date is required
-        </mat-error>
       </mat-form-field>
 
-<!-- Appointment Time -->
-<div class="time-picker" style="display: flex; flex-direction: column; gap: 5px;">
-  <label style="font-weight: 500;">Time</label> <!-- Optional label -->
+      <!-- Appointment Time -->
+      <div class="time-picker">
+        <label>Time *</label>
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Hour</mat-label>
+            <mat-select formControlName="hour">
+              <mat-option *ngFor="let h of hours" [value]="h">{{ h }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline">
+            <mat-label>AM/PM</mat-label>
+            <mat-select formControlName="ampm">
+              <mat-option value="AM">AM</mat-option>
+              <mat-option value="PM">PM</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
 
-  <div style="display: flex; gap: 10px;">
-    <!-- Hour -->
-    <mat-form-field appearance="outline" style="width: 100px; margin: 0;">
-      <mat-select formControlName="hour">
-        <mat-option *ngFor="let h of hours" [value]="h">{{ h }}</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <!-- AM/PM -->
-    <mat-form-field appearance="outline" style="width: 100px; margin: 0;">
-      <mat-select formControlName="ampm">
-        <mat-option value="AM">AM</mat-option>
-        <mat-option value="PM">PM</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-</div>
-
-
-
-
-      <button mat-raised-button color="primary" type="submit">
-        Confirm Appointment
+      <button mat-raised-button color="primary" type="submit" [disabled]="!appointmentForm.valid">
+        Book Appointment
       </button>
     </form>
   </div>
 </section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <h2 class="section-title">Our Services</h2>
+  <p class="section-subtitle">Comprehensive healthcare services for all your needs</p>
+  
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon-container">
+        <mat-icon>medical_services</mat-icon>
+      </div>
+      <h3>Expert Doctors</h3>
+      <p>Experienced specialists for accurate diagnosis</p>
+    </div>
+    
+    <div class="feature-card">
+      <div class="feature-icon-container">
+        <mat-icon>hearing</mat-icon>
+      </div>
+      <h3>OPD Consultation</h3>
+      <p>Personalized care for every patient</p>
+    </div>
+    
+    <div class="feature-card">
+      <div class="feature-icon-container">
+        <mat-icon>local_pharmacy</mat-icon>
+      </div>
+      <h3>Pharmacy</h3>
+      <p>Genuine medicines with guidance</p>
+    </div>
+    
+    <div class="feature-card">
+      <div class="feature-icon-container">
+        <mat-icon>science</mat-icon>
+      </div>
+      <h3>Lab Tests</h3>
+      <p>Accurate diagnostics with quick results</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>MediCare Hospital</h3>
+      <p style="color: #cbd5e1; line-height: 1.5; font-size: 0.9rem;">
+        Your trusted healthcare partner providing quality medical services with compassion.
+      </p>
+    </div>
+    
+    <div class="footer-section contact-info">
+      <h3>Contact</h3>
+      <p>
+        <mat-icon>location_on</mat-icon>
+        123 Main Street, Nagercoil, Tamil Nadu
+      </p>
+      <p>
+        <mat-icon>call</mat-icon>
+        98765 43210
+      </p>
+      <p>
+        <mat-icon>email</mat-icon>
+info&#64;medicarehospital.com
+      </p>
+    </div>
+    
+    <div class="footer-section opening-hours">
+      <h3>Timings</h3>
+      <p><strong>OPD:</strong> 8 AM - 8 PM</p>
+      <p><strong>Emergency:</strong> 24/7</p>
+      <p><strong>Pharmacy:</strong> 7 AM - 11 PM</p>
+    </div>
+  </div>
+  
+  <div class="copyright">
+    © 2024 MediCare Multi Speciality Hospital. All rights reserved.
+  </div>
+</footer>

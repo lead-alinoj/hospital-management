@@ -1,0 +1,326 @@
+<div class="attendance-container">
+  <mat-card class="attendance-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>check_circle</mat-icon>
+        Daily Attendance Entry
+      </mat-card-title>
+      <mat-card-subtitle>Mark attendance for staff members</mat-card-subtitle>
+      <mat-card-subtitle class="date-display">
+        {{ today | date:'fullDate' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <!-- Attendance Form -->
+      <div class="form-section">
+        <h3>{{ isEditing ? 'Edit Attendance' : 'Mark New Attendance' }}</h3>
+        
+        <form [formGroup]="attendanceForm" (ngSubmit)="markAttendance()">
+          <div class="form-row">
+            <!-- Date -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Date</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="date">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-error *ngIf="attendanceForm.get('date')?.hasError('required')">
+                Date is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Staff Selection -->
+      <mat-form-field appearance="outline" class="form-field">
+  <mat-label>Select Staff</mat-label>
+
+  <input matInput
+         type="text"
+         formControlName="staff"
+         [matAutocomplete]="auto"
+         (input)="filterStaff($event)"
+         placeholder="Search by name or staff ID">
+
+  <mat-autocomplete #auto="matAutocomplete"
+                    [displayWith]="displayStaff"
+                    (optionSelected)="onStaffSelect($event.option.value)">
+
+    <mat-option *ngFor="let staff of filteredStaff"
+                [value]="staff">
+      <div class="staff-option">
+<mat-icon>{{ getJobRoleIcon(staff.jobRole) }}</mat-icon>
+        <span class="staff-name">{{ staff.name }}</span>
+        <span class="staff-id">({{ staff.staffId }})</span>
+      </div>
+    </mat-option>
+
+  </mat-autocomplete>
+
+  <mat-icon matSuffix>person_search</mat-icon>
+
+<mat-error *ngIf="attendanceForm.get('staff')?.hasError('required')">
+  Please select a staff member
+</mat-error>
+
+</mat-form-field>
+
+
+
+            <!-- Staff Details (Auto-filled) -->
+            <div class="staff-details" *ngIf="selectedStaff">
+              <div class="detail-chip">
+                <mat-icon>badge</mat-icon>
+                <span>{{ selectedStaff.staffId }}</span>
+              </div>
+              <div class="detail-chip">
+                <mat-icon>work</mat-icon>
+                <span>{{ selectedStaff.jobRole }}</span>
+              </div>
+              <div class="detail-chip">
+                <mat-icon>phone</mat-icon>
+                <span>{{ selectedStaff.phone }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <!-- Shift -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Shift</mat-label>
+              <mat-select formControlName="shift">
+                <mat-option *ngFor="let shift of shifts" [value]="shift">
+                  <mat-icon>{{ getShiftIcon(shift) }}</mat-icon>
+                  {{ shift }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="attendanceForm.get('shift')?.hasError('required')">
+                Shift is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Status -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let status of statuses" [value]="status">
+                  <mat-icon [color]="status === 'Present' ? 'primary' : status === 'Absent' ? 'warn' : 'accent'">
+                    {{ getStatusIcon(status) }}
+                  </mat-icon>
+                  {{ status }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="attendanceForm.get('status')?.hasError('required')">
+                Status is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- In Time -->
+            <mat-form-field appearance="outline" class="form-field time-field">
+              <mat-label>In Time</mat-label>
+              <input matInput type="time" formControlName="inTime">
+              <mat-icon matSuffix>schedule</mat-icon>
+              <mat-error *ngIf="attendanceForm.get('inTime')?.hasError('required')">
+                In time is required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Out Time -->
+            <mat-form-field appearance="outline" class="form-field time-field">
+              <mat-label>Out Time</mat-label>
+              <input matInput type="time" formControlName="outTime">
+              <mat-icon matSuffix>schedule</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <!-- Remarks -->
+          <mat-form-field appearance="outline" class="remarks-field">
+            <mat-label>Remarks</mat-label>
+            <textarea matInput 
+                      formControlName="remarks" 
+                      rows="3" 
+                      placeholder="Any additional notes or comments"></textarea>
+          </mat-form-field>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button mat-raised-button 
+                    color="primary" 
+                    type="submit" 
+                    [disabled]="attendanceForm.invalid || isLoading">
+              <mat-icon *ngIf="isLoading" class="spinner-icon">
+                <mat-spinner diameter="20"></mat-spinner>
+              </mat-icon>
+              <mat-icon *ngIf="!isLoading">{{ isEditing ? 'save' : 'add' }}</mat-icon>
+              {{ isEditing ? 'Update Attendance' : 'Mark Attendance' }}
+            </button>
+            
+            <button *ngIf="isEditing" 
+                    mat-button 
+                    type="button" 
+                    (click)="resetForm()"
+                    [disabled]="isLoading">
+              <mat-icon>cancel</mat-icon>
+              Cancel
+            </button>
+            
+            <button mat-button 
+                    type="button" 
+                    (click)="resetForm()"
+                    [disabled]="isLoading">
+              <mat-icon>refresh</mat-icon>
+              Reset Form
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Today's Attendance List -->
+      <div class="attendance-list-section">
+        <div class="section-header">
+          <h3>Today's Attendance ({{ todayAttendance.length }})</h3>
+          <button mat-button color="primary" (click)="loadTodayAttendance()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <div class="attendance-table-container" *ngIf="!isLoading; else loading">
+          <table mat-table [dataSource]="dataSource" class="mat-elevation-z1">
+            <!-- Staff ID Column -->
+            <ng-container matColumnDef="staffId">
+              <th mat-header-cell *matHeaderCellDef>ID</th>
+              <td mat-cell *matCellDef="let attendance">
+                <div class="staff-cell">
+                  <mat-icon class="role-icon">{{ getRoleIcon(attendance.jobRole) }}</mat-icon>
+                  <span class="staff-id">{{ attendance.staffId }}</span>
+                </div>
+              </td>
+            </ng-container>
+<!-- Role Column -->
+<ng-container matColumnDef="role">
+  <th mat-header-cell *matHeaderCellDef>Role</th>
+  <td mat-cell *matCellDef="let attendance">
+    <span class="role-badge">
+      <mat-icon>{{ getRoleIcon(attendance.jobRole) }}</mat-icon>
+      {{ attendance.jobRole }}
+    </span>
+  </td>
+</ng-container>
+
+            <!-- Name Column -->
+            <ng-container matColumnDef="staffName">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let attendance">
+                <strong>{{ attendance.staffName }}</strong>
+                <div class="role-text">{{ attendance.jobRole }}</div>
+              </td>
+            </ng-container>
+
+            <!-- Shift Column -->
+            <ng-container matColumnDef="shift">
+              <th mat-header-cell *matHeaderCellDef>Shift</th>
+              <td mat-cell *matCellDef="let attendance">
+                <div class="shift-cell">
+                  <mat-icon>{{ getShiftIcon(attendance.shift) }}</mat-icon>
+                  <span>{{ attendance.shift }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- In Time Column -->
+            <ng-container matColumnDef="inTime">
+              <th mat-header-cell *matHeaderCellDef>In Time</th>
+              <td mat-cell *matCellDef="let attendance">
+                <div class="time-cell in-time">
+                  <mat-icon>login</mat-icon>
+                  <span>{{ attendance.inTime }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Out Time Column -->
+            <ng-container matColumnDef="outTime">
+              <th mat-header-cell *matHeaderCellDef>Out Time</th>
+              <td mat-cell *matCellDef="let attendance">
+                <div class="time-cell" [class.out-time]="attendance.outTime" [class.no-out]="!attendance.outTime">
+                  <mat-icon>logout</mat-icon>
+                  <span>{{ attendance.outTime || 'Not marked' }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let attendance">
+                <span class="status-badge" [class]="getStatusClass(attendance.status)">
+                  <mat-icon>{{ getStatusIcon(attendance.status) }}</mat-icon>
+                  {{ attendance.status }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Entered By Column -->
+            <ng-container matColumnDef="enteredBy">
+              <th mat-header-cell *matHeaderCellDef>Marked By</th>
+              <td mat-cell *matCellDef="let attendance">
+                <div class="entered-by">
+                  <mat-icon>person</mat-icon>
+                  <span>{{ attendance.enteredBy }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let attendance">
+                <div class="action-buttons">
+                  <button mat-icon-button 
+                          color="primary" 
+                          (click)="editAttendance(attendance)"
+                          matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  
+                  <button mat-icon-button 
+                          color="accent" 
+                          (click)="markOut(attendance)"
+                          *ngIf="canMarkOut(attendance)"
+                          matTooltip="Mark Out Time">
+                    <mat-icon>logout</mat-icon>
+                  </button>
+                  
+                  <button mat-icon-button 
+                          color="warn" 
+                          (click)="deleteAttendance(attendance)"
+                          matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+
+        <ng-template #loading>
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading attendance data...</p>
+          </div>
+        </ng-template>
+
+        <div *ngIf="!isLoading && todayAttendance.length === 0" class="empty-state">
+          <mat-icon>event_busy</mat-icon>
+          <h4>No attendance marked today</h4>
+          <p>Use the form above to mark attendance for staff members</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

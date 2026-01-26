@@ -39,6 +39,11 @@ updateVisit(id: string, updates: any): Observable<any> {
 deleteVisit(visitId: string): Observable<any> {
   return this.http.delete(`${this.apiUrl}/${visitId}`);
 }
+getDoctorConsultedPatients() {
+  return this.http.get<any>(
+    `${this.apiUrl}/doctor/consulted`
+  );
+}
 
 createVisit(visitData: any): Observable<any> {
   return this.http.post<any>(`${this.apiUrl}`, visitData).pipe(

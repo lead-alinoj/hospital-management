@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 
 const prescriptionMedicineSchema = new mongoose.Schema({
-  medicineId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Medicine',
-    required: true
-  },
+medicineId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Medicine',
+  required: function () {
+    return this.type === 'STOCK';
+  }
+},
   medicineName: String,
   strength: String,
 
@@ -15,10 +17,11 @@ const prescriptionMedicineSchema = new mongoose.Schema({
     min: 1
   },
 
-  take: {
-    type: String, // 1 tablet, 5 ml
-    required: true
-  },
+take: {
+  type: String,
+  default: null
+
+},
 
   morning: { type: Boolean, default: false },
   noon: { type: Boolean, default: false },
@@ -34,14 +37,17 @@ const prescriptionMedicineSchema = new mongoose.Schema({
   instructions: String,
 unitPrice: {
     type: Number,
-    required: true,
     min: 0
   },
   totalPrice: {
     type: Number,
-    required: true,
     min: 0
-  }
+  },
+  type: {
+  type: String,
+  enum: ['STOCK', 'MANUAL'],
+  required: true
+}
 });
   
 
@@ -85,8 +91,8 @@ const prescriptionSchema = new mongoose.Schema({
   },
     totalAmount: {
     type: Number,
-    required: true,
-    min: 0
+ default: 0,
+     min: 0
   },
   paymentStatus: {
     type: String,
@@ -119,13 +125,22 @@ billingDetails: {
 });
 // FIXED: Remove the arrow function issue
 prescriptionSchema.pre('save', function () {
-  if (this.medicines && this.medicines.length > 0) {
-    this.totalAmount = this.medicines.reduce((total, med) => {
-      return total + (med.totalPrice || 0);
-    }, 0);
-  } else {
+  if (!this.medicines || this.medicines.length === 0) {
     this.totalAmount = 0;
+    return;
   }
+
+  // ✅ Only include medicines that are IN STOCK and have medicineId (not manual/outside)
+  this.totalAmount = this.medicines.reduce((total, med) => {
+    // Skip manual/outside medicines
+    if (!med.medicineId) return total;
+    // Skip out-of-stock medicines
+    if (med.isOutOfStock) return total;
+    // Skip medicines with zero price
+    if (!med.unitPrice) return total;
+    return total + (med.unitPrice * (med.quantity || 0));
+  }, 0);
 });
+
 
 module.exports = mongoose.model('Prescription', prescriptionSchema);

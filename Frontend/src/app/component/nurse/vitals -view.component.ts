@@ -116,7 +116,7 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
                 <div class="measurement-value" [ngClass]="getTemperatureClass(vitals.temperature.value)">
                   {{ vitals.temperature.value }} {{ vitals.temperature.unit }}
                 </div>
-                <div class="measurement-label">Temperature</div>
+                <div class="measurement-label">Temperature(°F)</div>
               </div>
             </div>
 

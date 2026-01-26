@@ -61,6 +61,13 @@ import { VisitService } from '../../service/visit.service';
                     <span>{{ visit.patient?.age }}Y / {{ visit.patient?.gender }}</span>
                   </div>
                   <div class="info-row">
+  <span class="label">Visit Date:</span>
+  <span>
+    {{ visit.visitDate | date:'mediumDate' }}
+  </span>
+</div>
+
+                  <div class="info-row">
                     <span class="label">OP Number:</span>
                     <span>{{ visit.patient?.opNumber }}</span>
                   </div>
@@ -99,49 +106,64 @@ import { VisitService } from '../../service/visit.service';
       </mat-card>
       
       <!-- Today's Consulted Patients -->
-      <mat-card class="dashboard-card" *ngIf="consultedVisits.length > 0">
-        <mat-card-header>
-          <mat-card-title>Today's Consulted Patients</mat-card-title>
-        </mat-card-header>
-        
-        <mat-card-content>
-          <table mat-table [dataSource]="consultedVisits" class="mat-elevation-z1">
-            <ng-container matColumnDef="patient">
-              <th mat-header-cell *matHeaderCellDef>Patient</th>
-              <td mat-cell *matCellDef="let visit">
-                {{ visit.patient?.fullName }}
-              </td>
-            </ng-container>
-            
-            <ng-container matColumnDef="time">
-              <th mat-header-cell *matHeaderCellDef>Consultation Time</th>
-              <td mat-cell *matCellDef="let visit">
-                {{ visit.consultationTime | date:'shortTime' }}
-              </td>
-            </ng-container>
-            
-            <ng-container matColumnDef="diagnosis">
-              <th mat-header-cell *matHeaderCellDef>Diagnosis</th>
-              <td mat-cell *matCellDef="let visit">
-                {{ visit.diagnosis?.substring(0, 50) }}...
-              </td>
-            </ng-container>
-            
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let visit">
-                <button mat-button color="primary" 
-                  [routerLink]="['/doctor/consultation', visit._id]">
-                  View Details
-                </button>
-              </td>
-            </ng-container>
-            
-            <tr mat-header-row *matHeaderRowDef="['patient', 'time', 'diagnosis', 'actions']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['patient', 'time', 'diagnosis', 'actions'];"></tr>
-          </table>
-        </mat-card-content>
-      </mat-card>
+    <mat-card class="dashboard-card" *ngIf="consultedVisits.length > 0">
+  <mat-card-header>
+    <mat-card-title>My Patients</mat-card-title>
+    <mat-card-subtitle>
+      Patients you have already consulted
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <table mat-table [dataSource]="consultedVisits" class="mat-elevation-z1">
+
+      <!-- Patient -->
+      <ng-container matColumnDef="patient">
+        <th mat-header-cell *matHeaderCellDef>Patient</th>
+        <td mat-cell *matCellDef="let v">
+          {{ v.patient?.fullName }} <br />
+          <small>OP: {{ v.patient?.opNumber }}</small>
+        </td>
+      </ng-container>
+
+      <!-- Date -->
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let v">
+          {{ v.consultationTime | date:'mediumDate' }}
+        </td>
+      </ng-container>
+
+      <!-- Diagnosis -->
+      <ng-container matColumnDef="diagnosis">
+        <th mat-header-cell *matHeaderCellDef>Diagnosis</th>
+        <td mat-cell *matCellDef="let v">
+          {{ v.diagnosis || '—' }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let v">
+          <button mat-button color="primary"
+            [routerLink]="['/doctor/consultation', v._id]">
+            View
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row
+        *matHeaderRowDef="['patient','date','diagnosis','actions']">
+      </tr>
+      <tr mat-row
+        *matRowDef="let row; columns: ['patient','date','diagnosis','actions'];">
+      </tr>
+
+    </table>
+  </mat-card-content>
+</mat-card>
+
     </div>
   `,
   styles: [`
@@ -231,10 +253,28 @@ export class DoctorDashboardComponent implements OnInit {
   consultedVisits: any[] = [];
   isLoading = false;
   
-  ngOnInit(): void {
+ngOnInit(): void {
+  const url = window.location.pathname;
+
+  if (url.includes('/doctor/patients')) {
+    this.loadConsultedPatients();
+  } else {
     this.loadPendingConsultations();
   }
-  
+}
+
+  private loadConsultedPatients(): void {
+  this.visitService.getDoctorConsultedPatients().subscribe({
+    next: (res: any) => {
+      this.consultedVisits = res.data || [];
+    },
+    error: (err) => {
+      console.error('Consulted patients error', err);
+      this.consultedVisits = [];
+    }
+  });
+}
+
   private loadPendingConsultations(): void {
     this.isLoading = true;
     

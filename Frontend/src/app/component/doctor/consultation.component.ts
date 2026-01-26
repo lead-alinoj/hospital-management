@@ -264,12 +264,13 @@ import { ChangeDetectorRef } from '@angular/core';
   <!-- MEDICINE -->
   <mat-form-field appearance="outline" class="med-name">
     <mat-label>Medicine</mat-label>
-    <input
-      matInput
-      formControlName="name"
-      [matAutocomplete]="auto"
-      (input)="filterMedicines($event)"
-      placeholder="Search medicine">
+   <input
+  matInput
+  formControlName="name"
+  [matAutocomplete]="auto"
+  (input)="filterMedicines($event, i)"
+  placeholder="Search or type medicine">
+
 
     <mat-autocomplete #auto="matAutocomplete"
       (optionSelected)="onMedicineSelected($event.option.value, i)">
@@ -385,6 +386,15 @@ import { ChangeDetectorRef } from '@angular/core';
               <!-- Submit -->
               <div class="form-actions">
                 <button mat-button type="button" (click)="cancel()">Cancel</button>
+        <button
+  mat-button
+  color="accent"
+  *ngIf="visit?.visitStatus === 'Consultation_Completed'"
+  (click)="printPrescription()">
+  <mat-icon>print</mat-icon>
+  Print Prescription
+</button>
+
                 <button mat-raised-button color="primary" type="submit" 
                   [disabled]="consultationForm.invalid || isLoading">
                   {{ isLoading ? 'Saving...' : 'Complete Consultation' }}
@@ -621,6 +631,8 @@ export class ConsultationComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   private medicineService = inject(MedicineService);
   private prescriptionService = inject(PrescriptionService);
+  private pdfService = inject(PdfService);
+
   // private pdfService = inject(PdfService);
 private cdr = inject(ChangeDetectorRef);
 
@@ -681,13 +693,22 @@ private loadPatientHistory(): void {
 
 
 
-filterMedicines(event: Event): void {
-  const input = (event.target as HTMLInputElement).value.toLowerCase();
+filterMedicines(event: Event, index?: number): void {
+  const input = (event.target as HTMLInputElement).value;
+
+  if (index !== undefined) {
+    const medGroup = this.medications.at(index);
+    medGroup.patchValue({
+      medicineId: null,
+      isManual: true
+    });
+  }
+
   this.filteredMedicines = this.medicines.filter(med =>
-    med.name.toLowerCase().includes(input) ||
-    med.genericName?.toLowerCase().includes(input)
+    med.name.toLowerCase().includes(input.toLowerCase())
   );
 }
+
 
 
 getStockLabel(medicineId: string): string {
@@ -810,7 +831,8 @@ private loadVitals(): void {
 
   addMedication(): void {
   const medicationGroup = this.fb.group({
-    medicineId: ['', Validators.required],
+ medicineId: [null],          // 🔥 NOT required for manual
+    isManual: [false],           // 🔥 NEW    name: ['', Validators.required],
     name: ['', Validators.required],
     strength: [''],
 
@@ -834,6 +856,7 @@ private loadVitals(): void {
       medicineId: medicine._id,
       name: medicine.name,
       strength: medicine.strength,
+          isManual: false,
       quantity: 1
     });
   }
@@ -854,17 +877,22 @@ async saveConsultation(): Promise<void> {
       diagnosis: this.consultationForm.get('diagnosis')?.value,
       icd10Code: this.consultationForm.get('icd10Code')?.value,
       clinicalNotes: this.consultationForm.get('clinicalNotes')?.value,
-      medicines: this.medications.value.map((med: any) => ({
-        medicineId: med.medicineId,
-        quantity: med.quantity,
-        take: med.take,
-        morning: med.morning ? true : false,
-        noon: med.noon ? true : false,
-        evening: med.evening ? true : false,
-        night: med.night ? true : false,
-        days: med.days,
-        instructions: med.instructions
-      })),
+    medicines: this.medications.length > 0
+  ? this.medications.value.map((med: any) => ({
+      medicineId: med.medicineId || null,
+      name: med.name,
+      quantity: med.quantity,
+      take: med.take,
+      morning: !!med.morning,
+      noon: !!med.noon,
+      evening: !!med.evening,
+      night: !!med.night,
+      days: med.days,
+      instructions: med.instructions,
+      type: med.medicineId ? 'STOCK' : 'MANUAL'
+    }))
+  : [],
+
       advice: this.consultationForm.get('advice')?.value,
       followupDate: this.consultationForm.get('followupDate')?.value
     };
@@ -898,42 +926,25 @@ async saveConsultation(): Promise<void> {
     this.isLoading = false;
   }
 }
+async printPrescription(): Promise<void> {
+  if (!this.visit?._id) return;
 
-// private async generateAndDownloadPrescription(prescription: any): Promise<void> {
-//   this.isGeneratingPDF = true;
-  
-//   try {
-//     // Get prescription with populated data
-//     const response = await this.prescriptionService
-//       .getPrescriptionById(prescription._id)
-//       .toPromise();
+  try {
+    const res = await this.prescriptionService
+      .getPrescriptionByVisit(this.visit._id)
+      .toPromise();
 
-//     // Check if response exists and has data
-//     const fullPrescription = response?.data || response;
-//     if (!fullPrescription) {
-//       throw new Error('Failed to load prescription data');
-//     }
+    const prescription = res?.data || res;
+    const pdf = await this.pdfService.generatePrescriptionPDF(
+      prescription,
+      this.vitals
+    );
 
-//     // Generate PDF
-//     const pdf = await this.pdfService.generatePrescriptionPDF(
-//       fullPrescription,
-//       this.vitals
-//     );
-
-//     // Download PDF
-//     const patientName = this.visit?.patient?.fullName?.replace(/\s+/g, '_') || 'prescription';
-//     const date = new Date().toISOString().split('T')[0];
-//     const filename = `Prescription_${patientName}_${date}.pdf`;
-    
-//     this.pdfService.downloadPDF(pdf, filename);
-    
-//   } catch (error) {
-//     console.error('Error generating PDF:', error);
-//     this.showError('Error generating prescription PDF');
-//   } finally {
-//     this.isGeneratingPDF = false;
-//   }
-// }
+    pdf.save(`Prescription_${this.visit.patient.fullName}.pdf`);
+  } catch (e) {
+    this.showError('Failed to print prescription');
+  }
+}
 
   cancel(): void {
     history.back();

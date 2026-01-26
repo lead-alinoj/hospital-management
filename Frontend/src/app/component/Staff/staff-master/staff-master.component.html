@@ -1,0 +1,311 @@
+<div class="staff-container">
+  <mat-card class="staff-card">
+    <!-- Header -->
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>people</mat-icon>
+        Staff Master
+      </mat-card-title>
+      <mat-card-subtitle>Manage clinic staff members</mat-card-subtitle>
+    </mat-card-header>
+
+    <!-- Filters -->
+    <mat-card-content>
+      <div class="filters-section">
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search Staff</mat-label>
+            <input matInput [(ngModel)]="searchQuery" (keyup)="onSearch()" placeholder="Search by name, ID, or phone">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Role</mat-label>
+            <mat-select [(ngModel)]="selectedRole" (selectionChange)="onFilterChange()">
+              <mat-option value="">All Roles</mat-option>
+              <mat-option *ngFor="let role of roles" [value]="role">{{role}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="selectedStatus" (selectionChange)="onFilterChange()">
+              <mat-option value="">All Status</mat-option>
+              <mat-option *ngFor="let status of statuses" [value]="status">{{status}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-button color="basic" (click)="clearFilters()">
+            <mat-icon>clear_all</mat-icon>
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+ <form [formGroup]="staffForm" (ngSubmit)="saveStaff()">
+
+  <!-- BASIC INFO -->
+  <div class="form-row">
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Full Name *</mat-label>
+      <input matInput formControlName="name">
+    </mat-form-field>
+
+  <mat-form-field appearance="outline">
+  <mat-label>System Role</mat-label>
+  <mat-select formControlName="systemRole">
+    <mat-option value="None">None </mat-option>
+    <mat-option *ngFor="let role of roles" [value]="role">
+      {{ role }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+
+
+    <mat-form-field appearance="outline">
+      <mat-label>Job Role</mat-label>
+      <input matInput formControlName="jobRole" placeholder="e.g.Security ,Cleaner, Ward Boy">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Phone *</mat-label>
+      <input matInput formControlName="phone">
+    </mat-form-field>
+  </div>
+
+  <!-- PERSONAL DETAILS -->
+  <div class="form-row">
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Gender</mat-label>
+      <mat-select formControlName="gender">
+        <mat-option value="Male">Male</mat-option>
+        <mat-option value="Female">Female</mat-option>
+        <mat-option value="Other">Other</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Joining Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="joiningDate">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Qualification</mat-label>
+      <input matInput formControlName="qualification">
+    </mat-form-field>
+  </div>
+
+  <!-- ADDRESS -->
+  <div class="form-row">
+    <mat-form-field appearance="outline" class="form-field full-width">
+      <mat-label>Address</mat-label>
+      <textarea matInput rows="2" formControlName="address"></textarea>
+    </mat-form-field>
+  </div>
+
+  <!-- SALARY -->
+  <div class="form-row">
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Salary Type</mat-label>
+      <mat-select formControlName="salaryType">
+        <mat-option value="Monthly">Monthly</mat-option>
+        <mat-option value="Daily">Daily</mat-option>
+        <mat-option value="PerVisit">Per Visit</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Salary (₹)</mat-label>
+      <input matInput type="number" formControlName="salary">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        <mat-option value="Active">Active</mat-option>
+        <mat-option value="Inactive">Inactive</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- BANK DETAILS -->
+  <div formGroupName="bankDetails" class="form-row">
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Account Number</mat-label>
+      <input matInput formControlName="accountNumber">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>IFSC</mat-label>
+      <input matInput formControlName="ifsc">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>Bank Name</mat-label>
+      <input matInput formControlName="bankName">
+    </mat-form-field>
+  </div>
+
+  <!-- ID PROOF -->
+  <div formGroupName="idProof" class="form-row">
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>ID Proof Type</mat-label>
+      <mat-select formControlName="type">
+        <mat-option value="Aadhaar">Aadhaar</mat-option>
+        <mat-option value="PAN">PAN</mat-option>
+        <mat-option value="VoterID">Voter ID</mat-option>
+        <mat-option value="DrivingLicense">Driving License</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="form-field">
+      <mat-label>ID Proof Number</mat-label>
+      <input matInput formControlName="number">
+    </mat-form-field>
+  </div>
+
+  <!-- NOTES -->
+  <div class="form-row">
+    <mat-form-field appearance="outline" class="form-field full-width">
+      <mat-label>Notes</mat-label>
+      <textarea matInput rows="2" formControlName="notes"></textarea>
+    </mat-form-field>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="staffForm.invalid || isLoading">
+      <mat-icon>{{ isEditing ? 'save' : 'add' }}</mat-icon>
+      {{ isEditing ? 'Update Staff' : 'Add Staff' }}
+    </button>
+
+    <button *ngIf="isEditing"
+            mat-button
+            type="button"
+            (click)="cancelEdit()">
+      <mat-icon>cancel</mat-icon>
+      Cancel
+    </button>
+  </div>
+
+</form>
+
+
+      <!-- Staff List -->
+      <div class="table-section">
+        <h3>Staff List ({{filteredStaff.length}})</h3>
+        
+        <div class="table-container" *ngIf="!isLoading; else loading">
+          <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1">
+            <!-- Staff ID Column -->
+            <ng-container matColumnDef="staffId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Staff ID</th>
+              <td mat-cell *matCellDef="let staff">
+                <div class="staff-id">
+                  <mat-icon class="staff-icon">{{getRoleIcon(staff.systemRole)}}</mat-icon>
+                  <span class="id-text">{{staff.staffId}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <td mat-cell *matCellDef="let staff">{{staff.name}}</td>
+            </ng-container>
+
+            <!-- Role Column -->
+         <!-- Job Role Column -->
+<ng-container matColumnDef="jobRole">
+  <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Role</th>
+  <td mat-cell *matCellDef="let staff">
+    <span class="role-badge">
+      {{ staff.jobRole }}
+    </span>
+  </td>
+</ng-container>
+
+
+            <!-- Phone Column -->
+            <ng-container matColumnDef="phone">
+              <th mat-header-cell *matHeaderCellDef>Phone</th>
+              <td mat-cell *matCellDef="let staff">
+                <a [href]="'tel:' + staff.phone" class="phone-link">
+                  {{staff.phone}}
+                </a>
+              </td>
+            </ng-container>
+
+            <!-- Salary Column -->
+            <ng-container matColumnDef="salary">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Salary</th>
+              <td mat-cell *matCellDef="let staff">
+                ₹{{staff.salary | number}}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let staff">
+                <span class="status-badge" [class]="getStatusClass(staff.status)">
+                  {{staff.status}}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Created Date Column -->
+            <ng-container matColumnDef="createdDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+              <td mat-cell *matCellDef="let staff">
+                {{staff.createdDate | date:'dd/MM/yyyy'}}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let staff">
+                <div class="action-buttons">
+                   <button mat-icon-button color="accent"
+          (click)="viewStaff(staff)"
+          matTooltip="View">
+    <mat-icon>visibility</mat-icon>
+  </button>
+                  <button mat-icon-button color="primary" (click)="editStaff(staff)" matTooltip="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteStaff(staff)" matTooltip="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+
+          <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+        </div>
+
+        <ng-template #loading>
+          <div class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading staff data...</p>
+          </div>
+        </ng-template>
+
+        <div *ngIf="!isLoading && filteredStaff.length === 0" class="empty-state">
+          <mat-icon>people_outline</mat-icon>
+          <h4>No staff members found</h4>
+          <p>Add new staff members using the form above</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

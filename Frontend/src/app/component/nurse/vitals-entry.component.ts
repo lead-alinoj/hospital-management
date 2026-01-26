@@ -126,8 +126,16 @@ import { VitalsService } from "../../service/vitals.service";
 
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>Temperature</mat-label>
-                <input matInput type="number" formControlName="temperature" min="34" max="42" step="0.1">
-                <span matSuffix>°C</span>
+<input
+  matInput
+  type="number"
+  formControlName="temperature"
+  min="94"
+  max="108"
+  step="0.1"
+  inputmode="decimal"
+/>
+                <span matSuffix>°F</span>
                
               </mat-form-field>
 
@@ -491,6 +499,7 @@ export class VitalsEntryComponent implements OnInit {
   isLoading = false;
   isEditing = false;
   existingVitalsId?: string;
+activeTemplate: string | null = null;
 
   ngOnInit(): void {
     this.initForm();
@@ -507,7 +516,7 @@ private initForm(): void {
     bpSystolic: ['', [Validators.min(50), Validators.max(250)]],
     bpDiastolic: ['', [Validators.min(30), Validators.max(150)]],
     pulse: ['', [Validators.min(30), Validators.max(200)]],
-    temperature: ['', [Validators.min(34), Validators.max(42)]],
+temperature: ['', [Validators.min(94), Validators.max(108)]],
     spo2: ['', [Validators.min(70), Validators.max(100)]],
     respiratoryRate: ['', [Validators.min(8), Validators.max(60)]],
     bloodSugarValue: ['', [Validators.min(30), Validators.max(600)]],
@@ -630,34 +639,49 @@ private initForm(): void {
     });
   }
 
-  applyTemplate(templateName: string): void {
-    const templates: any = {
-      normal: {
-        height: 170,
-        weight: 70,
-        bpSystolic: 120,
-        bpDiastolic: 80,
-        pulse: 72,
-        temperature: 37,
-        spo2: 98,
-        respiratoryRate: 16,
-        bloodSugarValue: 110
-      },
-      fever: {
-        temperature: 38.5,
-        pulse: 90,
-        bpSystolic: 110,
-        bpDiastolic: 70
-      },
-      hypertension: {
-        bpSystolic: 150,
-        bpDiastolic: 95,
-        pulse: 78
-      }
-    };
+applyTemplate(templateName: string): void {
 
-    this.vitalsForm.patchValue(templates[templateName] || {});
+  // 🔁 If same template clicked again → CLEAR FORM
+  if (this.activeTemplate === templateName) {
+    this.vitalsForm.reset({
+      bloodSugarType: 'Random'
+    });
+    this.calculatedBMI = 0;
+    this.activeTemplate = null;
+    return;
   }
+
+  // Otherwise apply template
+  this.activeTemplate = templateName;
+
+  const templates: any = {
+    normal: {
+      height: 170,
+      weight: 70,
+      bpSystolic: 120,
+      bpDiastolic: 80,
+      pulse: 72,
+      temperature: 98.6, // Fahrenheit
+      spo2: 98,
+      respiratoryRate: 16,
+      bloodSugarValue: 110
+    },
+    fever: {
+      temperature: 101.3, // Fahrenheit
+      pulse: 90,
+      bpSystolic: 110,
+      bpDiastolic: 70
+    },
+    hypertension: {
+      bpSystolic: 150,
+      bpDiastolic: 95,
+      pulse: 78
+    }
+  };
+
+  this.vitalsForm.patchValue(templates[templateName] || {});
+}
+
 
   showAbnormalIndicators(): boolean {
     const form = this.vitalsForm.value;
@@ -682,7 +706,7 @@ private initForm(): void {
     if (this.checkHighTemperature(form.temperature)) {
       alerts.push({
         icon: 'thermostat',
-        message: `Fever Detected (${form.temperature}°C)`,
+        message: `Fever Detected (${form.temperature}°F)`,
         class: 'danger'
       });
     }
@@ -711,7 +735,7 @@ private initForm(): void {
   }
 
   checkHighTemperature(temp: number): boolean {
-    return temp > 37.5;
+    return temp > 100.4;
   }
 
   checkLowSpO2(spo2: number): boolean {
