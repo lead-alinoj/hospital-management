@@ -51,15 +51,15 @@
       <input matInput formControlName="name">
     </mat-form-field>
 
-  <mat-form-field appearance="outline">
+<mat-form-field appearance="outline">
   <mat-label>System Role</mat-label>
   <mat-select formControlName="systemRole">
-    <mat-option value="None">None </mat-option>
     <mat-option *ngFor="let role of roles" [value]="role">
       {{ role }}
     </mat-option>
   </mat-select>
 </mat-form-field>
+
 
 
     <mat-form-field appearance="outline">

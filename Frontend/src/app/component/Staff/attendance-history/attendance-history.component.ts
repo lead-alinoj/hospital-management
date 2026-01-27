@@ -75,6 +75,12 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
   
   isLoading = false;
   totalRecords = 0;
+  // 🔥 Today summary
+totalStaffCount = 0;
+todayPresentCount = 0;
+todayAbsentCount = 0;
+todayHalfDayCount = 0;
+
   selectedFilters: string[] = [];
 
   constructor(
@@ -104,6 +110,7 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
   ngOnInit(): void {
     this.loadStaff();
     this.loadAttendance();
+     this.loadTodaySummary();
   }
 
   ngAfterViewInit(): void {
@@ -121,6 +128,48 @@ resetDateRange(): void {
   
   this.loadAttendance();
 }
+loadTodaySummary(): void {
+  // 1️⃣ Load total active staff
+  this.staffService.getActiveStaff().subscribe({
+    next: staffRes => {
+      const activeStaff = staffRes.data;
+      this.totalStaffCount = activeStaff.length;
+
+      // 2️⃣ Load today's attendance
+      this.attendanceService.getTodayAttendance().subscribe({
+        next: attRes => {
+          const todayData = attRes.data;
+
+          // Present
+          this.todayPresentCount =
+            todayData.filter(a => a.status === 'Present').length;
+
+          // Half Day
+          this.todayHalfDayCount =
+            todayData.filter(a => a.status === 'Half Day').length;
+
+          // Explicit Absent (manually marked)
+          const explicitAbsentCount =
+            todayData.filter(a => a.status === 'Absent').length;
+
+          // Staff who marked ANY attendance today
+          const markedStaffIds = new Set(
+            todayData.map(a => a.staffId)
+          );
+
+          // Not marked at all today
+          const notMarkedCount =
+            activeStaff.filter(s => !markedStaffIds.has(s.staffId)).length;
+
+          // ✅ FINAL Absent count
+          this.todayAbsentCount =
+            explicitAbsentCount + notMarkedCount;
+        }
+      });
+    }
+  });
+}
+
   loadStaff(): void {
     this.staffService.getActiveStaff().subscribe({
       next: (response) => {

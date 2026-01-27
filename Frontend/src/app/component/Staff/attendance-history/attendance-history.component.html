@@ -145,8 +145,8 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="summary-value">{{ totalRecords }}</div>
-              <div class="summary-label">Attendance Entries</div>
+<div class="summary-value">{{ totalStaffCount }}</div>
+<div class="summary-label">Total Staff</div>
             </mat-card-content>
           </mat-card>
 
@@ -158,10 +158,9 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="summary-value present">
-{{ presentCount }}
-              </div>
-              <div class="summary-label">Staff Members</div>
+             <div class="summary-value present">{{ todayPresentCount }}</div>
+
+<div class="summary-label">Today Present</div>
             </mat-card-content>
           </mat-card>
 
@@ -173,10 +172,8 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="summary-value absent">
-{{ absentCount }}
-              </div>
-              <div class="summary-label">Staff Members</div>
+<div class="summary-value absent">{{ todayAbsentCount }}</div>
+<div class="summary-label">Today Absent</div>
             </mat-card-content>
           </mat-card>
 
@@ -188,10 +185,8 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="summary-value half-day">
-{{ halfDayCount }}
-              </div>
-              <div class="summary-label">Staff Members</div>
+     <div class="summary-value half-day">{{ todayHalfDayCount }}</div>
+<div class="summary-label">Today Half Day</div>
             </mat-card-content>
           </mat-card>
         </div>

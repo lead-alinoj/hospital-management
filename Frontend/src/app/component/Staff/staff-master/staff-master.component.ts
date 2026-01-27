@@ -23,6 +23,7 @@ import { Staff } from '../../../models/staff.model';
 import { StaffService } from '../../../service/staff.service';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog.component';
 import { finalize } from 'rxjs/operators';
+import { ViewStaffDialogComponent } from './view-staff-dialog.component';
 
 @Component({
   selector: 'app-staff-master',
@@ -146,24 +147,12 @@ loadStaff(): void {
 
 
 viewStaff(staff: Staff): void {
-  this.dialog.open(ConfirmDialogComponent, {
-    width: '500px',
-    data: {
-      title: 'Staff Details',
-      message: `
-        Name: ${staff.name}
-Role: ${staff.systemRole ?? 'None'}
-Job Role: ${staff.jobRole}
-        Phone: ${staff.phone}
-        Gender: ${staff.gender || '-'}
-        Qualification: ${staff.qualification || '-'}
-        Status: ${staff.status}
-      `,
-      confirmText: 'Close',
-      hideCancel: true
-    }
+  this.dialog.open(ViewStaffDialogComponent, {
+    width: '450px',
+    data: staff
   });
 }
+
 
   applyFilter(): void {
     const filterValue = this.searchQuery.toLowerCase();
