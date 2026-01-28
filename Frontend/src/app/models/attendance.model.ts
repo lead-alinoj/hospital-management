@@ -36,8 +36,8 @@ export interface UpdateAttendanceDto {
 }
 
 export interface AttendanceFilter {
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: string;   // YYYY-MM-DD
+  endDate?: string;     // YYYY-MM-DD
   staffId?: string;
   jobRole?: string;
 }

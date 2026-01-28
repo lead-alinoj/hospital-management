@@ -185,17 +185,16 @@ exports.getAttendanceByDateRange = async (req, res) => {
     
     let filter = {};
     
-    if (startDate && endDate) {
-      // Fix: Use string dates directly without extra parsing
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      
-      // Don't modify hours - let frontend handle it
-      filter.date = { 
-        $gte: new Date(start.setHours(0, 0, 0, 0)), 
-        $lte: new Date(end.setHours(23, 59, 59, 999)) 
-      };
-    }
+  if (startDate && endDate) {
+  const start = new Date(startDate);
+start.setHours(0, 0, 0, 0);
+
+const end = new Date(endDate);
+end.setHours(23, 59, 59, 999);
+
+  filter.date = { $gte: start, $lte: end };
+}
+
     
     
     if (staffId) filter.staffId = staffId;
@@ -220,13 +219,27 @@ exports.getAttendanceByDateRange = async (req, res) => {
 exports.getAttendanceSummary = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
-    const start = new Date(startDate || new Date().setDate(new Date().getDate() - 30));
-    start.setHours(0, 0, 0, 0);
-    
-    const end = new Date(endDate || new Date());
-    end.setHours(23, 59, 59, 999);
-    
+
+    let start, end;
+
+    if (startDate) {
+    start = new Date(startDate);
+start.setHours(0,0,0,0);
+
+    } else {
+      start = new Date();
+      start.setDate(start.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+    }
+
+    if (endDate) {
+      end = new Date(endDate);
+end.setHours(23,59,59,999);
+    } else {
+      end = new Date();
+      end.setHours(23, 59, 59, 999);
+    }
+
     const summary = await Attendance.aggregate([
       {
         $match: {
@@ -253,20 +266,12 @@ exports.getAttendanceSummary = async (req, res) => {
           }
         }
       },
-      {
-        $sort: { _id: -1 }
-      }
+      { $sort: { _id: -1 } }
     ]);
-    
-    res.json({
-      success: true,
-      data: summary
-    });
+
+    res.json({ success: true, data: summary });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -278,11 +283,12 @@ exports.exportAttendance = async (req, res) => {
     let filter = {};
 
     if (startDate && endDate) {
-const start = new Date(startDate);
-start.setHours(0,0,0,0);
+   const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
 
-const end = new Date(endDate);
-end.setHours(23,59,59,999);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
       filter.date = { $gte: start, $lte: end };
     }
 

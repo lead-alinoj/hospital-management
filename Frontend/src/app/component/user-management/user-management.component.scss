@@ -1,10 +1,13 @@
 // user-management.component.scss
 .user-management-container {
-  padding: 20px;
+    background: #cedef0;           // ⭐ standard admin background
+
+  padding: 50px;
   max-width: 1400px;
   margin: 0 auto;
 
   mat-card {
+    
     margin: 0;
   }
 }
@@ -24,9 +27,37 @@
     gap: 8px;
   }
 
-  .export-btn {
-    color: #666;
+.export-btn {
+  border: 1px solid #d1d5db;       /* soft border */
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-weight: 500;
+  font-size: 13px;
+  color: #eaedf1;
+  background: #3a6edd;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  transition: all 0.2s ease-in-out;
+
+  mat-icon {
+    font-size: 18px;
+    color: #dbdee4;
   }
+
+  &:hover {
+    background: #167de4;
+    border-color: #9ca3af;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
 }
 
 .filter-section {

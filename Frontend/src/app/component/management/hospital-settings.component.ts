@@ -195,141 +195,213 @@ import { environment } from '../../../environments/environment';
     </div>
   `,
   styles: [`
-    .hospital-settings {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .settings-card {
-      margin-bottom: 30px;
-    }
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-      gap: 30px;
-      margin-bottom: 30px;
-    }
-    @media (max-width: 1100px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .letterhead-logo {
+/* ===============================
+   GLOBAL CONTAINER
+================================ */
+.hospital-settings {
+  padding: 50px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #e1eaf1;
+}
+
+/* ===============================
+   CARD
+================================ */
+.settings-card {
+  border-radius: 10px;
+  background: #c7d5e2;
+}
+
+/* ===============================
+   FORM GRID
+================================ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===============================
+   FORM SECTIONS
+================================ */
+.form-section {
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.form-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+/* ===============================
+   FORM FIELDS
+================================ */
+.full-width {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.half-width {
+  width: 100%;
+}
+
+@media (min-width: 769px) {
+  .half-width {
+    width: calc(50% - 8px);
+  }
+}
+
+@media (max-width: 768px) {
+  .row {
+    flex-direction: column;
+  }
+}
+
+/* ===============================
+   LOGO UPLOAD
+================================ */
+.logo-upload-section {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.logo-upload-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.logo-preview {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.logo-image {
   max-width: 120px;
   max-height: 120px;
-  margin-bottom: 10px;
+  object-fit: contain;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.upload-controls {
+  text-align: center;
+}
+
+.upload-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ===============================
+   PREVIEW SECTION
+================================ */
+.preview-section {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+}
+
+.letterhead-preview {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 24px;
+}
+
+.letterhead-content {
+  text-align: center;
+}
+
+.letterhead-logo {
+  max-width: 100px;
+  max-height: 100px;
+  margin-bottom: 12px;
   object-fit: contain;
 }
 
-    .form-section {
-      padding: 20px;
-      background: #f9f9f9;
-      border-radius: 8px;
-    }
-    .form-section h3 {
-      margin-top: 0;
-      color: #3f51b5;
-      border-bottom: 2px solid #3f51b5;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-    }
-    .full-width {
-      width: 100%;
-      margin-bottom: 15px;
-    }
-    .half-width {
-      width: calc(50% - 10px);
-    }
-    .row {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 15px;
-    }
-    .logo-upload-section {
-      margin-top: 20px;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-      border: 2px dashed #ddd;
-    }
-    .logo-upload-section h4 {
-      margin-top: 0;
-      color: #666;
-    }
-    .logo-preview {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .logo-image {
-      max-width: 150px;
-      max-height: 150px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 10px;
-      background: white;
-    }
-    .upload-controls {
-      text-align: center;
-    }
-    .upload-hint {
-      margin-top: 10px;
-      color: #666;
-    }
-    .preview-section {
-      margin-top: 30px;
-      padding: 20px;
-      background: #f5f5f5;
-      border-radius: 8px;
-    }
-    .letterhead-preview {
-      background: white;
-      padding: 30px;
-      border: 1px solid #ddd;
-    }
-    .letterhead-content {
-      text-align: center;
-    }
-    .hospital-header h2 {
-      color: #3f51b5;
-      margin-bottom: 10px;
-    }
-    .hospital-header p {
-      margin: 5px 0;
-      color: #555;
-    }
-    .prescription-header h3 {
-      color: #333;
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #3f51b5;
-    }
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 15px;
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #eee;
-    }
-    .loading-state {
-      text-align: center;
-      padding: 50px;
-    }
-    .loading-state p {
-      margin-top: 20px;
-      color: #666;
-    }
-    @media (max-width: 768px) {
-      .row {
-        flex-direction: column;
-      }
-      .half-width {
-        width: 100%;
-      }
-      .form-section {
-        padding: 15px;
-      }
-    }
+.hospital-header h2 {
+  margin: 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.hospital-header p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.prescription-header h3 {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ===============================
+   ACTION BUTTONS
+================================ */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+}
+
+/* ===============================
+   LOADING STATE
+================================ */
+.loading-state {
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.loading-state p {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
   `]
 })
 export class HospitalSettingsComponent implements OnInit {

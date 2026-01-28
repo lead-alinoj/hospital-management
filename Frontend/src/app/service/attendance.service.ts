@@ -30,8 +30,12 @@ export class AttendanceService {
   // Get staff attendance
   getStaffAttendance(staffId: string, filter?: { startDate?: Date; endDate?: Date }): Observable<{ success: boolean; data: Attendance[] }> {
     let params = new HttpParams();
-    if (filter?.startDate) params = params.set('startDate', filter.startDate.toISOString());
-    if (filter?.endDate) params = params.set('endDate', filter.endDate.toISOString());
+if (filter?.startDate)
+  params = params.set('startDate', filter.startDate.toISOString().split('T')[0]);
+
+if (filter?.endDate)
+  params = params.set('endDate', filter.endDate.toISOString().split('T')[0]);
+
 
     return this.http.get<{ success: boolean; data: Attendance[] }>(`${this.apiUrl}/staff/${staffId}`, { params });
   }
@@ -48,38 +52,36 @@ export class AttendanceService {
     let params = new HttpParams();
     
     // Fix: Format dates to strings for the API
-    if (filter.startDate) {
-      params = params.set('startDate', filter.startDate.toISOString().split('T')[0]);
-    }
-    if (filter.endDate) {
-      params = params.set('endDate', filter.endDate.toISOString().split('T')[0]);
-    }
+  if (filter.startDate) params = params.set('startDate', filter.startDate);
+if (filter.endDate) params = params.set('endDate', filter.endDate);
+
     if (filter.staffId) params = params.set('staffId', filter.staffId);
     if (filter.jobRole) params = params.set('jobRole', filter.jobRole);
 
     return this.http.get<{ success: boolean; data: Attendance[] }>(`${this.apiUrl}/range`, { params });
   }
-  // Get attendance summary
-  getAttendanceSummary(startDate?: Date, endDate?: Date): Observable<{ success: boolean; data: any[] }> {
-    let params = new HttpParams();
-    
-    if (startDate) params = params.set('startDate', startDate.toISOString().split('T')[0]);
-    if (endDate) params = params.set('endDate', endDate.toISOString().split('T')[0]);
+getAttendanceSummary(startDate?: string, endDate?: string): Observable<{ success: boolean; data: any[] }> {
+  let params = new HttpParams();
 
-    return this.http.get<{ success: boolean; data: any[] }>(`${this.apiUrl}/summary`, { params });
-  }
+  if (startDate) params = params.set('startDate', startDate);
+  if (endDate) params = params.set('endDate', endDate);
+
+  return this.http.get<{ success: boolean; data: any[] }>(`${this.apiUrl}/summary`, { params });
+}
+
 
 exportAttendance(
-  startDate: Date,
-  endDate: Date,
+  startDate: string,
+  endDate: string,
   format: 'excel' | 'pdf',
   staffId?: string,
   jobRole?: string
 ): Observable<Blob> {
 
   let params = new HttpParams()
-    .set('startDate', startDate.toISOString().split('T')[0])
-    .set('endDate', endDate.toISOString().split('T')[0])
+.set('startDate', startDate)
+.set('endDate', endDate)
+
     .set('format', format);
 
   if (staffId) params = params.set('staffId', staffId);

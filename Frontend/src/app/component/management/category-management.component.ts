@@ -94,9 +94,127 @@ import { CategoryService } from '../../service/category.service';
   </div>
   `,
   styles: [`
-    .category-management { padding: 20px; max-width: 900px; margin: 0 auto; }
-    .form-row { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
-    table { width: 100%; }
+   /* Page background */
+.category-management {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eef3f9 0%, #f8fafc 100%);
+  padding: 70px 35px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Main container */
+.category-management > h2 {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 16px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Card-style layout */
+.category-management {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Form container */
+form {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  margin-bottom: 28px;
+}
+
+/* Form row */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  align-items: end;
+}
+
+/* Form fields */
+mat-form-field {
+  width: 100%;
+}
+
+/* Primary button */
+button[mat-raised-button] {
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 500;
+  padding: 0 22px;
+}
+
+/* Secondary button */
+button[mat-button] {
+  height: 44px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Table wrapper */
+table {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+/* Table header */
+th {
+  background: #f1f5f9;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Table cells */
+td {
+  font-size: 13px;
+  color: #1e293b;
+}
+
+/* Hover effect */
+tr.mat-row:hover {
+  background: #f8fafc;
+}
+
+/* Action buttons */
+td mat-icon-button {
+  border-radius: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .category-management {
+    padding: 20px 12px;
+  }
+
+  form {
+    padding: 16px;
+  }
+
+  button[mat-raised-button],
+  button[mat-button] {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-management > h2 {
+    font-size: 18px;
+  }
+
+  th, td {
+    font-size: 12px;
+  }
+}
+
   `]
 })
 export class CategoryManagementComponent implements OnInit {

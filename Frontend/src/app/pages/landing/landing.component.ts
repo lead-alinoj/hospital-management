@@ -67,30 +67,27 @@ openAuthDialog(type: 'login' | 'register') {
   });
 }
 
+submitAppointment() {
+  if (this.appointmentForm.valid) {
+    const formValue = this.appointmentForm.value;
 
-   submitAppointment() {
-    if (this.appointmentForm.valid) {
-      const formValue = this.appointmentForm.value;
-
-      // Combine hour, minute, am/pm into a single time string if set
-      if (formValue.hour && formValue.minute && formValue.ampm) {
-        formValue.appointmentTime = `${formValue.hour}:${formValue.minute} ${formValue.ampm}`;
-      } else {
-        formValue.appointmentTime = ''; // optional
-      }
-
-      this.appointmentService.createAppointment(formValue).subscribe({
-        next: res => {
-          alert('Appointment booked successfully!');
-          this.appointmentForm.reset();
-        },
-        error: err => {
-          alert('Failed to book appointment.');
-          console.error(err);
-        }
-      });
+    // ✅ OPTIONAL time logic
+    if (formValue.hour && formValue.ampm) {
+      formValue.appointmentTime = `${formValue.hour}:00 ${formValue.ampm}`;
     } else {
-      this.appointmentForm.markAllAsTouched();
+      formValue.appointmentTime = null; // ✅ better than empty string
     }
+
+    console.log('Sending payload:', formValue);
+
+    this.appointmentService.createAppointment(formValue).subscribe({
+      next: () => {
+        alert('Appointment booked successfully!');
+        this.appointmentForm.reset();
+      },
+      error: err => console.error(err)
+    });
   }
 }
+
+  }

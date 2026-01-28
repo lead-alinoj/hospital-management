@@ -187,17 +187,18 @@ loadTodaySummary(): void {
     });
   }
 
-  get presentCount(): number {
-    return this.attendanceData.filter(a => a.status === 'Present').length;
-  }
+get presentCount(): number {
+  return this.filteredData.filter(a => a.status === 'Present').length;
+}
 
-  get absentCount(): number {
-    return this.attendanceData.filter(a => a.status === 'Absent').length;
-  }
+get absentCount(): number {
+  return this.filteredData.filter(a => a.status === 'Absent').length;
+}
 
-  get halfDayCount(): number {
-    return this.attendanceData.filter(a => a.status === 'Half Day').length;
-  }
+get halfDayCount(): number {
+  return this.filteredData.filter(a => a.status === 'Half Day').length;
+}
+
 
   getDuration(minutes?: number, outTime?: string): string {
     if (!outTime) return 'Ongoing';
@@ -226,12 +227,13 @@ loadTodaySummary(): void {
     const filter: AttendanceFilter = {};
 
     // Fix: Use Date objects instead of strings
-    if (fv.startDate) {
-      filter.startDate = this.formatDateForBackend(fv.startDate, 'start');
-    }
-    if (fv.endDate) {
-      filter.endDate = this.formatDateForBackend(fv.endDate, 'end');
-    }
+  if (fv.startDate) {
+filter.startDate = fv.startDate.toISOString().split('T')[0];
+}
+if (fv.endDate) {
+filter.endDate = fv.endDate.toISOString().split('T')[0];
+}
+
     if (fv.staffId) {
       filter.staffId = fv.staffId;
     }
@@ -269,21 +271,6 @@ loadTodaySummary(): void {
   }
 
 
-private formatDate(date: Date, type: 'start' | 'end' = 'start'): string {
-  const d = new Date(date);
-  
-  // For start date: set to beginning of day
-  if (type === 'start') {
-    d.setHours(0, 0, 0, 0);
-  } 
-  // For end date: set to end of day
-  else {
-    d.setHours(23, 59, 59, 999);
-  }
-  
-  // Return ISO string without timezone offset
-  return d.toISOString().split('T')[0];
-}
 
 updateSelectedFilters(formValue: any): void {
   this.selectedFilters = [];
@@ -375,8 +362,9 @@ removeFilter(filter: string): void {
     }
 
     // Fix: Get formatted Date objects
-    const formattedStartDate = this.formatDateForBackend(startDate, 'start');
-    const formattedEndDate = this.formatDateForBackend(endDate, 'end');
+const formattedStartDate = startDate.toISOString().split('T')[0];
+const formattedEndDate = endDate.toISOString().split('T')[0];
+
 
     this.isLoading = true;
 
@@ -402,19 +390,7 @@ removeFilter(filter: string): void {
         }
       });
   }
-  // Fix: New method for proper date formatting
-  private formatDateForBackend(date: Date, type: 'start' | 'end'): Date {
-    const d = new Date(date);
-    
-    if (type === 'start') {
-      d.setHours(0, 0, 0, 0);
-    } else {
-      d.setHours(23, 59, 59, 999);
-    }
-    
-    // Return ISO string in YYYY-MM-DD format
-    return d;
-  }
+
   printReport(): void {
     // Create a printable version of the report
     const printWindow = window.open('', '_blank');
@@ -441,7 +417,7 @@ removeFilter(filter: string): void {
             <div class="header">
               <h1>${title}</h1>
               <p>${dateRange}</p>
-              <p>Total Records: ${this.totalRecords}</p>
+<p>Total Records: ${this.filteredData.length}</p>
             </div>
             
             <div class="summary">

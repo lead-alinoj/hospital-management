@@ -5,9 +5,9 @@
 
 /* Main Container */
 .history-container {
-  background: linear-gradient(135deg, #f8fafc 0%, #e8f0fe 100%);
+  background: linear-gradient(135deg, #b9bfc5 0%, #e8f0fe 100%);
   min-height: calc(100vh - 64px); /* Account for header */
-  padding: 24px;
+  padding: 29px;
   animation: fadeIn 0.5s ease-out;
 
   @media (max-width: 768px) {
@@ -40,7 +40,7 @@
 
   /* Card Header */
   mat-card-header {
-    background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+    background: linear-gradient(135deg, #ecedee 0%, #d9dee0 100%);
     color: white;
     padding: 32px 40px !important;
     position: relative;
@@ -64,6 +64,7 @@
       align-items: center;
       gap: 16px;
       font-size: 28px;
+      color: #1e3a8a;
       font-weight: 700;
       margin-bottom: 8px;
       position: relative;
@@ -82,7 +83,7 @@
     }
 
     mat-card-subtitle {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(36, 43, 100, 0.9);
       font-size: 16px;
       margin-bottom: 4px;
       font-weight: 500;
@@ -383,6 +384,22 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 24px;
+/* Icon colors per summary card */
+.summary-card:nth-child(1) mat-icon {
+  color: #2563eb; /* Blue - Total */
+}
+
+.summary-card:nth-child(2) mat-icon {
+  color: #16a34a; /* Green - Present */
+}
+
+.summary-card:nth-child(3) mat-icon {
+  color: #dc2626; /* Red - Absent */
+}
+
+.summary-card:nth-child(4) mat-icon {
+  color: #d97706; /* Orange - Half Day */
+}
 
     @media (max-width: 768px) {
       grid-template-columns: repeat(2, 1fr);
@@ -394,7 +411,7 @@
     }
 
     .summary-card {
-      border-radius: 16px;
+      border-radius: 14px;
       border: 1px solid rgba(30, 136, 229, 0.15);
       background: white;
       transition: all 0.4s ease;
@@ -418,27 +435,30 @@
           0 12px 30px rgba(30, 136, 229, 0.15),
           0 8px 20px rgba(30, 136, 229, 0.08);
       }
+mat-card-content {
+  overflow: visible;
+}
 
       mat-card-header {
-        padding: 20px 24px;
+        padding: 14px 24px;
         background: transparent;
 
-        mat-card-title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: #1e3a8a;
-          font-size: 16px;
-          font-weight: 600;
-          margin: 0;
+      mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;          // ⬆ Bigger title
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #1e3a8a;
 
-          mat-icon {
-            font-size: 20px;
-            width: 20px;
-            height: 20px;
-            color: #1e88e5;
-          }
-        }
+  mat-icon {
+    font-size: 26px;        // ⬆ Bigger icon
+    width: 26px;
+    height: 26px;
+  }
+}
+
       }
 
       mat-card-content {
@@ -448,14 +468,17 @@
 .summary-value {
   font-size: 42px;
   font-weight: 800;
-  margin-bottom: 8px;
+
+  /* ✅ CRITICAL FIX */
+  line-height: 1.2;
+  padding: 6px 0;
+  display: inline-block;
+
   background: linear-gradient(135deg, #1e3a8a 0%, #1e88e5 100%);
-
-  -webkit-background-clip: text;  /* ✅ vendor FIRST */
-  background-clip: text;          /* ✅ standard AFTER */
-
+  -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  color: transparent;             /* ✅ fallback */
+  color: transparent;
 
   &.present {
     background: linear-gradient(135deg, #38a169 0%, #48bb78 100%);
@@ -481,6 +504,7 @@
     color: transparent;
   }
 }
+
 
 
 

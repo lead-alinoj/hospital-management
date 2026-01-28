@@ -444,9 +444,11 @@ import { CategoryService } from '../../service/category.service';
   `,
   styles: [`
     .medicine-management {
-      padding: 20px;
+      padding: 72px;
       max-width: 1400px;
       margin: 0 auto;
+        background: #eff1f3;   /* ⭐ MAIN CONTAINER BACKGROUND */
+  color: #10233d;  
     }
 .header-section {
   display: flex;
