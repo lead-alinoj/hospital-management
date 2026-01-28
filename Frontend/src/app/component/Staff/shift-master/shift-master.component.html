@@ -1,0 +1,91 @@
+<mat-card>
+  <mat-card-title>Shift Master</mat-card-title>
+
+  <!-- Shift Form -->
+  <form [formGroup]="shiftForm" (ngSubmit)="saveShift()">
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Shift Name</mat-label>
+        <input matInput formControlName="name">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Start Time</mat-label>
+        <input matInput type="time" formControlName="startTime">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>End Time</mat-label>
+        <input matInput type="time" formControlName="endTime">
+      </mat-form-field>
+
+      <mat-checkbox formControlName="isOvernight">
+        Overnight Shift
+      </mat-checkbox>
+    </div>
+
+    <!-- <div class="row">
+      <mat-form-field>
+        <mat-label>Full Day (mins)</mat-label>
+        <input matInput type="number" formControlName="fullDayMinutes">
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Half Day (mins)</mat-label>
+        <input matInput type="number" formControlName="halfDayMinutes">
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Max Minutes</mat-label>
+        <input matInput type="number" formControlName="maxMinutes">
+      </mat-form-field>
+    </div> -->
+
+    <button mat-raised-button color="primary" type="submit">
+      Save Shift
+    </button>
+  </form>
+
+  <mat-divider></mat-divider>
+
+  <!-- ✅ TABLE START -->
+  <table mat-table [dataSource]="shifts" class="mat-elevation-z1">
+
+    <!-- Name -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Shift</th>
+      <td mat-cell *matCellDef="let s">
+        {{ s.name }}
+        <span *ngIf="!s.active" style="color:red;font-size:12px;">(Inactive)</span>
+      </td>
+    </ng-container>
+
+    <!-- Time -->
+    <ng-container matColumnDef="time">
+      <th mat-header-cell *matHeaderCellDef>Time</th>
+      <td mat-cell *matCellDef="let s">
+        {{ s.startTime }} - {{ s.endTime }}
+      </td>
+    </ng-container>
+
+    <!-- ✅ ACTIONS (INSIDE TABLE) -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let s">
+        <button mat-icon-button
+                color="warn"
+                (click)="deactivateShift(s._id!)">
+          <mat-icon>
+            {{ s.active ? 'toggle_off' : 'toggle_on' }}
+          </mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="['name','time','actions']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['name','time','actions']"></tr>
+
+  </table>
+  <!-- ✅ TABLE END -->
+
+</mat-card>

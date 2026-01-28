@@ -23,19 +23,15 @@ totalMinutes: {
   type: Number,
   default: 0
 },
-  shift: {
-    type: String,
-    enum: ['Morning', 'Evening', 'Full Day', 'On Call'],
-    required: true
+  overtimeMinutes: { type: Number, default: 0 },
+
+  shiftId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Shift'
   },
-  inTime: {
-    type: String,
-    required: true
-  },
-  outTime: {
-    type: String,
-    default: null
-  },
+   attendanceDate: Date,     // IN date
+  inTime: Date,
+  outTime: Date,
   status: {
     type: String,
     enum: ['Present', 'Absent', 'Half Day'],
@@ -47,13 +43,32 @@ totalMinutes: {
   },
   enteredBy: {
     type: String,
+    
     required: true
   },
   
   createdTime: {
     type: Date,
     default: Date.now
-  }
+  },
+  adminLogout: {
+  type: Boolean,
+  default: false
+},
+
+adminOutTime: {
+  type: Date
+},
+
+logoutReason: {
+  type: String,
+  enum: ['Forgot to logout', 'Server issue', 'Emergency', 'System error']
+},
+
+adminClosedBy: {
+  type: String
+}
+
 }, {
   timestamps: true
 });

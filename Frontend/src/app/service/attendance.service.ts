@@ -39,6 +39,11 @@ if (filter?.endDate)
 
     return this.http.get<{ success: boolean; data: Attendance[] }>(`${this.apiUrl}/staff/${staffId}`, { params });
   }
+getPendingLogout(): Observable<{ success: boolean; data: Attendance[] }> {
+  return this.http.get<{ success: boolean; data: Attendance[] }>(
+    `${this.apiUrl}/pending-logout`
+  );
+}
 
   // Get attendance by date
   getAttendanceByDate(date: Date): Observable<{ success: boolean; data: Attendance[] }> {

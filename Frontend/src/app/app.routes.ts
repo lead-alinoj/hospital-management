@@ -26,6 +26,7 @@ import { AdminAppointmentsComponent } from './pages/appointments/appointments.co
 import { AttendanceHistoryComponent } from './component/Staff/attendance-history/attendance-history.component';
 import { AttendanceEntryComponent } from './component/Staff/attendance-entry/attendance-entry.component';
 import { StaffMasterComponent } from './component/Staff/staff-master/staff-master.component';
+import { ShiftMasterComponent } from './component/Staff/shift-master/shift-master.component';
 
 export const routes: Routes = [
   // Empty path redirects to login
@@ -57,9 +58,17 @@ export const routes: Routes = [
     data: { title: 'Admin Dashboard', message: 'Admin dashboard coming soon' }
   },
   {
+  path: 'admin/shift-master',
+  component: ShiftMasterComponent,
+  canActivate: [authGuard, adminGuard],
+    data: { roles: ['Admin'] }
+
+},
+
+  {
   path: 'admin/hospital',
   component: HospitalSettingsComponent,
-  // canActivate: [authGuard],
+  canActivate: [authGuard],
   data: { roles: ['Admin'] }
 },
   {

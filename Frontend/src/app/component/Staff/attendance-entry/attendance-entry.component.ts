@@ -24,7 +24,8 @@ import { Staff } from '../../../models/staff.model';
 import { Attendance, MarkAttendanceDto } from '../../../models/attendance.model';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog.component';
 import { MatDividerModule } from "@angular/material/divider";
-
+import { Shift } from '../../../models/shift.model';
+import { ShiftService } from '../../../service/shift.service';
 @Component({
   selector: 'app-attendance-entry',
   standalone: true,
@@ -59,11 +60,10 @@ export class AttendanceEntryComponent implements OnInit {
   todayAttendance: Attendance[] = [];
   activeStaff: Staff[] = [];
   
-  displayedColumns: string[] = ['staffId', 'staffName', 'role', 'shift', 'inTime', 'outTime', 'status', 'enteredBy', 'actions'];
+  displayedColumns: string[] = ['staffId', 'staffName', 'role', 'shiftId', 'inTime', 'outTime', 'status', 'enteredBy', 'actions'];
   dataSource = new MatTableDataSource<Attendance>();
   
-  shifts = ['Morning', 'Evening', 'Full Day', 'On Call'];
-  statuses = ['Present', 'Absent', 'Half Day'];
+shifts: Shift[] = [];
   
   isLoading = false;
   isEditing = false;
@@ -76,6 +76,7 @@ export class AttendanceEntryComponent implements OnInit {
   constructor(
     private attendanceService: AttendanceService,
     private staffService: StaffService,
+    private shiftService: ShiftService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
@@ -85,10 +86,10 @@ export class AttendanceEntryComponent implements OnInit {
       staff: [null, Validators.required],
       staffName: [''],
   jobRole: [''],
-      shift: ['Morning', Validators.required],
-  inTime: [this.getCurrentTime()],
+ shiftId: [null, Validators.required], 
+   inTime: [this.getCurrentTime()],
  outTime: [''],
-       status: ['Present', Validators.required],
+      //  status: ['Present', Validators.required],
       remarks: ['']
     });
   }
@@ -97,18 +98,10 @@ export class AttendanceEntryComponent implements OnInit {
     this.loadTodayAttendance();
     this.loadActiveStaff();
     
-    // Auto-update form when staff is selected
-    // this.attendanceForm.get('staffId')?.valueChanges.subscribe(staffId => {
-    //   const staff = this.activeStaff.find(s => s._id === staffId || s.staffId === staffId);
-    //   if (staff) {
-    //     this.selectedStaff = staff;
-    //     this.attendanceForm.patchValue({
-    //       staffName: staff.name,
-    //       role: staff.role
-    //     });
-    //   }
-    // });
-  }
+    this.shiftService.getShifts().subscribe(res => {
+    this.shifts = res.data;
+  });
+}
   displayStaff = (staff: Staff): string => {
   return staff ? `${staff.name} (${staff.staffId})` : '';
 };
@@ -188,36 +181,53 @@ getJobRoleIcon(jobRole: string): string {
       return;
     }
 
-    const formData = this.attendanceForm.value;
-    const selectedDate = new Date(formData.date);
-    selectedDate.setHours(0, 0, 0, 0); // Normalize to start of day
-    const attendanceData: MarkAttendanceDto = {
-       date: selectedDate,  // Use formatted date
-      staffId: formData.staff.staffId,
-      staffName: formData.staffName,
-      jobRole: formData.jobRole,   // ✅ USE THIS
-      shift: formData.shift,
-      inTime: formData.inTime,
-      outTime: undefined,
-      status: formData.status,
-      remarks: formData.remarks
-    };
+   
+  const formData = this.attendanceForm.value;
+
+  // Normalize date
+  const attendanceDate = new Date(formData.date);
+  attendanceDate.setHours(0, 0, 0, 0);
+
+  // Convert time string → Date
+  const inDateTime = new Date(attendanceDate);
+  const [h, m] = formData.inTime.split(':');
+  inDateTime.setHours(+h, +m, 0, 0);
+
+const attendanceData: MarkAttendanceDto = {
+  date: attendanceDate,
+  staffId: formData.staff.staffId,
+  staffName: formData.staffName,
+  jobRole: formData.jobRole,
+  shiftId: formData.shiftId,          // ✅ FIX
+  inTime: formData.inTime,             // ✅ FIX (string HH:mm)
+  status: formData.status,             // ✅ FIX
+  remarks: formData.remarks
+};
+
 
     this.isLoading = true;
 
     if (this.isEditing && this.editingId) {
-      this.attendanceService.updateAttendance(this.editingId, attendanceData).subscribe({
-        next: (response) => {
-          this.snackBar.open('Attendance updated successfully', 'Close', { duration: 3000 });
-          this.resetForm();
-          this.loadTodayAttendance();
-        },
-        error: (error) => {
-          console.error('Error updating attendance:', error);
-          this.snackBar.open('Error updating attendance', 'Close', { duration: 3000 });
-          this.isLoading = false;
-        }
-      });
+  
+
+const now = new Date();
+const outTime =
+  `${now.getHours().toString().padStart(2,'0')}:` +
+  `${now.getMinutes().toString().padStart(2,'0')}`;
+
+this.attendanceService.updateAttendance(this.editingId, {
+  outTime   // ✅ string HH:mm
+}).subscribe({
+  next: () => {
+    this.snackBar.open('Attendance updated successfully', 'Close', { duration: 3000 });
+    this.resetForm();
+    this.loadTodayAttendance();
+  },
+  error: () => {
+    this.isLoading = false;
+  }
+});
+
     } else {
       this.attendanceService.markAttendance(attendanceData).subscribe({
         next: (response) => {
@@ -246,7 +256,7 @@ getJobRoleIcon(jobRole: string): string {
   staff: staff || null,
       staffName: attendance.staffName,
 jobRole: attendance.jobRole,
-       shift: attendance.shift,
+shiftId: attendance.shiftId,  
       inTime: attendance.inTime,
       outTime: attendance.outTime || '',
       status: attendance.status,
@@ -319,9 +329,9 @@ getCurrentTime(): string {
       date: new Date(),
       staffName: '',
       role: '',
-      shift: 'Morning',
-      inTime: '09:00',
-      outTime: '17:00',
+ shiftId: null,  
+       inTime: '09:00',
+  outTime: '',
       status: 'Present',
       remarks: ''
     });
@@ -355,7 +365,8 @@ getCurrentTime(): string {
     }
   }
 
-  canMarkOut(attendance: Attendance): boolean {
-    return attendance.status === 'Present' && !attendance.outTime;
-  }
+ canMarkOut(attendance: Attendance): boolean {
+  return !attendance.outTime;
+}
+
 }

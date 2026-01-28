@@ -111,6 +111,8 @@ todayHalfDayCount = 0;
     this.loadStaff();
     this.loadAttendance();
      this.loadTodaySummary();
+     this.loadPendingLogoutCount();
+
   }
 
   ngAfterViewInit(): void {
@@ -456,7 +458,7 @@ const formattedEndDate = endDate.toISOString().split('T')[0];
                     <td>${record.staffName}</td>
                     <td>${record.staffId}</td>
                     <td>${record.jobRole}</td>
-                    <td>${record.shift}</td>
+                    <td>${record.shiftId}</td>
                     <td>${record.inTime}</td>
                     <td>${record.outTime || '-'}</td>
                     <td>${record.status}</td>
@@ -498,14 +500,22 @@ const formattedEndDate = endDate.toISOString().split('T')[0];
       default: return '';
     }
   }
+pendingLogoutCount = 0;
 
-  getShiftIcon(shift: string): string {
-    switch (shift) {
-      case 'Morning': return 'wb_sunny';
-      case 'Evening': return 'nights_stay';
-      case 'Full Day': return 'all_inclusive';
-      case 'On Call': return 'phone_in_talk';
-      default: return 'schedule';
-    }
-  }
+loadPendingLogoutCount(): void {
+  this.attendanceService.getPendingLogout().subscribe(res => {
+    this.pendingLogoutCount = res.data.length;
+  });
 }
+
+getShiftIcon(shift: any): string {
+  const name = shift?.name?.toLowerCase() || '';
+
+  if (name.includes('morning')) return 'wb_sunny';
+  if (name.includes('evening')) return 'nights_stay';
+  if (name.includes('night')) return 'dark_mode';
+
+  return 'schedule';
+}
+
+  }

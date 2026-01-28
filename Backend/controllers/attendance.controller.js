@@ -2,94 +2,139 @@ const Attendance = require('../models/attendance.model');
 const Staff = require('../models/staff.model');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
+const Shift = require('../models/shift.model');
 
 exports.markAttendance = async (req, res) => {
-  try {
-    const today = new Date();
-    today.setHours(0,0,0,0);
+  const { staffId, staffName, jobRole, shiftId } = req.body;
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const exists = await Attendance.findOne({
-      staffId: req.body.staffId,
-      date: { $gte: today, $lt: tomorrow }
-    });
-
-    if (exists) {
-      return res.status(400).json({
-        success: false,
-        error: 'Attendance already marked for today'
-      });
-    }
-
-    const now = new Date();
-    const inTime = `${now.getHours().toString().padStart(2,'0')}:${now
-      .getMinutes().toString().padStart(2,'0')}`;
-
-    const attendance = await Attendance.create({
-      staffId: req.body.staffId,
-      staffName: req.body.staffName,
-      jobRole: req.body.jobRole,
-      shift: req.body.shift,
-      inTime,
-      status: req.body.status,
-      remarks: req.body.remarks,
-  enteredBy: req.user.email || req.user.username || 'System',
-      date: today
-    });
-
-    res.status(201).json({ success: true, data: attendance });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+  if (!shiftId) {
+    return res.status(400).json({ error: 'Shift ID missing' });
   }
+
+  const shift = await Shift.findById(shiftId);
+  if (!shift) {
+    return res.status(400).json({ error: 'Invalid shift' });
+  }
+
+  const now = new Date();
+  const attendanceDate = new Date(now);
+  attendanceDate.setHours(0, 0, 0, 0);
+
+  // ✅ Convert HH:mm → Date
+  const [h, m] = req.body.inTime.split(':');
+  const inTime = new Date(attendanceDate);
+  inTime.setHours(+h, +m, 0, 0);
+
+  // ✅ Check open attendance ONLY for today
+  const open = await Attendance.findOne({
+    staffId,
+    outTime: null,
+    date: attendanceDate
+  });
+
+  if (open) {
+    return res.status(400).json({ error: 'Previous attendance not closed' });
+  }
+
+  const attendance = await Attendance.create({
+    staffId,
+    staffName,
+    jobRole,
+    shiftId,
+    date: attendanceDate,
+    inTime,
+      remarks: req.body.remarks || '',
+    enteredBy: req.user?.email || 'System'
+  });
+
+  res.json({ success: true, data: attendance });
 };
 
 
 
 exports.updateAttendance = async (req, res) => {
-  try {
-    const attendance = await Attendance.findById(req.params.id);
-    if (!attendance) {
-      return res.status(404).json({ success: false });
-    }
+  const attendance = await Attendance.findById(req.params.id).populate('shiftId');
 
-    if (attendance.outTime) {
-      return res.status(400).json({
-        success: false,
-        error: 'Already logged out'
-      });
-    }
-
-    const [h, m] = attendance.inTime.split(':').map(Number);
-    const inDate = new Date(attendance.date);
-    inDate.setHours(h, m, 0);
-
-    const now = new Date();
-    const diffMinutes = Math.floor((now - inDate) / 60000);
-
-    // 🚫 BLOCK < 5 minutes
-    if (diffMinutes < 5) {
-      return res.status(400).json({
-        success: false,
-        error: 'Logout allowed only after 5 minutes'
-      });
-    }
-
-    const outTime = `${now.getHours().toString().padStart(2,'0')}:${now
-      .getMinutes().toString().padStart(2,'0')}`;
-
-    attendance.outTime = outTime;
-    attendance.totalMinutes = diffMinutes;
-
-    await attendance.save();
-
-    res.json({ success: true, data: attendance });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+  if (!attendance || attendance.outTime) {
+    return res.status(400).json({ error: 'Invalid logout' });
   }
+
+  const now = new Date();
+  const workedMinutes = Math.floor((now - attendance.inTime) / 60000);
+
+  attendance.outTime = now;
+  attendance.totalMinutes = workedMinutes;
+
+  // ✅ KEEP STATUS AS PRESENT
+  if (!attendance.status) {
+    attendance.status = 'Present';
+  }
+
+  // optional overtime
+  const shift = attendance.shiftId;
+  if (workedMinutes > shift.fullDayMinutes) {
+    attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
+  }
+
+  await attendance.save();
+  res.json({ success: true, data: attendance });
 };
 
+
+
+exports.adminCloseAttendance = async (req, res) => {
+  const { outTime, reason } = req.body;
+
+  const attendance = await Attendance.findById(req.params.id)
+    .populate('shiftId');
+
+  if (!attendance || attendance.outTime) {
+    return res.status(400).json({ error: 'Attendance already closed' });
+  }
+
+  const forcedOut = new Date(outTime);
+  const workedMinutes =
+    Math.floor((forcedOut - attendance.inTime) / 60000);
+
+  const shift = attendance.shiftId;
+
+  attendance.outTime = forcedOut;
+  attendance.totalMinutes = Math.min(workedMinutes, shift.maxMinutes);
+
+  attendance.status =
+    attendance.totalMinutes >= shift.fullDayMinutes
+      ? 'Present'
+      : attendance.totalMinutes >= shift.halfDayMinutes
+      ? 'Half Day'
+      : 'Absent';
+
+  attendance.adminLogout = true;
+  attendance.adminOutTime = forcedOut;
+  attendance.logoutReason = reason;
+  attendance.adminClosedBy = req.user?.email || 'Admin';
+
+  await attendance.save();
+
+  res.json({ success: true, data: attendance });
+};
+
+// Get pending logout attendance (Admin only)
+exports.getPendingLogoutAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.find({
+      outTime: null
+    })
+    .populate('shiftId')
+    .sort({ date: 1, inTime: 1 });
+
+    res.json({
+      success: true,
+      data: attendance
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Get today's attendance
 exports.getTodayAttendance = async (req, res) => {
@@ -104,7 +149,9 @@ exports.getTodayAttendance = async (req, res) => {
         $gte: today,
         $lt: tomorrow
       }
-    }).sort({ inTime: 1 });
+    })
+    .populate('shiftId') 
+    .sort({ inTime: 1 });
     
     res.json({
       success: true,
@@ -135,7 +182,8 @@ exports.getStaffAttendance = async (req, res) => {
     }
     
     const attendance = await Attendance.find(filter)
-      .sort({ date: -1 })
+     .populate('shiftId')   
+    .sort({ date: -1, inTime: 1 })
       .limit(100);
     
     res.json({
@@ -163,7 +211,9 @@ exports.getAttendanceByDate = async (req, res) => {
         $gte: date,
         $lt: nextDay
       }
-    }).sort({ inTime: 1 });
+    })
+    .populate('shiftId')
+    .sort({ inTime: 1 });
     
     res.json({
       success: true,
@@ -201,7 +251,9 @@ end.setHours(23, 59, 59, 999);
     if (jobRole) filter.jobRole = jobRole;
     
     const attendance = await Attendance.find(filter)
-      .sort({ date: -1, inTime: 1 });
+      .populate('shiftId')   // ✅ THIS IS WHY UI SHOWS —
+  
+    .sort({ date: -1, inTime: 1 });
     
     res.json({
       success: true,
@@ -296,6 +348,8 @@ exports.exportAttendance = async (req, res) => {
     if (jobRole) filter.jobRole = jobRole;
 
     const attendance = await Attendance.find(filter)
+      .populate('shiftId')   // ✅ ADD THIS
+
       .sort({ date: 1, inTime: 1 });
     
     if (format === 'excel') {
@@ -323,7 +377,7 @@ exports.exportAttendance = async (req, res) => {
           staffId: record.staffId,
           staffName: record.staffName,
           jobRole: record.jobRole,
-          shift: record.shift,
+shift: record.shiftId?.name,
           inTime: record.inTime,
           outTime: record.outTime || '-',
           status: record.status,
@@ -353,7 +407,7 @@ exports.exportAttendance = async (req, res) => {
       
       attendance.forEach((record, index) => {
         doc.text(`${index + 1}. ${record.staffName} (${record.staffId}) - ${record.status}`);
-        doc.text(`   Date: ${record.date.toISOString().split('T')[0]}, Shift: ${record.shift}, In: ${record.inTime}, Out: ${record.outTime || '-'}`);
+        doc.text(`   Date: ${record.date.toISOString().split('T')[0]}, Shift: ${record.shiftId?.name}, In: ${record.inTime}, Out: ${record.outTime || '-'}`);
         doc.moveDown(0.5);
       });
       

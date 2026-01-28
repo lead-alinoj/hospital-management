@@ -4,9 +4,9 @@ export interface Attendance {
   staffId: string;
   staffName: string;
 jobRole: string;
-  shift: 'Morning' | 'Evening' | 'Full Day' | 'On Call';
-  inTime: string;
-  outTime?: string;
+shiftId: string;   
+ inTime: Date;
+  outTime?: Date;
   status: 'Present' | 'Absent' | 'Half Day';
   remarks?: string;
   enteredBy: string;
@@ -22,7 +22,7 @@ export interface MarkAttendanceDto {
   staffId: string;
   staffName: string;
   jobRole: string;
-    shift: 'Morning' | 'Evening' | 'Full Day' | 'On Call';
+   shiftId: string;
   inTime: string;
   outTime?: string;
   status: 'Present' | 'Absent' | 'Half Day';

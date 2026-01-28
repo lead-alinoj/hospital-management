@@ -87,34 +87,17 @@
 
           <div class="form-row">
             <!-- Shift -->
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Shift</mat-label>
-              <mat-select formControlName="shift">
-                <mat-option *ngFor="let shift of shifts" [value]="shift">
-                  <mat-icon>{{ getShiftIcon(shift) }}</mat-icon>
-                  {{ shift }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="attendanceForm.get('shift')?.hasError('required')">
-                Shift is required
-              </mat-error>
-            </mat-form-field>
+          <mat-form-field>
+  <mat-label>Shift</mat-label>
+  <mat-select formControlName="shiftId">
+    <mat-option *ngFor="let s of shifts" [value]="s._id">
+      {{ s.name }} ({{ s.startTime }} - {{ s.endTime }})
+    </mat-option>
+  </mat-select>
+</mat-form-field>
 
-            <!-- Status -->
-            <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Status</mat-label>
-              <mat-select formControlName="status">
-                <mat-option *ngFor="let status of statuses" [value]="status">
-                  <mat-icon [color]="status === 'Present' ? 'primary' : status === 'Absent' ? 'warn' : 'accent'">
-                    {{ getStatusIcon(status) }}
-                  </mat-icon>
-                  {{ status }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="attendanceForm.get('status')?.hasError('required')">
-                Status is required
-              </mat-error>
-            </mat-form-field>
+
+          
 
             <!-- In Time -->
             <mat-form-field appearance="outline" class="form-field time-field">
@@ -219,12 +202,12 @@
             </ng-container>
 
             <!-- Shift Column -->
-            <ng-container matColumnDef="shift">
+            <ng-container matColumnDef="shiftId">
               <th mat-header-cell *matHeaderCellDef>Shift</th>
               <td mat-cell *matCellDef="let attendance">
                 <div class="shift-cell">
-                  <mat-icon>{{ getShiftIcon(attendance.shift) }}</mat-icon>
-                  <span>{{ attendance.shift }}</span>
+                  <mat-icon>{{ getShiftIcon(attendance.shiftId) }}</mat-icon>
+                  <span>{{ attendance.shiftId?.name }}</span>
                 </div>
               </td>
             </ng-container>
@@ -235,7 +218,7 @@
               <td mat-cell *matCellDef="let attendance">
                 <div class="time-cell in-time">
                   <mat-icon>login</mat-icon>
-                  <span>{{ attendance.inTime }}</span>
+<span>{{ attendance.inTime | date:'hh:mm a' }}</span>
                 </div>
               </td>
             </ng-container>
@@ -246,7 +229,7 @@
               <td mat-cell *matCellDef="let attendance">
                 <div class="time-cell" [class.out-time]="attendance.outTime" [class.no-out]="!attendance.outTime">
                   <mat-icon>logout</mat-icon>
-                  <span>{{ attendance.outTime || 'Not marked' }}</span>
+<span>{{ attendance.outTime ? (attendance.outTime | date:'hh:mm a') : 'Not marked' }}</span>
                 </div>
               </td>
             </ng-container>

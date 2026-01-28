@@ -61,6 +61,12 @@
     <mat-icon>manage_accounts</mat-icon>
     Staff Master
   </button>
+  
+  <button mat-menu-item routerLink="/admin/shift-master">
+  <mat-icon>schedule</mat-icon>
+  Shift Master
+</button>
+
   <button mat-menu-item routerLink="/admin/attendance"
           (click)="closeMobileMenuOnNavigation()">
     <mat-icon>check_circle</mat-icon>
@@ -255,6 +261,7 @@
     <mat-icon>check_circle</mat-icon>
     Mark Attendance
   </button>
+  
           </ng-container>
           
           <ng-container *ngIf="isDoctor()">

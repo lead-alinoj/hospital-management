@@ -26,6 +26,7 @@ router.get('/staff/:staffId', attendanceController.getStaffAttendance);
 router.get('/date/:date', attendanceController.getAttendanceByDate);
 router.get('/range', attendanceController.getAttendanceByDateRange);
 router.get('/summary', attendanceController.getAttendanceSummary);
+router.get('/pending-logout', attendanceController.getPendingLogoutAttendance);
 
 // Export should be admin only
 router.get(
