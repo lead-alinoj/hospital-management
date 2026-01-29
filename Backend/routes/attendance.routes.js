@@ -27,6 +27,12 @@ router.get('/date/:date', attendanceController.getAttendanceByDate);
 router.get('/range', attendanceController.getAttendanceByDateRange);
 router.get('/summary', attendanceController.getAttendanceSummary);
 router.get('/pending-logout', attendanceController.getPendingLogoutAttendance);
+router.put(
+  '/admin-close/:id',
+  protect,
+  authorize('Admin'),
+  attendanceController.adminCloseAttendance
+);
 
 // Export should be admin only
 router.get(

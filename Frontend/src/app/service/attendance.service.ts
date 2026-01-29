@@ -31,10 +31,10 @@ export class AttendanceService {
   getStaffAttendance(staffId: string, filter?: { startDate?: Date; endDate?: Date }): Observable<{ success: boolean; data: Attendance[] }> {
     let params = new HttpParams();
 if (filter?.startDate)
-  params = params.set('startDate', filter.startDate.toISOString().split('T')[0]);
+params = params.set('startDate', String(filter.startDate));
 
 if (filter?.endDate)
-  params = params.set('endDate', filter.endDate.toISOString().split('T')[0]);
+params = params.set('endDate', String(filter.endDate));
 
 
     return this.http.get<{ success: boolean; data: Attendance[] }>(`${this.apiUrl}/staff/${staffId}`, { params });
@@ -57,8 +57,10 @@ getPendingLogout(): Observable<{ success: boolean; data: Attendance[] }> {
     let params = new HttpParams();
     
     // Fix: Format dates to strings for the API
-  if (filter.startDate) params = params.set('startDate', filter.startDate);
-if (filter.endDate) params = params.set('endDate', filter.endDate);
+  if (filter.startDate) params = params.set('startDate', filter.startDate as string);
+
+if (filter.endDate)params = params.set('endDate', filter.endDate as string);
+
 
     if (filter.staffId) params = params.set('staffId', filter.staffId);
     if (filter.jobRole) params = params.set('jobRole', filter.jobRole);
@@ -74,6 +76,17 @@ getAttendanceSummary(startDate?: string, endDate?: string): Observable<{ success
   return this.http.get<{ success: boolean; data: any[] }>(`${this.apiUrl}/summary`, { params });
 }
 
+// Admin force close attendance (forgot logout / emergency)
+adminCloseAttendance(attendanceId: string, payload: {
+  outTime: Date;
+  reason: string;
+}): Observable<{ success: boolean; data: Attendance }> {
+
+  return this.http.put<{ success: boolean; data: Attendance }>(
+    `${this.apiUrl}/admin-close/${attendanceId}`,
+    payload
+  );
+}
 
 exportAttendance(
   startDate: string,

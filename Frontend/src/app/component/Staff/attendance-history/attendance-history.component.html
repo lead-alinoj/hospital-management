@@ -82,8 +82,8 @@
   <mat-label>From Date</mat-label>
   <input matInput 
          [matDatepicker]="startPicker" 
-         formControlName="startDate"
-         [value]="filterForm.get('startDate')?.value | date:'yyyy-MM-dd'">
+         formControlName="startDate">
+         <!-- [value]="filterForm.get('startDate')?.value | date:'yyyy-MM-dd'" -->
   <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
   <mat-datepicker #startPicker></mat-datepicker>
 </mat-form-field>
@@ -92,8 +92,8 @@
   <mat-label>To Date</mat-label>
   <input matInput 
          [matDatepicker]="endPicker" 
-         formControlName="endDate"
-         [value]="filterForm.get('endDate')?.value | date:'yyyy-MM-dd'">
+         formControlName="endDate">
+         <!-- [value]="filterForm.get('endDate')?.value | date:'yyyy-MM-dd'"> -->
   <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
   <mat-datepicker #endPicker></mat-datepicker>
 </mat-form-field>
@@ -143,14 +143,8 @@
               <mat-icon>clear_all</mat-icon>
               Clear Filters
             </button>
-            <!-- <button mat-button 
-        type="button" 
-        (click)="resetDateRange()"
-        [disabled]="isLoading"
-        color="accent">
-  <mat-icon>today</mat-icon>
-  This Month
-</button> -->
+
+
           
             
             <div class="export-buttons">
@@ -169,6 +163,9 @@
         [disabled]="isLoading || filteredData.length === 0">
   <mat-icon>picture_as_pdf</mat-icon>
   Export PDF
+</button>
+<button mat-raised-button color="warn" (click)="openPendingLogoutDialog()">
+  Pending Logouts ({{ pendingLogoutCount }})
 </button>
 
               

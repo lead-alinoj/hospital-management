@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>Pending Logout Attendance</h2>
+
+<table mat-table [dataSource]="data">
+  <ng-container matColumnDef="staff">
+    <th mat-header-cell *matHeaderCellDef>Staff</th>
+    <td mat-cell *matCellDef="let r">{{ r.staffName }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="inTime">
+    <th mat-header-cell *matHeaderCellDef>In Time</th>
+    <td mat-cell *matCellDef="let r">{{ r.inTime | date:'HH:mm' }}</td>
+  </ng-container>
+
+<ng-container matColumnDef="action">
+  <th mat-header-cell *matHeaderCellDef>Action</th>
+  <td mat-cell *matCellDef="let r">
+    
+    <!-- SHOW BUTTON INITIALLY -->
+    <button mat-raised-button color="warn"
+      *ngIf="!r.showForce"
+      (click)="enableForce(r)">
+      Force Logout
+    </button>
+
+    <!-- SHOW TIME + CONFIRM AFTER CLICK -->
+    <div *ngIf="r.showForce" class="force-box">
+      <input
+        type="datetime-local"
+        [(ngModel)]="r.forceOutTime"
+        class="time-input"
+        
+      />
+
+      <button mat-raised-button color="primary"
+        (click)="confirmForceLogout(r)">
+        Confirm
+      </button>
+    </div>
+
+  </td>
+</ng-container>
+
+
+  <tr mat-header-row *matHeaderRowDef="['staff','inTime','action']"></tr>
+  <tr mat-row *matRowDef="let row; columns: ['staff','inTime','action']"></tr>
+</table>
+
+<div align="end" style="margin-top:16px">
+  <button mat-button (click)="close()">Close</button>
+</div>

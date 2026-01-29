@@ -87,7 +87,7 @@
 
           <div class="form-row">
             <!-- Shift -->
-          <mat-form-field>
+            <mat-form-field appearance="outline" class="form-field time-field">
   <mat-label>Shift</mat-label>
   <mat-select formControlName="shiftId">
     <mat-option *ngFor="let s of shifts" [value]="s._id">
@@ -261,12 +261,12 @@
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let attendance">
                 <div class="action-buttons">
-                  <button mat-icon-button 
+                  <!-- <button mat-icon-button 
                           color="primary" 
                           (click)="editAttendance(attendance)"
                           matTooltip="Edit">
                     <mat-icon>edit</mat-icon>
-                  </button>
+                  </button> -->
                   
                   <button mat-icon-button 
                           color="accent" 
@@ -276,12 +276,12 @@
                     <mat-icon>logout</mat-icon>
                   </button>
                   
-                  <button mat-icon-button 
+                  <!-- <button mat-icon-button 
                           color="warn" 
                           (click)="deleteAttendance(attendance)"
                           matTooltip="Delete">
                     <mat-icon>delete</mat-icon>
-                  </button>
+                  </button> -->
                 </div>
               </td>
             </ng-container>

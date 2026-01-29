@@ -1,0 +1,103 @@
+:host {
+  display: block;
+}
+
+/* Dialog Title */
+h2[mat-dialog-title] {
+  margin: 0;
+  padding-bottom: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #b71c1c; // warning red
+  border-bottom: 1px solid #eee;
+}
+
+/* Table */
+table {
+  width: 100%;
+  margin-top: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header row */
+th.mat-header-cell {
+  background: #f5f7fa;
+  color: #333;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+/* Data cells */
+td.mat-cell {
+  font-size: 14px;
+  color: #444;
+  padding: 12px 16px;
+}
+
+/* Hover effect */
+tr.mat-row:hover {
+  background: #fafafa;
+}
+
+/* In-Time column highlight */
+td.mat-cell:nth-child(2) {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+/* Force Logout button */
+button[color="warn"] {
+  min-width: 120px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* Footer actions */
+div[align="end"] {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* Close button */
+button[mat-button] {
+  font-weight: 600;
+}
+
+/* Empty state (optional if no data) */
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #777;
+
+  mat-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 8px;
+  }
+}
+.force-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.time-input {
+  padding: 6px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  th.mat-header-cell,
+  td.mat-cell {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  button[color="warn"] {
+    min-width: auto;
+    padding: 6px 12px;
+  }
+}

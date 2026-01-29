@@ -29,7 +29,7 @@ exports.markAttendance = async (req, res) => {
   const open = await Attendance.findOne({
     staffId,
     outTime: null,
-    date: attendanceDate
+    // date: attendanceDate
   });
 
   if (open) {
@@ -59,20 +59,25 @@ exports.updateAttendance = async (req, res) => {
     return res.status(400).json({ error: 'Invalid logout' });
   }
 
-  const now = new Date();
-  const workedMinutes = Math.floor((now - attendance.inTime) / 60000);
+  // ✅ USE PROVIDED OUT TIME IF SENT
+  const outTime = req.body.outTime
+    ? new Date(`${attendance.date.toISOString().split('T')[0]}T${req.body.outTime}`)
+    : new Date();
 
-  attendance.outTime = now;
+  const workedMinutes = Math.max(
+    Math.floor((outTime - attendance.inTime) / 60000),
+    1
+  );
+
+  attendance.outTime = outTime;
   attendance.totalMinutes = workedMinutes;
 
-  // ✅ KEEP STATUS AS PRESENT
-  if (!attendance.status) {
-    attendance.status = 'Present';
-  }
+  // ✅ DO NOT CHANGE STATUS
+  attendance.status = attendance.status || 'Present';
 
   // optional overtime
   const shift = attendance.shiftId;
-  if (workedMinutes > shift.fullDayMinutes) {
+  if (shift && workedMinutes > shift.fullDayMinutes) {
     attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
   }
 
@@ -92,21 +97,19 @@ exports.adminCloseAttendance = async (req, res) => {
     return res.status(400).json({ error: 'Attendance already closed' });
   }
 
+  // ✅ FORCE OUT TIME (EXACT)
   const forcedOut = new Date(outTime);
-  const workedMinutes =
-    Math.floor((forcedOut - attendance.inTime) / 60000);
 
-  const shift = attendance.shiftId;
+  const workedMinutes = Math.max(
+    Math.floor((forcedOut - attendance.inTime) / 60000),
+    1
+  );
 
   attendance.outTime = forcedOut;
-  attendance.totalMinutes = Math.min(workedMinutes, shift.maxMinutes);
+  attendance.totalMinutes = workedMinutes;
 
-  attendance.status =
-    attendance.totalMinutes >= shift.fullDayMinutes
-      ? 'Present'
-      : attendance.totalMinutes >= shift.halfDayMinutes
-      ? 'Half Day'
-      : 'Absent';
+  // ✅ VERY IMPORTANT: KEEP STATUS SAFE
+  attendance.status = attendance.status || 'Present';
 
   attendance.adminLogout = true;
   attendance.adminOutTime = forcedOut;
@@ -117,6 +120,7 @@ exports.adminCloseAttendance = async (req, res) => {
 
   res.json({ success: true, data: attendance });
 };
+
 
 // Get pending logout attendance (Admin only)
 exports.getPendingLogoutAttendance = async (req, res) => {
@@ -236,14 +240,16 @@ exports.getAttendanceByDateRange = async (req, res) => {
     let filter = {};
     
   if (startDate && endDate) {
-  const start = new Date(startDate);
+ const start = new Date(startDate);
 start.setHours(0, 0, 0, 0);
 
 const end = new Date(endDate);
 end.setHours(23, 59, 59, 999);
 
+
   filter.date = { $gte: start, $lte: end };
 }
+
 
     
     
@@ -369,17 +375,21 @@ exports.exportAttendance = async (req, res) => {
         { header: 'Remarks', key: 'remarks', width: 30 },
         { header: 'Entered By', key: 'enteredBy', width: 20 }
       ];
-      
+      const formatTime = (d) =>
+  d ? new Date(d).toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }) : '-';
       // Add rows
       attendance.forEach(record => {
         worksheet.addRow({
-          date: record.date.toISOString().split('T')[0],
+date: record.date.toLocaleDateString('en-CA'),
           staffId: record.staffId,
           staffName: record.staffName,
           jobRole: record.jobRole,
 shift: record.shiftId?.name,
-          inTime: record.inTime,
-          outTime: record.outTime || '-',
+         inTime: formatTime(record.inTime),
+  outTime: formatTime(record.outTime),
           status: record.status,
           remarks: record.remarks,
           enteredBy: record.enteredBy
@@ -405,11 +415,57 @@ shift: record.shiftId?.name,
       doc.fontSize(12).text(`Period: ${startDate} to ${endDate}`, { align: 'center' });
       doc.moveDown();
       
-      attendance.forEach((record, index) => {
-        doc.text(`${index + 1}. ${record.staffName} (${record.staffId}) - ${record.status}`);
-        doc.text(`   Date: ${record.date.toISOString().split('T')[0]}, Shift: ${record.shiftId?.name}, In: ${record.inTime}, Out: ${record.outTime || '-'}`);
-        doc.moveDown(0.5);
-      });
+      // ===== TABLE HEADER =====
+const tableTop = doc.y + 10;
+const colX = {
+  date: 40,
+  name: 90,
+  role: 180,
+  shift: 240,
+  in: 300,
+  out: 340,
+  status: 380
+};
+
+doc.fontSize(9).font('Helvetica-Bold');
+doc.text('Date', colX.date, tableTop);
+doc.text('Name', colX.name, tableTop);
+doc.text('Role', colX.role, tableTop);
+doc.text('Shift', colX.shift, tableTop);
+doc.text('In', colX.in, tableTop);
+doc.text('Out', colX.out, tableTop);
+doc.text('Status', colX.status, tableTop);
+
+doc.moveDown(0.5);
+doc.font('Helvetica');
+
+let y = tableTop + 15;
+
+const fmtTime = d =>
+  d ? new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '-';
+
+// ===== TABLE ROWS =====
+attendance.forEach(record => {
+  if (y > 750) {
+    doc.addPage();
+    y = 50;
+  }
+
+doc.text(
+  record.date.toLocaleDateString('en-GB'),
+  colX.date,
+  y
+);
+  doc.text(record.staffName, colX.name, y);
+  doc.text(record.jobRole, colX.role, y);
+  doc.text(record.shiftId?.name || '-', colX.shift, y);
+  doc.text(fmtTime(record.inTime), colX.in, y);
+  doc.text(fmtTime(record.outTime), colX.out, y);
+  doc.text(record.status, colX.status, y);
+
+  y += 16;
+});
+
       
       doc.end();
     }

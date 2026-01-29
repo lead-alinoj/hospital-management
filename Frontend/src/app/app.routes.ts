@@ -27,6 +27,7 @@ import { AttendanceHistoryComponent } from './component/Staff/attendance-history
 import { AttendanceEntryComponent } from './component/Staff/attendance-entry/attendance-entry.component';
 import { StaffMasterComponent } from './component/Staff/staff-master/staff-master.component';
 import { ShiftMasterComponent } from './component/Staff/shift-master/shift-master.component';
+import { IpAdmissionComponent } from './component/reception/ip-admission.component';
 
 export const routes: Routes = [
   // Empty path redirects to login
@@ -101,7 +102,13 @@ export const routes: Routes = [
     canActivate: [authGuard, receptionGuard],
     data: { title: 'Staff Master' }
   },
-  
+ 
+{
+  path: 'reception/ip-admission/:visitId',
+  component: IpAdmissionComponent,
+  canActivate: [authGuard, receptionGuard],
+  data: { roles: ['Reception'] }
+},
   // Attendance Routes
   {
     path: 'admin/attendance',
@@ -135,6 +142,7 @@ export const routes: Routes = [
   canActivate: [authGuard],
   data: { role: 'Doctor' }
 },
+
 {
   path: 'doctor/consultation/:visitId',
   component: ConsultationComponent,

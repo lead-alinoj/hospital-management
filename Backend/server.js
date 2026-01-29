@@ -25,7 +25,9 @@ const appointmentRoutes = require('./routes/appointments');
 const staffRoutes = require('./routes/staff.routes');
 const attendanceRoutes = require('./routes/attendance.routes');
 const shiftRoutes = require('./routes/shift.routes');
+const ipadmissionRoutes = require('./routes/ipadmission.routes');
 // Routes
+
 app.use('/api/auth', authRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/patients', patientRoutes);
@@ -49,6 +51,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/shifts', shiftRoutes);
+app.use('/api/ipadmission', ipadmissionRoutes);
 // Example route
 app.get('/', (req, res) => {
   res.send('HMS Backend Running');

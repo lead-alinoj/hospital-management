@@ -23,6 +23,9 @@ import { AttendanceService } from '../../../service/attendance.service';
 import { StaffService } from '../../../service/staff.service';
 import { MatDividerModule } from "@angular/material/divider";
 import { AfterViewInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
+import { PendingLogoutDialogComponent } from '../attendance-pending-logout-dialog/attendance-pending-logout-dialog.component';
 
 @Component({
   selector: 'app-attendance-history',
@@ -71,7 +74,7 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
     'enteredBy',
     'remarks'
   ];
-  dataSource = new MatTableDataSource<Attendance>();
+dataSource = new MatTableDataSource<Attendance>([]);
   
   isLoading = false;
   totalRecords = 0;
@@ -87,7 +90,9 @@ todayHalfDayCount = 0;
     private attendanceService: AttendanceService,
     private staffService: StaffService,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+      private dialog: MatDialog
+
   ) {
     // Set default date range (last 30 days)
     const endDate = new Date();
@@ -229,12 +234,13 @@ get halfDayCount(): number {
     const filter: AttendanceFilter = {};
 
     // Fix: Use Date objects instead of strings
-  if (fv.startDate) {
-filter.startDate = fv.startDate.toISOString().split('T')[0];
+if (fv.startDate) {
+  filter.startDate = this.formatDateLocal(fv.startDate);
 }
 if (fv.endDate) {
-filter.endDate = fv.endDate.toISOString().split('T')[0];
+  filter.endDate = this.formatDateLocal(fv.endDate);
 }
+
 
     if (fv.staffId) {
       filter.staffId = fv.staffId;
@@ -249,18 +255,21 @@ filter.endDate = fv.endDate.toISOString().split('T')[0];
 
     this.attendanceService.getAttendanceByDateRange(filter).subscribe({
       next: (res) => {
-        this.attendanceData = res.data;
-        this.filteredData = res.data;
-        this.totalRecords = res.data.length;
-        
-        // Update data source with filtered data
-        this.dataSource.data = this.filteredData;
+    this.attendanceData = res.data || [];
+this.filteredData = [...this.attendanceData];
+this.totalRecords = this.filteredData.length;
+
+// ✅ SAFE async update (prevents NG0100)
+Promise.resolve().then(() => {
+  this.dataSource.data = this.filteredData;
+});
+
         
         // Reinitialize paginator and sort
-        setTimeout(() => {
-          this.dataSource.paginator = this.paginator;
-          this.dataSource.sort = this.sort;
-        });
+        // setTimeout(() => {
+        //   this.dataSource.paginator = this.paginator;
+        //   this.dataSource.sort = this.sort;
+        // });
         
         this.isLoading = false;
       },
@@ -354,6 +363,13 @@ removeFilter(filter: string): void {
   // Reload data with updated filters
   this.loadAttendance();
 }
+private formatDateLocal(date: Date): string {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = ('0' + (d.getMonth() + 1)).slice(-2);
+  const day = ('0' + d.getDate()).slice(-2);
+  return `${year}-${month}-${day}`;
+}
 
    exportData(format: 'excel' | 'pdf'): void {
     const { startDate, endDate, staffId, jobRole } = this.filterForm.value;
@@ -364,8 +380,8 @@ removeFilter(filter: string): void {
     }
 
     // Fix: Get formatted Date objects
-const formattedStartDate = startDate.toISOString().split('T')[0];
-const formattedEndDate = endDate.toISOString().split('T')[0];
+const formattedStartDate = this.formatDateLocal(startDate);
+const formattedEndDate = this.formatDateLocal(endDate);
 
 
     this.isLoading = true;
@@ -502,11 +518,30 @@ const formattedEndDate = endDate.toISOString().split('T')[0];
   }
 pendingLogoutCount = 0;
 
-loadPendingLogoutCount(): void {
-  this.attendanceService.getPendingLogout().subscribe(res => {
-    this.pendingLogoutCount = res.data.length;
+openPendingLogoutDialog(): void {
+  const ref = this.dialog.open(PendingLogoutDialogComponent, {
+    width: '900px',
+    disableClose: true
+  });
+
+  ref.afterClosed().subscribe(() => {
+    this.loadPendingLogoutCount();
+    this.loadAttendance();
   });
 }
+loadPendingLogoutCount(): void {
+  this.attendanceService.getPendingLogout().subscribe({
+    next: (res) => {
+      this.pendingLogoutCount = res.data.length;
+    },
+    error: (err) => {
+      console.error('Error loading pending logout count', err);
+      this.pendingLogoutCount = 0;
+    }
+  });
+}
+
+
 
 getShiftIcon(shift: any): string {
   const name = shift?.name?.toLowerCase() || '';

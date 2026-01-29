@@ -296,7 +296,7 @@ import { PatientService } from '../../service/patient.service';
   `,
   styles: [`
     .patient-search-container {
-      padding: 20px;
+      padding: 40px;
       max-width: 1400px;
       margin: 0 auto;
     }
