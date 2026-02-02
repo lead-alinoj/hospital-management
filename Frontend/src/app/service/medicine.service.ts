@@ -33,7 +33,10 @@ getDoctorMedicines(): Observable<any> {
   getMedicineById(id: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/${id}`);
   }
-
+// Add this method
+getAllItemsForIP(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/all-for-ip`);
+}
   // Update
   updateMedicine(id: string, updates: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}`, updates);

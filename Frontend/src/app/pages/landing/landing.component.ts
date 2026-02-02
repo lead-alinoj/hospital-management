@@ -17,6 +17,7 @@ import { LoginComponent } from '../../auth/login/login.component';
 import { MatMenuModule } from "@angular/material/menu";
 import { RegisterComponent } from '../../auth/register/register.component';
 import { ComponentType } from '@angular/cdk/portal';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-landing',
@@ -43,7 +44,7 @@ export class LandingComponent {
   appointmentForm: FormGroup;
 hours = Array.from({length: 12}, (_, i) => i + 1); // 1-12
   
-  constructor(private fb: FormBuilder, private appointmentService: AppointmentService,private dialog: MatDialog) {
+  constructor(private fb: FormBuilder, private appointmentService: AppointmentService,private dialog: MatDialog, public authService: AuthService) {
     this.appointmentForm = this.fb.group({
       patientName: ['', Validators.required],
       contactNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],

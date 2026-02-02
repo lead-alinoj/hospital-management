@@ -1,0 +1,72 @@
+<div class="main-layout">
+  <!-- Header Component -->
+  <app-header (toggleSidebar)="toggleSidebar()"></app-header>
+
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" 
+       [class.overlay-visible]="isMobileView && isSidebarOpen"
+       (click)="closeSidebarOnMobile()"></div>
+
+  <!-- Main Content Area -->
+  <div class="sidebar-container">
+    <!-- Sidebar -->
+    <nav class="sidebar" 
+         [class.sidebar-collapsed]="!isSidebarOpen"
+         [class.sidebar-open]="isSidebarOpen">
+      
+      <!-- User Profile Section -->
+      <div class="user-profile">
+        <div class="user-avatar">
+          {{ userName.charAt(0) || 'U' }}
+        </div>
+        <div class="user-info">
+          <h3 class="user-name">{{ userName || 'User' }}</h3>
+          <p class="user-role">{{ userRole || 'Role' }}</p>
+        </div>
+      </div>
+
+      <!-- Main Menu Section -->
+      <div class="menu-section">
+        <!-- Dashboard -->
+        <a *ngFor="let item of filteredMenuItems"
+           [routerLink]="item.route"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: false }"
+           class="menu-item"
+           (click)="closeSidebarOnMobile()">
+          <mat-icon class="menu-icon">{{ item.icon }}</mat-icon>
+          <span class="menu-label">{{ item.label }}</span>
+          <span *ngIf="item.badgeCount && item.badgeCount > 0" 
+                class="menu-badge">
+            {{ item.badgeCount }}
+          </span>
+        </a>
+
+        <!-- Divider between main menu and settings -->
+        <mat-divider class="menu-divider"></mat-divider>
+
+        <button class="menu-item" (click)="logout()">
+          <mat-icon class="menu-icon">logout</mat-icon>
+          <span class="menu-label">Logout</span>
+        </button>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="footer-item">
+          <mat-icon class="footer-icon">help</mat-icon>
+          <span class="footer-label">Help & Support</span>
+        </div>
+        <div class="footer-item">
+          <mat-icon class="footer-icon">info</mat-icon>
+          <span class="footer-label">About System</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

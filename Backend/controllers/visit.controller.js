@@ -79,32 +79,6 @@ if (existingVisit) {
     });
   }
 };
-
-// Get doctor consulted patients
-exports.getDoctorConsultedPatients = async (req, res) => {
-  try {
-    const doctorId = req.user.id;
-
-    const visits = await Visit.find({
-      doctor: doctorId,
-      visitStatus: 'Consultation_Completed'
-    })
-      .populate('patient', 'fullName age gender opNumber mobile')
-      .sort({ consultationTime: -1 });
-
-    res.json({
-      success: true,
-      data: visits
-    });
-  } catch (error) {
-    console.error('Doctor patients error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching doctor patients'
-    });
-  }
-};
-
 exports.getAllPatientsWithLastVisit = async (req, res) => {
   try {
     const patients = await Patient.aggregate([

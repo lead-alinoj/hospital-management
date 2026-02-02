@@ -71,7 +71,26 @@ getPrescriptionWithDetails(id: string) {
   updatePrescriptionStatus(id: string, status: string): Observable<any> {
     return this.http.patch(`${this.apiUrl}/${id}/status`, { status });
   }
+// Add to prescription.service.ts
+addIPBillItems(billData: any): Observable<any> {
+  return this.http.post(`${this.apiUrl}/ip-bill`, billData);
+}
 
+getIPBillItems(visitId: string): Observable<any> {
+  return this.http.get(`${this.apiUrl}/ip-bill/${visitId}`);
+}
+
+updateIPBillItem(itemId: string, updates: any): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/ip-bill/${itemId}`, updates);
+}
+
+deleteIPBillItem(itemId: string): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/ip-bill/${itemId}`);
+}
+
+calculateIPBill(visitId: string): Observable<any> {
+  return this.http.get(`${this.apiUrl}/ip-bill/calculate/${visitId}`);
+}
   // Generate prescription ID (utility method)
   generatePrescriptionId(): string {
     const date = new Date();

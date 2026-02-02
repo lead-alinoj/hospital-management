@@ -26,11 +26,12 @@ exports.markAttendance = async (req, res) => {
   inTime.setHours(+h, +m, 0, 0);
 
   // ✅ Check open attendance ONLY for today
-  const open = await Attendance.findOne({
-    staffId,
-    outTime: null,
-    // date: attendanceDate
-  });
+const open = await Attendance.findOne({
+  staffId,
+  shiftId,
+  outTime: null,
+});
+
 
   if (open) {
     return res.status(400).json({ error: 'Previous attendance not closed' });
@@ -60,9 +61,18 @@ exports.updateAttendance = async (req, res) => {
   }
 
   // ✅ USE PROVIDED OUT TIME IF SENT
-  const outTime = req.body.outTime
-    ? new Date(`${attendance.date.toISOString().split('T')[0]}T${req.body.outTime}`)
-    : new Date();
+ let outTime = req.body.outTime
+  ? new Date(req.body.outTime)
+  : new Date();
+
+// 🔥 ADD THIS BLOCK (JUST BELOW)
+const shift = attendance.shiftId;
+if (shift?.isOvernight && outTime < attendance.inTime) {
+  outTime.setDate(outTime.getDate() + 1);
+}
+if (shift && workedMinutes > shift.fullDayMinutes) {
+    attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
+  }
 
   const workedMinutes = Math.max(
     Math.floor((outTime - attendance.inTime) / 60000),
@@ -76,10 +86,7 @@ exports.updateAttendance = async (req, res) => {
   attendance.status = attendance.status || 'Present';
 
   // optional overtime
-  const shift = attendance.shiftId;
-  if (shift && workedMinutes > shift.fullDayMinutes) {
-    attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
-  }
+  
 
   await attendance.save();
   res.json({ success: true, data: attendance });
@@ -99,7 +106,10 @@ exports.adminCloseAttendance = async (req, res) => {
 
   // ✅ FORCE OUT TIME (EXACT)
   const forcedOut = new Date(outTime);
-
+const shift = attendance.shiftId;
+if (shift?.isOvernight && forcedOut < attendance.inTime) {
+  forcedOut.setDate(forcedOut.getDate() + 1);
+}
   const workedMinutes = Math.max(
     Math.floor((forcedOut - attendance.inTime) / 60000),
     1

@@ -51,7 +51,24 @@ exports.getMedicineById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+// Get all items for IP billing (all categories except Equipment for doctors)
+exports.getAllItemsForIP = async (req, res) => {
+  try {
+    const medicines = await Medicine.find({ isActive: true })
+      .populate('category', 'name type')
+      .sort({ 'category.type': 1, name: 1 });
 
+    res.json({
+      success: true,
+      data: medicines
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 // Update medicine
 exports.updateMedicine = async (req, res) => {
   try {

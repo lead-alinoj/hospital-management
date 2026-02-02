@@ -79,7 +79,7 @@ import { MatNativeDateModule } from '@angular/material/core';
   </mat-select>
   </mat-form-field>
 <mat-form-field appearance="outline" class="half-width">
-  <mat-label>Date of Birth (if known)</mat-label>
+  <mat-label>Date of Birth </mat-label>
 <mat-icon matPrefix>calendar_today</mat-icon>
 
   <input matInput [matDatepicker]="picker" formControlName="dateOfBirth">
@@ -230,7 +230,7 @@ styles: [`
   }
 
   .registration-container {
-    padding: 60px;
+    padding: 20px;
     max-width: 1200px;
     margin: auto;
   }

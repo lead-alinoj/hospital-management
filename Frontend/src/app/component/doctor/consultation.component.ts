@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,6 +23,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from "@angular/material/divider";
 import { ChangeDetectorRef } from '@angular/core';
+import { IpRecommendationDialogComponent } from './ip-recommendation-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-consultation',
@@ -42,7 +45,8 @@ import { ChangeDetectorRef } from '@angular/core';
     MatAutocompleteModule,
     MatTooltipModule,
     MatExpansionModule,
-    MatDividerModule
+    MatDividerModule,
+    
 ],
   template: `
     <div class="consultation-container">
@@ -386,7 +390,14 @@ import { ChangeDetectorRef } from '@angular/core';
               <!-- Submit -->
               <div class="form-actions">
                 <button mat-button type="button" (click)="cancel()">Cancel</button>
-        <button
+ <button mat-raised-button color="primary"
+        (click)="openIpRecommendation(visit)">
+  <mat-icon>hotel</mat-icon>
+  Recommend IP
+</button>
+
+
+                <button
   mat-button
   color="accent"
   *ngIf="visit?.visitStatus === 'Consultation_Completed'"
@@ -394,6 +405,7 @@ import { ChangeDetectorRef } from '@angular/core';
   <mat-icon>print</mat-icon>
   Print Prescription
 </button>
+
 
                 <button mat-raised-button color="primary" type="submit" 
                   [disabled]="consultationForm.invalid || isLoading">
@@ -465,6 +477,8 @@ mat-form-field {
       padding: 20px;
       max-width: 1200px;
       margin: 0 auto;
+        background: var(--bg-soft);
+
     }
     .patient-header {
       margin-bottom: 20px;
@@ -625,6 +639,7 @@ mat-form-field {
 })
 export class ConsultationComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private fb = inject(FormBuilder);
   private visitService = inject(VisitService);
   private vitalsService = inject(VitalsService);
@@ -632,6 +647,8 @@ export class ConsultationComponent implements OnInit {
   private medicineService = inject(MedicineService);
   private prescriptionService = inject(PrescriptionService);
   private pdfService = inject(PdfService);
+private dialog = inject(MatDialog);
+private authService = inject(AuthService); // Add this
 
   // private pdfService = inject(PdfService);
 private cdr = inject(ChangeDetectorRef);
@@ -751,7 +768,21 @@ getStockClass(medicineId: string): string {
   get medications() {
     return this.consultationForm.get('medications') as any;
   }
+recommendIPAdmission() {
+  this.router.navigate(['/doctor/ip-admission', this.visit._id], {
+    state: {
+      visitId: this.visit._id,
+      source: 'DOCTOR'
+    }
+  });
+}
 
+private showSuccess(message: string): void {
+  this.snackBar.open(message, 'Close', {
+    duration: 3000,
+    panelClass: ['success-snackbar']
+  });
+}
 private loadVisitData(): void {
   const visitId = this.route.snapshot.paramMap.get('visitId');
   if (visitId) {
@@ -925,6 +956,19 @@ async saveConsultation(): Promise<void> {
   } finally {
     this.isLoading = false;
   }
+}
+openIpRecommendation(visit: any) {
+  this.dialog.open(IpRecommendationDialogComponent, {
+    width: '900px',
+    disableClose: true,
+    data: {
+      visitId: visit._id,
+      patient: visit.patient,
+      diagnosis: visit.diagnosis,
+      vitals: visit.vitals,
+      role: 'Doctor' // ✅ CRITICAL
+    }
+  });
 }
 async printPrescription(): Promise<void> {
   if (!this.visit?._id) return;

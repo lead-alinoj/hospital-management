@@ -296,9 +296,10 @@ import { PatientService } from '../../service/patient.service';
   `,
   styles: [`
     .patient-search-container {
-      padding: 40px;
+      padding: 20px;
       max-width: 1400px;
       margin: 0 auto;
+      background: #d0dff5;
     }
     
     .search-header {

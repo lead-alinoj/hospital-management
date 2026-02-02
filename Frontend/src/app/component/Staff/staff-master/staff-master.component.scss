@@ -6,8 +6,8 @@
 .staff-container {
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
   min-height: 100vh;
-  padding: 20px;
-  margin-top: 64px; /* Account for fixed header */
+  padding: 1px;
+  // margin-top: 10px; /* Account for fixed header */
 
   @media (max-width: 767px) {
     padding: 12px;
@@ -22,11 +22,11 @@
 /* Main Card Container */
 .staff-card {
   background: #ffffff;
-  border-radius: 16px !important;
+  border-radius: 4px !important;
   box-shadow: 
     0 10px 40px rgba(31, 38, 135, 0.08),
     0 8px 25px rgba(31, 38, 135, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.18);
   overflow: hidden;
   margin: 0 auto;
   max-width: 1400px;

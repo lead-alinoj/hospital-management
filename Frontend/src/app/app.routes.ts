@@ -6,13 +6,12 @@ import { PlaceholderComponent } from './shared/placeholder/placeholder.component
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { UserManagementComponent } from './component/user-management/user-management.component';
-import { receptionGuard  } from './auth/role.guard';
+import { receptionGuard } from './auth/role.guard';
 import { PatientRegistrationComponent } from './component/reception/patient-registration.component';
 import { CreateVisitComponent } from './component/reception/create-visit.component';
-import { ReceptionDashboardComponent } from './component/reception/dashboard.component';
+import { ReceptionDashboardComponent } from './component/reception/reception-dashboard.component';
 import { NurseDashboardComponent } from './component/nurse/nurse-dashboard.component';
 import { VitalsEntryComponent } from './component/nurse/vitals-entry.component';
-import { VitalsViewComponent } from './component/nurse/vitals -view.component';
 import { VitalsHistoryComponent } from './component/nurse/vitals-history.component';
 import { DoctorDashboardComponent } from './component/doctor/doctor-dashboard.component';
 import { ConsultationComponent } from './component/doctor/consultation.component';
@@ -28,193 +27,255 @@ import { AttendanceEntryComponent } from './component/Staff/attendance-entry/att
 import { StaffMasterComponent } from './component/Staff/staff-master/staff-master.component';
 import { ShiftMasterComponent } from './component/Staff/shift-master/shift-master.component';
 import { IpAdmissionComponent } from './component/reception/ip-admission.component';
+import { IpDashboardComponent } from './component/reception/ip-dashboard.component';
+import { BedManagementComponent } from './component/IP/bed-management.component';
+import { CareUnitMasterComponent } from './component/IP/care-unit-master.component';
+import { MainLayoutComponent } from './component/layout/main-layout.component';
+import { VitalsViewComponent } from './component/nurse/vitals -view.component';
+import { IpRecommendationDialogComponent } from './component/doctor/ip-recommendation-dialog.component';
 
 export const routes: Routes = [
-  // Empty path redirects to login
- {
+  // Public routes - No layout
+  {
     path: '',
     component: LandingComponent
   },
-
-  { 
-    path: 'login', 
-    component: LoginComponent 
-  },
-  { 
-    path: 'register', 
-    component: RegisterComponent 
-  },
-  { 
-    path: 'unauthorized', 
-    component: UnauthorizedComponent 
-  },
-  
-  // ========== PROTECTED ROUTES (Require login) ==========
-  
-  // Admin routes
   {
-    path: 'admin/dashboard',
-    component: PlaceholderComponent,
-    canActivate: [authGuard, adminGuard],
-    data: { title: 'Admin Dashboard', message: 'Admin dashboard coming soon' }
+    path: 'login',
+    component: LoginComponent
   },
   {
-  path: 'admin/shift-master',
-  component: ShiftMasterComponent,
-  canActivate: [authGuard, adminGuard],
-    data: { roles: ['Admin'] }
-
-},
-
+    path: 'register',
+    component: RegisterComponent
+  },
   {
-  path: 'admin/hospital',
-  component: HospitalSettingsComponent,
-  canActivate: [authGuard],
+    path: 'unauthorized',
+    component: UnauthorizedComponent
+  },
+
+  // ========== PROTECTED ROUTES WITH MAIN LAYOUT ==========
+  {
+    path: '',
+    component: MainLayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      // ========== ADMIN ROUTES ==========
+      {
+        path: 'admin/dashboard',
+        component: PlaceholderComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/shift-master',
+        component: ShiftMasterComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/hospital',
+        component: HospitalSettingsComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/reports',
+        component: PlaceholderComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/users',
+        component: UserManagementComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/appointments',
+        component: AdminAppointmentsComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/staff',
+        component: StaffMasterComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/attendance',
+        component: AttendanceEntryComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+      {
+        path: 'admin/attendance/history',
+        component: AttendanceHistoryComponent,
+        canActivate: [adminGuard],
+        data: { roles: ['Admin'] }
+      },
+
+      // ========== DOCTOR ROUTES ==========
+      {
+        path: 'doctor/dashboard',
+        component: DoctorDashboardComponent,
+        data: { roles: ['Doctor'] }
+      },
+      {
+        path: 'doctor/consultation/:visitId',
+        component: ConsultationComponent,
+        data: { roles: ['Doctor'] }
+      },
+      {
+        path: 'doctor/patients',
+        component: DoctorDashboardComponent,
+        data: { roles: ['Doctor'] }
+      },
+   
+
+      // ========== NURSE ROUTES ==========
+      {
+        path: 'nurse/dashboard',
+        component: NurseDashboardComponent,
+        data: { roles: ['Nurse'] }
+      },
+      {
+        path: 'nurse/vitals/:visitId',
+        component: VitalsEntryComponent,
+        data: { roles: ['Nurse'] }
+      },
+      {
+        path: 'nurse/vitals/view/:visitId',
+        component: VitalsViewComponent,
+        data: { roles: ['Nurse'] }
+      },
+
+      // ========== RECEPTION ROUTES ==========
+      {
+        path: 'reception/staff',
+        component: StaffMasterComponent,
+        canActivate: [receptionGuard],
+        data: { roles: ['Reception'] }
+      },
+      {
+        path: 'reception/attendance',
+        component: AttendanceEntryComponent,
+        canActivate: [receptionGuard],
+        data: { roles: ['Reception'] }
+      },
+      {
+        path: 'reception/dashboard',
+        component: ReceptionDashboardComponent,
+        data: { roles: ['Reception'] }
+      },
+      {
+        path: 'reception/patient/register',
+        component: PatientRegistrationComponent,
+        data: { roles: ['Reception'] }
+      },
+      {
+        path: 'reception/visit/create',
+        component: CreateVisitComponent,
+        data: { roles: ['Reception'] }
+      },
+      {
+        path: 'reception/patient/search',
+        component: PatientSearchComponent,
+        data: { roles: ['Reception'] }
+      },
+      {
+        path: 'reception/ip-admission',
+          canActivate: [receptionGuard],   // ✅ ADD THIS
+        component: IpAdmissionComponent,
+        data: { roles: ['Reception'] }
+      },
+
+      // ========== PHARMACY ROUTES ==========
+      {
+        path: 'pharmacy/dashboard',
+        component: PharmacyDashboardComponent,
+        data: { roles: ['Pharmacy'] }
+      },
+      {
+        path: 'pharmacy/medicines',
+        component: MedicineManagementComponent,
+        data: { roles: ['Pharmacy'] }
+      },
+      {
+        path: 'pharmacy/categories',
+        component: CategoryManagementComponent,
+        data: { roles: ['Pharmacy'] }
+      },
+
+      // ========== COMMON ROUTES ==========
+      {
+        path: 'ip-dashboard',
+        component: IpDashboardComponent,
+        data: { roles: ['Admin', 'Doctor', 'Nurse', 'Reception', 'Pharmacy'] }
+      },
+     
+ // Admin
+{
+  path: 'admin/care-units',
+  component: CareUnitMasterComponent,
+  canActivate: [adminGuard],
   data: { roles: ['Admin'] }
 },
-  {
-    path: 'admin/reports',
-    component: PlaceholderComponent,
-    canActivate: [authGuard, adminGuard],
-    data: { title: 'Reports', message: 'Reports module coming soon' }
-  },
-  {
-    path: 'admin/users',
-    component: UserManagementComponent,
-    canActivate: [authGuard, adminGuard],
-    data: { title: 'User Management', message: 'User management coming soon' }
-  },
-  {
-  path: 'admin/appointments',
-  component: AdminAppointmentsComponent,
-  canActivate: [authGuard, adminGuard], // Only accessible by admin
-  data: { title: 'Appointments' }
-},
-  {
-    path: 'admin/staff',
-    component: StaffMasterComponent,
-    canActivate: [authGuard, adminGuard],
-    data: { title: 'Staff Master' }
-  },
-  {
-    path: 'reception/staff',
-    component: StaffMasterComponent,
-    canActivate: [authGuard, receptionGuard],
-    data: { title: 'Staff Master' }
-  },
- 
+
+// Reception
 {
-  path: 'reception/ip-admission/:visitId',
-  component: IpAdmissionComponent,
-  canActivate: [authGuard, receptionGuard],
+  path: 'reception/care-units',
+  component: CareUnitMasterComponent,
+  canActivate: [receptionGuard],
   data: { roles: ['Reception'] }
 },
-  // Attendance Routes
-  {
-    path: 'admin/attendance',
-    component: AttendanceEntryComponent,
-    canActivate: [authGuard, adminGuard],
-    data: { title: 'Attendance Entry' }
-  },
-  {
-    path: 'reception/attendance',
-    component: AttendanceEntryComponent,
-    canActivate: [authGuard, receptionGuard],
-    data: { title: 'Attendance Entry' }
-  },
-  {
-    path: 'admin/attendance/history',
-    component: AttendanceHistoryComponent,
-    canActivate: [authGuard, adminGuard],
-    data: { title: 'Attendance History' }
-  },
-  // {
-  //   path: 'admin/attendance/reports',
-  //   component: AttendanceReportsComponent,
-  //   canActivate: [authGuard, adminGuard],
-  //   data: { title: 'Attendance Reports' }
-  // },
 
-  // Doctor routes
+// Nurse
 {
-  path: 'doctor/dashboard',
-  component: DoctorDashboardComponent,
-  canActivate: [authGuard],
-  data: { role: 'Doctor' }
+  path: 'nurse/care-units',
+  component: CareUnitMasterComponent,
+  data: { roles: ['Nurse'] }
+},
+// Admin
+{
+  path: 'admin/beds',
+  component: BedManagementComponent,
+  canActivate: [adminGuard],
+  data: { roles: ['Admin'] }
 },
 
+// Reception
 {
-  path: 'doctor/consultation/:visitId',
-  component: ConsultationComponent,
-  canActivate: [authGuard],
-  data: { role: 'Doctor' }
+  path: 'reception/beds',
+  component: BedManagementComponent,
+  canActivate: [receptionGuard],
+  data: { roles: ['Reception'] }
 },
 
-  { 
-    path: 'doctor/patients', 
-      component: DoctorDashboardComponent,
-    canActivate: [authGuard],
-    data: { title: 'My Patients', message: 'Patient management coming soon' }
-  },
-  
-  // Nurse routes
-  { 
-    path: 'nurse/dashboard', 
-    component: NurseDashboardComponent,
-    canActivate: [authGuard],
-    data: { role: 'Nurse' }
-  },
-   {
-    path: 'nurse/vitals/:visitId',
-    component: VitalsEntryComponent, // Use the existing vitals component
-    canActivate: [authGuard],
-    data: { role: 'Nurse' }
-  },
-   {
-    path: 'vitals/history/:patientId',
-    component: VitalsHistoryComponent , // You might want to create a view-only component
-    // canActivate: [authGuard],
-    data: { role: 'Nurse' }
-  },
-  {
-    path: 'nurse/vitals/view/:visitId',
-    component: VitalsViewComponent, // You might want to create a view-only component
-    canActivate: [authGuard],
-    data: { role: 'Nurse' }
-  },
-  // Reception routes
-  {
-   path: 'reception',
-       canActivate: [authGuard], // Add authentication guard
+// Nurse (view only)
+{
+  path: 'nurse/beds',
+  component: BedManagementComponent,
+  data: { roles: ['Nurse'] }
+},
 
-    children: [
-      { path: 'dashboard', component: ReceptionDashboardComponent},
-      { path: 'patient/register', component: PatientRegistrationComponent }, // This is the missing route
-      { path: 'visit/create', component: CreateVisitComponent },
-      { path: 'patient/search', component: PatientSearchComponent },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+
+      {
+        path: 'vitals/history/:patientId',
+        component: VitalsHistoryComponent,
+        data: { roles: ['Nurse', 'Doctor'] }
+      },
+
+      // Default redirect
+      // {
+      //   path: '',
+      //   redirectTo: 'dashboard',
+      //   pathMatch: 'full'
+      // }
     ]
   },
-  // Pharmacy routes
- {
-  path: 'pharmacy/dashboard',
-  component: PharmacyDashboardComponent,
-  canActivate: [authGuard],
-  data: { roles: ['Pharmacy', 'Admin'] }
-},
-{
-  path: 'pharmacy/medicines',
-  component: MedicineManagementComponent,
-  canActivate: [authGuard],
-  data: { roles: ['Pharmacy', 'Admin'] }
-},
-{
-  path: 'pharmacy/categories',
-  component: CategoryManagementComponent, // Make sure to import this component
-  canActivate: [authGuard],
-  data: { roles: ['Pharmacy', 'Admin'] }
-},
-  // Wildcard route - redirect to login
+
+  // Wildcard route
   {
     path: '**',
     redirectTo: ''
