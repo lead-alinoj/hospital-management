@@ -272,17 +272,18 @@ export class AddIpMedicineDialogComponent {
   }
 
   private loadItems(): void {
-    this.medicineService.getMedicines().subscribe({
-      next: (response: any) => {
-        this.allItems = response.data || [];
-        this.filterItemsByType();
-      },
-      error: (error) => {
-        console.error('Error loading items:', error);
-        this.allItems = [];
-      }
-    });
-  }
+  // Use billable items endpoint instead of all items
+  this.medicineService.getBillableItems().subscribe({
+    next: (response: any) => {
+      this.allItems = response.data || [];
+      this.filterItemsByType();
+    },
+    error: (error) => {
+      console.error('Error loading items:', error);
+      this.allItems = [];
+    }
+  });
+}
 
   private filterItemsByType(): void {
     let filtered = this.allItems;
@@ -336,10 +337,23 @@ export class AddIpMedicineDialogComponent {
     }
   }
 
-  onItemTypeChange(event: any): void {
-    this.selectedItemType = event.value as any;
-    this.loadItems();
+ onItemTypeChange(event: any): void {
+  this.selectedItemType = event.value as any;
+  
+  // Filter categories based on hospital requirements
+  let allowedCategories = ['Medicine', 'Consumable'];
+  
+  if (this.selectedItemType === 'Medicine') {
+    allowedCategories = ['Medicine'];
+  } else if (this.selectedItemType === 'Consumable') {
+    allowedCategories = ['Consumable'];
   }
+  
+  // Filter items
+  this.allItems = this.allItems.filter(item => 
+    allowedCategories.includes(item.category?.type)
+  );
+}
 
   addItem(): void {
     const itemGroup = this.fb.group({

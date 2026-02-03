@@ -61,7 +61,14 @@ getAllItemsForIP(): Observable<any> {
   getLowStockMedicines(): Observable<any> {
     return this.http.get(`${this.apiUrl}/low-stock`);
   }
-
+  // Add this method to MedicineService class
+getBillableItems(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/billable-items`);
+}
+// Add this method in MedicineService
+addIPBillItems(data: any): Observable<any> {
+  return this.http.post(`${environment.apiUrl}/ip-billing/items`, data);
+}
   // Get available medicines (with stock > 0)
   getAvailableMedicines(): Observable<any> {
     return this.http.get(`${this.apiUrl}/available`);

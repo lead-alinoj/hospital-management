@@ -26,7 +26,7 @@ const staffRoutes = require('./routes/staff.routes');
 const attendanceRoutes = require('./routes/attendance.routes');
 const shiftRoutes = require('./routes/shift.routes');
 const ipadmissionRoutes = require('./routes/ipAdmission.routes');
-// const ipBillRoutes = require('./routes/ipBill.routes');
+const ipBillRoutes = require('./routes/ipBill.routes');
 const bedRoutes = require('./routes/bed.routes');
 const careUnitRoutes = require('./routes/careUnit.routes');
 // Routes
@@ -55,7 +55,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/ip-admission', ipadmissionRoutes);
-// app.use('/api/ipbill', ipBillRoutes);
+app.use('/api/ipbill', ipBillRoutes);
 app.use('/api/bed', bedRoutes);
 app.use('/api/care-units', careUnitRoutes);
 

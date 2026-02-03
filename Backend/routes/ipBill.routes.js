@@ -3,30 +3,31 @@ const router = express.Router();
 const ipBillController = require('../controllers/ipBill.controller');
 const { protect, authorize } = require('../middleware/auth');
 
+// All routes require authentication
 router.use(protect);
 
-// Add IP bill items
-router.post('/',
-  authorize('Nurse', 'Doctor', 'Reception', 'Admin'),
+// Add bill items - Multiple roles allowed
+router.post('/items',
+  authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
   ipBillController.addIPBillItems
 );
 
-// Get IP bill items for a visit
-router.get('/:visitId',
-  authorize('Nurse', 'Doctor', 'Reception', 'Admin'),
+// Get bill items for visit
+router.get('/items/:visitId',
+  authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
   ipBillController.getIPBillItems
 );
 
-// Calculate IP bill
+// Calculate bill
 router.get('/calculate/:visitId',
-  authorize('Reception', 'Admin'),
+  authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
   ipBillController.calculateIPBill
 );
 
-// Delete IP bill item
-router.delete('/:itemId',
+// Delete bill item
+router.delete('/items/:itemId',
   authorize('Admin', 'Reception'),
-  ipBillController.deleteIPBillItem
+  ipBillController.deleteBillItem
 );
 
 module.exports = router;

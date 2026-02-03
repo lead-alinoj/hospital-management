@@ -1,43 +1,66 @@
-const IPBill = require('../models/ipBill.model');
+const IPBillItem = require('../models/ipBill.model');
 const Medicine = require('../models/medicine.model');
+const Visit = require('../models/visit.model');
 
+// Add IP bill items
 exports.addIPBillItems = async (req, res) => {
   try {
-    const { visitId, items, administeredBy, notes } = req.body;
-
-    // Create bill items
-    const billItems = items.map(item => ({
-      visit: visitId,
-      patient: req.body.patientId,
-      itemId: item.itemId,
-      name: item.name,
-      categoryType: item.categoryType,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      totalPrice: item.totalPrice,
-      frequency: item.frequency,
-      days: item.days,
-      instructions: item.instructions,
-      administeredBy,
-      notes,
-      addedBy: req.user.id
-    }));
-
-    // Save bill items
-    const savedItems = await IPBill.insertMany(billItems);
-
-    // Update medicine stock if it's a medicine/consumable item
-    for (const item of items) {
-      if (item.itemId && (item.categoryType === 'Medicine' || item.categoryType === 'Consumable')) {
-        const medicine = await Medicine.findById(item.itemId);
-        if (medicine) {
-          // Deduct stock for IP patient
-          medicine.stockQty = Math.max(0, medicine.stockQty - item.quantity);
-          await medicine.save();
-        }
-      }
+    const { visitId, items } = req.body;
+    
+    // Get visit and patient
+    const visit = await Visit.findById(visitId).populate('patient');
+    if (!visit) {
+      return res.status(404).json({
+        success: false,
+        message: 'Visit not found'
+      });
     }
-
+    
+    // Validate and prepare items
+    const billItems = [];
+    
+    for (const item of items) {
+      // For medicine items, check stock and deduct
+      if (item.categoryType === 'Medicine' && item.itemId) {
+        const medicine = await Medicine.findById(item.itemId);
+        
+        if (!medicine) {
+          throw new Error(`Medicine ${item.name} not found`);
+        }
+        
+        if (medicine.stockQty < item.quantity) {
+          throw new Error(`Insufficient stock for ${medicine.name}. Available: ${medicine.stockQty}`);
+        }
+        
+        // Deduct stock
+        medicine.stockQty -= item.quantity;
+        await medicine.save();
+      }
+      
+      // Create bill item
+      const billItem = new IPBillItem({
+        visit: visitId,
+        patient: visit.patient._id,
+        itemId: item.itemId,
+        name: item.name,
+        categoryType: item.categoryType,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.quantity * item.unitPrice,
+        frequency: item.frequency,
+        days: item.days,
+        instructions: item.instructions,
+        administeredBy: req.body.administeredBy,
+        addedBy: req.user.id,
+        notes: req.body.notes
+      });
+      
+      billItems.push(billItem);
+    }
+    
+    // Save all items
+    const savedItems = await IPBillItem.insertMany(billItems);
+    
     res.json({
       success: true,
       data: savedItems,
@@ -47,135 +70,116 @@ exports.addIPBillItems = async (req, res) => {
     console.error('Error adding IP bill items:', error);
     res.status(500).json({
       success: false,
-      message: 'Error adding bill items',
-      error: error.message
+      message: error.message
     });
   }
 };
 
+// Get IP bill items for a visit
 exports.getIPBillItems = async (req, res) => {
   try {
     const { visitId } = req.params;
-
-    const billItems = await IPBill.find({ visit: visitId })
-      .sort({ createdAt: -1 });
-
+    
+    const items = await IPBillItem.find({ visit: visitId })
+      .sort({ createdAt: -1 })
+      .populate('addedBy', 'name role');
+    
     res.json({
       success: true,
-      data: billItems,
-      count: billItems.length
+      data: items,
+      total: items.length
     });
   } catch (error) {
     console.error('Error fetching IP bill items:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching bill items',
-      error: error.message
+      message: error.message
     });
   }
 };
 
+// Calculate total bill
 exports.calculateIPBill = async (req, res) => {
   try {
     const { visitId } = req.params;
-
-    // Get visit details
-    const Visit = require('../models/visit.model');
+    
+    // Get all bill items
+    const billItems = await IPBillItem.find({ visit: visitId });
+    
+    // Get visit details for room charges
     const visit = await Visit.findById(visitId)
       .populate('bedAllocated')
       .populate('patient');
-
+    
     if (!visit) {
       return res.status(404).json({
         success: false,
         message: 'Visit not found'
       });
     }
-
-    // Get all bill items
-    const billItems = await IPBill.find({ visit: visitId });
-
+    
     // Calculate room charges
     const admissionDate = visit.admissionDate || new Date();
-    const dischargeDate = visit.dischargeDate || new Date();
-    const stayDays = Math.ceil((dischargeDate - admissionDate) / (1000 * 60 * 60 * 24));
+    const currentDate = new Date();
+    const stayDays = Math.ceil((currentDate - admissionDate) / (1000 * 60 * 60 * 24));
     const roomChargesPerDay = visit.bedAllocated?.room?.chargesPerDay || 0;
     const roomCharges = stayDays * roomChargesPerDay;
-
+    
     // Calculate item charges
     const itemCharges = billItems.reduce((sum, item) => sum + item.totalPrice, 0);
-
-    // Doctor fees (can be configured)
-    const doctorFees = 500; // Default doctor visit charge
-
-    // Nursing charges
-    const nursingCharges = stayDays * 200;
-
-    // Total calculation
-    const subtotal = roomCharges + itemCharges + doctorFees + nursingCharges;
+    
+    // Total
+    const subtotal = roomCharges + itemCharges;
     const tax = subtotal * 0.18; // 18% GST
     const total = subtotal + tax;
-
-    const billSummary = {
-      stayDays,
-      admissionDate,
-      dischargeDate,
-      room: {
-        number: visit.bedAllocated?.room?.roomNumber,
-        type: visit.bedAllocated?.room?.type,
-        chargesPerDay: roomChargesPerDay
-      },
-      charges: {
-        roomCharges,
-        itemCharges,
-        doctorFees,
-        nursingCharges,
-        subtotal,
-        tax,
-        total
-      },
-      items: billItems,
-      patient: visit.patient,
-      paymentStatus: 'PENDING'
-    };
-
+    
     res.json({
       success: true,
-      data: billSummary
+      data: {
+        patient: visit.patient,
+        admissionDate,
+        stayDays,
+        roomCharges,
+        itemCharges,
+        subtotal,
+        tax,
+        total,
+        items: billItems
+      }
     });
   } catch (error) {
     console.error('Error calculating IP bill:', error);
     res.status(500).json({
       success: false,
-      message: 'Error calculating bill',
-      error: error.message
+      message: error.message
     });
   }
 };
 
-exports.deleteIPBillItem = async (req, res) => {
+// Delete bill item
+exports.deleteBillItem = async (req, res) => {
   try {
     const { itemId } = req.params;
-
-    const billItem = await IPBill.findById(itemId);
+    
+    const billItem = await IPBillItem.findById(itemId);
     if (!billItem) {
       return res.status(404).json({
         success: false,
         message: 'Bill item not found'
       });
     }
-
-    // Restore stock if applicable
-    if (billItem.itemId && (billItem.categoryType === 'Medicine' || billItem.categoryType === 'Consumable')) {
+    
+    // Restore stock if medicine item
+    if (billItem.categoryType === 'Medicine' && billItem.itemId) {
       const medicine = await Medicine.findById(billItem.itemId);
       if (medicine) {
         medicine.stockQty += billItem.quantity;
         await medicine.save();
       }
     }
-
-    await IPBill.findByIdAndDelete(itemId);
-
+    
+    await IPBillItem.findByIdAndDelete(itemId);
+    
     res.json({
       success: true,
       message: 'Bill item deleted successfully'
@@ -184,8 +188,7 @@ exports.deleteIPBillItem = async (req, res) => {
     console.error('Error deleting bill item:', error);
     res.status(500).json({
       success: false,
-      message: 'Error deleting bill item',
-      error: error.message
+      message: error.message
     });
   }
 };

@@ -24,6 +24,8 @@ export type VisitStatus =
   | 'Vitals_Completed'
   | 'Consultation_In_Progress'
   | 'Consultation_Completed'
+  | 'IP_RECOMMENDED'
+  | 'IP_ACTIVE'
   | 'Pharmacy'
   | 'Completed';
 

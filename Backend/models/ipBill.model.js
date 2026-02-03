@@ -1,133 +1,79 @@
 const mongoose = require('mongoose');
 
-const billingSchema = new mongoose.Schema({
+const ipBillItemSchema = new mongoose.Schema({
   visit: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Visit',
     required: true
   },
-  
   patient: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
     required: true
   },
   
-  admissionDate: {
-    type: Date,
+  // Item Details
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Medicine'
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  categoryType: {
+    type: String,
+    enum: ['Medicine', 'Consumable', 'Lab', 'Procedure', 'Blood', 'Miscellaneous'],
     required: true
   },
   
-  dischargeDate: {
-    type: Date,
-    required: true
-  },
-  
-  stayDays: {
+  // Pricing
+  quantity: {
     type: Number,
     required: true,
     min: 1
   },
-  
-  // Room Charges
-  roomCharges: {
+  unitPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  totalPrice: {
     type: Number,
     required: true,
     min: 0
   },
   
-  // Medical Charges
-  doctorCharges: {
-    type: Number,
-    default: 0
-  },
+  // For Medicines
+  frequency: String,
+  days: Number,
+  instructions: String,
   
-  nursingCharges: {
-    type: Number,
-    default: 0
-  },
-  
-  medicineCharges: {
-    type: Number,
-    default: 0
-  },
-  
-  procedureCharges: {
-    type: Number,
-    default: 0
-  },
-  
-  investigationCharges: {
-    type: Number,
-    default: 0
-  },
-  
-  otherCharges: {
-    type: Number,
-    default: 0
-  },
-  
-  discount: {
-    type: Number,
-    default: 0
-  },
-  
-  tax: {
-    type: Number,
-    default: 0
-  },
-  
-  totalAmount: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  
-  paidAmount: {
-    type: Number,
-    default: 0
-  },
-  
-  balanceAmount: {
-    type: Number,
-    default: 0
-  },
-  
-  paymentStatus: {
+  // Tracking
+  administeredBy: {
     type: String,
-    enum: ['PENDING', 'PARTIALLY_PAID', 'PAID', 'CANCELLED'],
-    default: 'PENDING'
+    enum: ['Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Lab'],
+    required: true
   },
-  
-  paymentMode: {
-    type: String,
-    enum: ['CASH', 'CARD', 'UPI', 'INSURANCE', 'CHEQUE'],
-    default: 'CASH'
-  },
-  
-  createdBy: {
+  addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
   
-  remarks: {
-    type: String,
-    default: ''
+  // Status
+  isFinalized: {
+    type: Boolean,
+    default: false
   },
   
-  isActive: {
-    type: Boolean,
-    default: true
+  notes: String,
+  
+  // Audit
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
 
-// Calculate balance amount before save
-billingSchema.pre('save', function(next) {
-  this.balanceAmount = this.totalAmount - this.paidAmount - this.discount;
-  next();
-});
-
-module.exports = mongoose.model('Billing', billingSchema);
+module.exports = mongoose.model('IPBillItem', ipBillItemSchema);

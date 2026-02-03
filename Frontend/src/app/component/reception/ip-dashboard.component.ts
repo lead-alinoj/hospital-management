@@ -17,6 +17,7 @@ import { Router } from '@angular/router';
 import { IpAdmissionService } from '../../service/ip-admission.service';
 import { IpRecommendationDialogComponent } from '../doctor/ip-recommendation-dialog.component';
 import { AuthService } from '../../auth/auth.service';
+import { MedicineService } from '../../service/medicine.service';
 @Component({
   selector: 'app-ip-dashboard',
   standalone: true,
@@ -478,15 +479,22 @@ ngOnInit(): void {
   const user = this.authService.getCurrentUser();
   const role = user?.role; // Doctor | Nurse | Reception | Admin
 
-  if (role === 'Doctor' || role === 'Nurse' || role === 'Admin') {
-    this.loadActivePatients(); // ✅ allowed
+  // ✅ Active IP Patients → ALL roles
+  if (role && ['Doctor', 'Nurse', 'Reception', 'Admin'].includes(role)) {
+    this.loadActivePatients();
   }
 
-  if (role === 'Reception' || role === 'Admin') {
-    this.loadRecommendedPatients(); // ✅ reception job
-    this.loadAllBeds();              // ✅ bed status
+  // ✅ Bed Status → ALL roles
+  if (role && ['Doctor', 'Nurse', 'Reception', 'Admin'].includes(role)) {
+    this.loadAllBeds();
+  }
+
+  // ✅ IP Recommendations → ONLY Reception & Admin
+  if (role && ['Reception', 'Admin', 'Nurse'].includes(role)) {
+    this.loadRecommendedPatients();
   }
 }
+
 
 
   // Add these methods
@@ -534,6 +542,17 @@ private loadActivePatients(): void {
   });
 }
 
+allocateBed(recommendation: any) {
+  this.router.navigate(
+    ['/reception/ip-admission'],
+    {
+      queryParams: {
+        visitId: recommendation.visitId,
+        source: 'RECOMMENDATION'
+      }
+    }
+  );
+}
 
    private loadAllBeds(): void {
     this.bedService.getAllBeds().subscribe({
@@ -663,16 +682,19 @@ private loadRecommendedPatients(): void {
       }
     });
   }
-admitPatient(patient: any): void {
-  this.dialog.open(IpRecommendationDialogComponent, {
-    width: '900px',
-    data: {
-      visitId: patient.visitId, // ✅ CORRECT
-      patient: patient.patient,
-      role: 'Reception'
+// In ip-dashboard.component.ts - Update the admitPatient method
+admitPatient(recommendedPatient: any): void {
+  this.router.navigate(
+    ['/reception/ip-admission'],
+    {
+      queryParams: {
+        visitId: recommendedPatient.visitId,
+        source: 'RECOMMENDATION'
+      }
     }
-  });
+  );
 }
+
 
 
 

@@ -36,7 +36,7 @@ doctor: {
   },
   visitStatus: {
     type: String,
-    enum: [ 'Waiting', 'Vitals_In_Progress', 'Vitals_Completed', 'Consultation_In_Progress', 'Consultation_Completed','IP_RECOMMENDED',  'Pharmacy', 'Completed'],
+    enum: [ 'Waiting', 'Vitals_In_Progress', 'Vitals_Completed', 'Consultation_In_Progress', 'Consultation_Completed','IP_RECOMMENDED','IP_ACTIVE',  'Pharmacy', 'Completed'],
     default: 'Waiting'
   },
   priority: {

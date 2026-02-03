@@ -1293,18 +1293,7 @@ export class IpAdmissionComponent implements OnInit {
     this.loadBedAvailability();
   }
 
-  private checkMode() {
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as any;
-    
-    if (state && state.source === 'DOCTOR' && state.visitId) {
-      this.isDoctorMode = true;
-      this.visitId = state.visitId;
-      this.loadVisit();
-    } else {
-      this.isDoctorMode = false;
-    }
-  }
+
 
   private initForm() {
     this.admissionForm = this.fb.group({
@@ -1405,10 +1394,119 @@ export class IpAdmissionComponent implements OnInit {
     if (this.isDoctorMode) {
       this.doctorRecommendation();
     } else {
-      this.emergencyAdmission();
+      if (this.visitId) {
+        this.allocateRecommendedBed(); // For recommendations
+      } else {
+        this.emergencyAdmission(); // For emergency admissions
+      }
     }
   }
+  private allocateRecommendedBed(): void {
+    if (!this.selectedBed || !this.admissionForm.valid) {
+      this.showError('Please select a bed and enter admission reason');
+      return;
+    }
 
+    const admissionData = {
+      visitId: this.visitId,
+      bedId: this.selectedBed._id,
+      admissionNotes: this.admissionForm.get('admissionReason')?.value || '',
+      expectedStayDays: 3, // Default value or get from form
+      admissionType: this.admissionForm.get('admissionType')?.value || 'DOCTOR_ADVISED',
+      shift: this.getCurrentShift()
+    };
+
+    this.isLoading = true;
+
+    this.ipService.allocateRecommendedAdmission(admissionData).subscribe({
+      next: (response) => {
+        console.log('✅ Bed allocated successfully:', response);
+        this.showSuccess('Patient admitted to selected bed');
+        this.router.navigate(['/ip-dashboard']);
+      },
+      error: (err) => {
+        console.error('❌ Allocation error:', err);
+        const errorMessage = err.error?.message || 'Bed allocation failed';
+        this.showError(errorMessage);
+        this.isLoading = false;
+      }
+    });
+  }
+ 
+private checkMode(): void {
+  this.route.queryParams.subscribe(params => {
+    const visitId = params['visitId'];
+    const source = params['source'];
+
+    console.log('🔍 Query Params:', params);
+
+    if (source === 'RECOMMENDATION' && visitId) {
+      this.isDoctorMode = false; // Reception mode
+      this.visitId = visitId;
+      this.loadVisitFromApi();   // ⬅️ IMPORTANT
+    } else if (source === 'DOCTOR' && visitId) {
+      this.isDoctorMode = true;
+      this.visitId = visitId;
+      this.loadVisit();
+    } else {
+      this.isDoctorMode = false;
+    }
+  });
+}
+private loadVisitFromApi(): void {
+  this.isLoading = true;
+
+  this.visitService.getVisitById(this.visitId).subscribe({
+    next: (res: any) => {
+      this.visit = res.data || res;
+
+      // ✅ AUTO-SELECT PATIENT
+      this.selectedPatient = this.visit.patient;
+      this.selectedPatientId = this.visit.patient?._id;
+
+      // ✅ Pre-fill form
+      this.admissionForm.patchValue({
+        admissionReason: this.visit.diagnosis || 'IP admission recommended by doctor',
+        admissionType: 'DOCTOR_ADVISED'
+      });
+
+      this.isLoading = false;
+
+      console.log('✅ Patient auto-selected:', this.selectedPatient.fullName);
+    },
+    error: () => {
+      this.showError('Failed to load visit details');
+      this.isLoading = false;
+    }
+  });
+}
+
+private loadVisitFromRecommendation(state: any): void {
+  this.isLoading = true;
+  
+  // Use the passed state data
+  this.visit = {
+    _id: state.visitId,
+    patient: state.patient,
+    admissionType: state.admissionType,
+    diagnosis: state.diagnosis,
+    medicines: state.medicines
+  };
+  
+  // Set the patient for reception mode
+  this.selectedPatient = state.patient;
+  this.selectedPatientId = state.patient?._id;
+  
+  // Pre-fill the admission form
+  this.admissionForm.patchValue({
+    admissionReason: state.diagnosis || 'IP admission recommended by doctor',
+    admissionType: state.admissionType || 'DOCTOR_ADVISED'
+  });
+  
+  this.isLoading = false;
+  
+  console.log('✅ Loaded recommended visit:', this.visit);
+}
   private doctorRecommendation() {
     if (!this.visit || this.admissionForm.invalid) return;
 

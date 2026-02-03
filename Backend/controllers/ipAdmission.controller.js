@@ -253,6 +253,150 @@ exports.recommendIP = async (req, res) => {
     });
   }
 };
+// In ipAdmission.controller.js - Add allocateRecommendedAdmission endpoint
+// In ipAdmission.controller.js - Add allocateRecommendedAdmission endpoint
+exports.allocateRecommendedAdmission = async (req, res) => {
+  try {
+    console.log('🔵 allocateRecommendedAdmission API called');
+    console.log('👉 User:', req.user.id, req.user.role);
+    console.log('👉 Body:', JSON.stringify(req.body, null, 2));
+
+    const { 
+      visitId, 
+      bedId, 
+      admissionNotes, 
+      admissionType = 'DOCTOR_ADVISED',
+      expectedStayDays = 3, // Default to 3 days if not provided
+      nursingInstructions,
+      shift
+    } = req.body;
+
+    // Validate reception role
+    if (req.user.role !== 'Reception' && req.user.role !== 'Admin') {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Only reception can allocate beds for recommended admissions' 
+      });
+    }
+
+    // Find the recommended visit
+    const visit = await Visit.findById(visitId)
+      .populate('patient')
+      .populate('doctor')
+      .populate('prescriptionId');
+    
+    if (!visit) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Visit not found' 
+      });
+    }
+
+    console.log('📊 Found visit:', {
+      id: visit._id,
+      patient: visit.patient?.fullName,
+      visitStatus: visit.visitStatus,
+      admissionStatus: visit.admissionStatus
+    });
+
+    // Verify it's a recommended visit
+    if (visit.visitStatus !== 'IP_RECOMMENDED' && visit.admissionStatus !== 'NOT_ADMITTED') {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Visit is not in recommended state for IP admission',
+        currentStatus: visit.visitStatus,
+        admissionStatus: visit.admissionStatus
+      });
+    }
+
+    // Check if bed is available
+    const bed = await Bed.findOne({ 
+      _id: bedId, 
+      status: 'AVAILABLE', 
+      isActive: true 
+    });
+    
+    if (!bed) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Bed not available or does not exist' 
+      });
+    }
+
+    // Check if patient is already admitted
+    const existingAdmission = await Bed.findOne({
+      currentPatient: visit.patient._id,
+      status: 'OCCUPIED'
+    });
+
+    if (existingAdmission) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Patient already admitted to another bed' 
+      });
+    }
+
+    // Update bed status
+    bed.status = 'OCCUPIED';
+    bed.currentPatient = visit.patient._id;
+    bed.currentVisit = visit._id;
+    bed.admissionDate = new Date();
+    await bed.save();
+
+    // Update visit with admission details
+    visit.visitStatus = 'IP_ACTIVE';
+    visit.admissionStatus = 'IP_ACTIVE';
+    visit.admissionType = admissionType;
+    visit.admissionDate = new Date();
+    visit.bedAllocated = bed._id;
+    visit.admissionReason = admissionNotes;
+    visit.admissionNotes = admissionNotes;
+    visit.admittedByRole = 'Reception';
+    visit.expectedStayDays = expectedStayDays;
+    visit.nursingInstructions = nursingInstructions;
+    visit.shift = shift || getCurrentShift();
+    
+    if (admissionType === 'OBSERVATION') {
+      visit.isObservationCase = true;
+    }
+    
+    await visit.save();
+
+    // Update patient type
+    await Patient.findByIdAndUpdate(visit.patient._id, { patientType: 'IP' });
+
+    console.log('✅ Admission successful:', {
+      visitId: visit._id,
+      patient: visit.patient.fullName,
+      bed: bed.bedNumber,
+      admissionType: visit.admissionType
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Patient admitted successfully',
+      data: { 
+        visit: {
+          _id: visit._id,
+          patient: visit.patient,
+          admissionType: visit.admissionType,
+          bedAllocated: bed,
+          admissionDate: visit.admissionDate
+        },
+        bed
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ allocateRecommendedAdmission error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to allocate bed for recommended admission',
+      error: error.message,
+      stack: error.stack
+    });
+  }
+};
 // In ipAdmission.controller.js - Temporary debug version
 exports.getRecommendedIPPatients = async (req, res) => {
   try {

@@ -8,22 +8,83 @@ const { protect, authorize } = require('../middleware/auth');
 // Protect all IP routes
 router.use(protect);
 
-// Add this route after existing routes:
-router.get('/available-visits',
-  authorize('Reception', 'Admin'),
-  ipController.getAvailableVisits
-);
+// ==================== ROUTES ====================
 
 // Bed availability
 router.get('/beds/available',
   authorize('Reception', 'Doctor', 'Nurse', 'Admin'),
   ipController.getBedAvailability
 );
-// Add to ipadmission.routes.js
+
+// Current IP patients
+router.get('/current',
+  authorize('Doctor', 'Nurse', 'Admin', 'Reception'),
+  ipController.getCurrentIPPatients
+);
+
+// Recommended IP patients (from doctor recommendations)
+router.get('/recommended',
+  authorize('Reception', 'Admin', 'Doctor'),
+  ipController.getRecommendedIPPatients
+);
+
+// Available visits for reception
+router.get('/available-visits',
+  authorize('Reception', 'Admin'),
+  ipController.getAvailableVisits
+);
+
+// Allocate bed for recommended admission (Reception only)
+router.post('/allocate-recommended',
+  authorize('Reception', 'Admin'),
+  ipController.allocateRecommendedAdmission
+);
+
+// Emergency admission (Reception)
+router.post('/emergency',
+  authorize('Reception', 'Admin', 'Nurse'),
+  ipController.emergencyAdmission
+);
+
+// Doctor advised admission
+router.post('/doctor-admit',
+  authorize('Doctor', 'Admin', 'Reception'),
+  ipController.doctorAdvisedAdmission
+);
+
+// Doctor recommend IP (no bed allocation)
+router.post('/recommend',
+  authorize('Doctor', 'Admin'),
+  ipController.recommendIP
+);
+
+// Cancel admission
+router.post('/cancel',
+  authorize('Reception', 'Doctor', 'Admin'),
+  ipController.cancelAdmission
+);
+
+// Discharge patient
+router.post('/discharge',
+  authorize('Doctor', 'Admin', 'Nurse', 'Reception'),
+  ipController.dischargePatient
+);
+// Doctor recommend IP (no bed allocation)
+router.post('/recommend',
+  authorize('Doctor', 'Admin'),
+  ipController.recommendIP
+);
+
+// ==================== DEBUG ROUTES ====================
+// (These can be removed in production)
+
+// Debug: Check all recommendations
 router.get('/debug/check-recommendations',
   authorize('Admin', 'Doctor', 'Reception'),
   async (req, res) => {
     try {
+      const Visit = require('../models/visit.model');
+      
       // First check ALL visits
       const allVisits = await Visit.find({})
         .select('_id patient doctor visitStatus admissionStatus admissionType')
@@ -64,11 +125,14 @@ router.get('/debug/check-recommendations',
     }
   }
 );
-// Add this to ipadmission.routes.js
+
+// Debug: Get all recommendations
 router.get('/debug/recommendations', 
   authorize('Admin', 'Doctor', 'Reception'),
   async (req, res) => {
     try {
+      const Visit = require('../models/visit.model');
+      
       const allVisits = await Visit.find({
         visitStatus: 'IP_RECOMMENDED'
       })
@@ -88,79 +152,6 @@ router.get('/debug/recommendations',
       res.status(500).json({ success: false, error: error.message });
     }
   }
-);
-router.get(
-  '/recommended',
-  authorize('Reception', 'Admin', 'Doctor'),
-  ipController.getRecommendedIPPatients
-);
-// Add this temporary debug route to your ipadmission.routes.js
-router.get('/debug/recommendations',
-  authorize('Admin'),
-  async (req, res) => {
-    try {
-      // Check ALL visits to see what's happening
-      const allVisits = await Visit.find({})
-        .select('_id visitStatus admissionStatus admissionType ipRecommendationNotes patient doctor')
-        .populate('patient', 'fullName opNumber')
-        .populate('doctor', 'name')
-        .sort({ updatedAt: -1 })
-        .limit(10);
-
-      // Check specifically for IP_RECOMMENDED
-      const recommendedVisits = await Visit.find({
-        visitStatus: 'IP_RECOMMENDED'
-      }).countDocuments();
-
-      console.log('=== DEBUG: All recent visits ===');
-      allVisits.forEach(v => {
-        console.log(`Visit ${v._id}: Status=${v.visitStatus}, Admission=${v.admissionStatus}, Type=${v.admissionType}`);
-        console.log(`  Patient: ${v.patient?.fullName}, Doctor: ${v.doctor?.name}`);
-      });
-      console.log(`=== Total IP_RECOMMENDED: ${recommendedVisits} ===`);
-
-      res.json({
-        success: true,
-        data: {
-          allVisits,
-          recommendedCount: recommendedVisits,
-          ipRecommendedVisits: allVisits.filter(v => v.visitStatus === 'IP_RECOMMENDED')
-        }
-      });
-    } catch (error) {
-      console.error('Debug error:', error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  }
-);
-// Emergency admission (Reception)
-router.post('/emergency',
-  authorize('Reception', 'Admin', 'Nurse'),
-  ipController.emergencyAdmission
-);
-
-// Doctor advised admission
-router.post('/doctor-admit',
-  authorize('Doctor', 'Admin','Reception'),
-  ipController.doctorAdvisedAdmission
-);
-
-// Cancel admission
-router.post('/cancel',
-  authorize('Reception', 'Doctor', 'Admin'),
-  ipController.cancelAdmission
-);
-
-// Discharge patient
-router.post('/discharge',
-  authorize('Doctor', 'Admin','Nurse', 'Reception'),
-  ipController.dischargePatient
-);
-
-// Current IP patients
-router.get('/current',
-  authorize('Doctor', 'Nurse', 'Admin', 'Reception'),
-  ipController.getCurrentIPPatients
 );
 
 module.exports = router;

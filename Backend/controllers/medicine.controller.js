@@ -10,7 +10,32 @@ exports.createMedicine = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
+// Get items for IP billing (filter non-billable categories)
+exports.getBillableItems = async (req, res) => {
+  try {
+    const items = await Medicine.find({ isActive: true })
+      .populate({
+        path: 'category',
+        match: { 
+          type: { 
+            $in: ['Medicine', 'Consumable'] 
+          } 
+        }
+      })
+      .where('category').ne(null)
+      .sort({ name: 1 });
+    
+    res.json({
+      success: true,
+      data: items
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 // Get all medicines
 exports.getMedicines = async (req, res) => {
   try {

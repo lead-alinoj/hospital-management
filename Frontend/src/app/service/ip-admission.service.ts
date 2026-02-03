@@ -101,13 +101,13 @@ allocateRecommendedAdmission(data: {
   visitId: string;
   bedId: string;
   admissionNotes: string;
-  expectedStayDays: number;
+  expectedStayDays?: number;
   admissionType: 'DOCTOR_ADVISED' | 'OBSERVATION';
   nursingInstructions?: string;
   specialRequirements?: any;
 }) {
   return this.http.post(
-    `${this.apiUrl}/ip-admission/allocate`,
+`${this.apiUrl}/allocate-recommended`,
     data
   );
 }
