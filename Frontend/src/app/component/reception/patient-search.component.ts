@@ -301,7 +301,9 @@ import { PatientService } from '../../service/patient.service';
       margin: 0 auto;
       background: #d0dff5;
     }
-    
+    .mat-card-title{
+      color: #1565c0;
+    }
     .search-header {
       margin-bottom: 20px;
     }

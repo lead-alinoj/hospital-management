@@ -134,7 +134,7 @@ export class MainLayoutComponent implements OnInit {
     {
       icon: 'monitor_heart',
       label: 'Vitals',
-      route: '/nurse/vitals',
+      route: '/nurse/vitalshistory',
       roles: ['Nurse']
     },
     

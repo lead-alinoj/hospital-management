@@ -16,6 +16,7 @@ import { AddIpMedicineDialogComponent} from './add-ip-medicine-dialog.component'
 import { Router } from '@angular/router';
 import { IpAdmissionService } from '../../service/ip-admission.service';
 import { IpRecommendationDialogComponent } from '../doctor/ip-recommendation-dialog.component';
+import { AuthService } from '../../auth/auth.service';
 @Component({
   selector: 'app-ip-dashboard',
   standalone: true,
@@ -145,11 +146,68 @@ import { IpRecommendationDialogComponent } from '../doctor/ip-recommendation-dia
   </div>
 </mat-tab>
 
+<!-- In ip-dashboard.component.html - Update the IP Recommendations tab -->
 <mat-tab label="IP Recommendations">
-  <mat-card *ngFor="let p of recommendedPatients">
-    {{ p.patient.fullName }} – OP {{ p.patient.opNumber }}
-    <button mat-button (click)="admitPatient(p)">Allocate Bed</button>
-  </mat-card>
+  <div class="cards-grid" *ngIf="recommendedPatients.length > 0">
+    <mat-card *ngFor="let r of recommendedPatients" class="patient-card">
+      <mat-card-header>
+        <mat-card-title>{{ r.patient?.fullName || 'Unknown Patient' }}</mat-card-title>
+        <mat-card-subtitle>
+          OP: {{ r.patient?.opNumber || 'N/A' }} |
+          {{ r.patient?.age || 'N/A' }}Y / {{ r.patient?.gender || 'N/A' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p><b>Recommended By:</b> {{ r.recommendedByRole || 'Doctor' }}</p>
+        <p><b>Doctor:</b> Dr. {{ r.doctor?.name || 'Not specified' }}</p>
+        <p><b>Diagnosis:</b> {{ r.diagnosis || 'No diagnosis' }}</p>
+        <p><b>Admission Type:</b> {{ r.admissionType || 'DOCTOR_ADVISED' }}</p>
+
+        <!-- VITALS -->
+        <div class="vitals-box" *ngIf="r.vitals">
+          <b>Vitals:</b>
+          <span *ngIf="r.vitals.bloodPressure?.systolic">
+            BP {{ r.vitals.bloodPressure.systolic }}/{{ r.vitals.bloodPressure.diastolic }},
+          </span>
+          <span *ngIf="r.vitals.pulse">Pulse {{ r.vitals.pulse }}, </span>
+          <span *ngIf="r.vitals.spo2">SpO₂ {{ r.vitals.spo2 }}%</span>
+        </div>
+
+        <!-- MEDICINES -->
+        <div class="medicine-box" *ngIf="r.medicines?.length > 0">
+          <h4>Medicines</h4>
+          <table class="history-table">
+            <tr *ngFor="let m of r.medicines">
+              <td>{{ m.medicineName }}</td>
+              <td>{{ m.quantity }} × {{ m.days }} days</td>
+              <td>{{ m.take }}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div *ngIf="!r.medicines || r.medicines.length === 0" class="no-medicines">
+          <p><em>No medicines prescribed</em></p>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="admitPatient(r)"
+          [disabled]="!r.visitId">
+          Allocate Bed
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <div *ngIf="recommendedPatients.length === 0" class="no-data">
+    <mat-icon>hotel</mat-icon>
+    <p>No IP recommendations available</p>
+    <small>When doctors recommend IP admission during consultation, they will appear here.</small>
+  </div>
 </mat-tab>
 
         <!-- Active IP Patients -->
@@ -351,6 +409,38 @@ import { IpRecommendationDialogComponent } from '../doctor/ip-recommendation-dia
       font-weight: bold; 
       margin: 10px 0;
     }
+    /* Add to ip-dashboard.component.css */
+.vitals-box {
+  background: #f0f8ff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.medicine-box {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.history-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.no-medicines {
+  color: #888;
+  font-style: italic;
+  margin: 10px 0;
+}
     .beds-list { margin-top: 20px; }
     table { width: 100%; }
     .tab-content { padding: 20px 0; }
@@ -363,6 +453,7 @@ private ipAdmissionService = inject(IpAdmissionService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 private router = inject(Router);
+private authService = inject(AuthService);
 
    selectedPatient: any = null;
   billItems: any[] = [];
@@ -383,12 +474,21 @@ private router = inject(Router);
 
   displayedColumns = ['bedNumber', 'room', 'status', 'patient', 'admissionDate', 'actions'];
 
-  ngOnInit(): void {
-    this.loadActivePatients();
-    this.loadAllBeds();
-      this.loadRecommendedPatients(); // 🔥 ADD THIS
+ngOnInit(): void {
+  const user = this.authService.getCurrentUser();
+  const role = user?.role; // Doctor | Nurse | Reception | Admin
 
+  if (role === 'Doctor' || role === 'Nurse' || role === 'Admin') {
+    this.loadActivePatients(); // ✅ allowed
   }
+
+  if (role === 'Reception' || role === 'Admin') {
+    this.loadRecommendedPatients(); // ✅ reception job
+    this.loadAllBeds();              // ✅ bed status
+  }
+}
+
+
   // Add these methods
   addBillItem(patient: any): void {
     // Implement dialog to add bill items
@@ -446,18 +546,34 @@ private loadActivePatients(): void {
       }
     });
   }
+// In ip-dashboard.component.ts - Update the loadRecommendedPatients method
 private loadRecommendedPatients(): void {
+  console.log('🟢 Loading IP recommendations...');
+
   this.ipAdmissionService.getRecommendedIPPatients().subscribe({
     next: (res: any) => {
+      console.log('✅ API Response:', res);
       this.recommendedPatients = res.data || [];
-    },
-    error: () => {
-      this.snackBar.open('Failed to load IP recommendations', 'Close', {
-        duration: 3000
+      console.log('📊 Patients count:', this.recommendedPatients.length);
+      
+      // Debug: Log each patient's structure
+      this.recommendedPatients.forEach((patient, index) => {
+        console.log(`Patient ${index + 1}:`, {
+          id: patient.visitId,
+          name: patient.patient?.fullName,
+          medicines: patient.medicines,
+          diagnosis: patient.diagnosis,
+          admissionType: patient.admissionType
+        });
       });
+    },
+    error: (err) => {
+      console.error('❌ API Error:', err);
+      this.recommendedPatients = [];
     }
   });
 }
+
 
 
  private calculateBedStats(): void {
@@ -551,12 +667,13 @@ admitPatient(patient: any): void {
   this.dialog.open(IpRecommendationDialogComponent, {
     width: '900px',
     data: {
-      visitId: patient._id,
+      visitId: patient.visitId, // ✅ CORRECT
       patient: patient.patient,
-      role: 'Reception' // ✅ IMPORTANT
+      role: 'Reception'
     }
   });
 }
+
 
 
   viewVitals(patient: any): void {

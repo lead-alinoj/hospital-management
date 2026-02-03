@@ -76,6 +76,8 @@ med.type = 'STOCK';
       visitId,
       patientId: visit.patient._id,
       doctorId,
+        patientType: req.body.patientType || 'OP', // 🔥 SAFE
+
   medicines: Array.isArray(medicines) ? medicines : [],
       ...prescriptionData
     });

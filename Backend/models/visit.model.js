@@ -36,7 +36,7 @@ doctor: {
   },
   visitStatus: {
     type: String,
-    enum: [ 'Waiting', 'Vitals_In_Progress', 'Vitals_Completed', 'Consultation_In_Progress', 'Consultation_Completed', 'Pharmacy', 'Completed'],
+    enum: [ 'Waiting', 'Vitals_In_Progress', 'Vitals_Completed', 'Consultation_In_Progress', 'Consultation_Completed','IP_RECOMMENDED',  'Pharmacy', 'Completed'],
     default: 'Waiting'
   },
   priority: {
@@ -44,6 +44,27 @@ doctor: {
     enum: ['Normal', 'High', 'Emergency'],
     default: 'Normal'
   },
+  admissionStatus: {
+  type: String,
+  enum: ['NOT_ADMITTED', 'IP_ACTIVE', 'DISCHARGED'],
+  default: 'NOT_ADMITTED'
+},
+admissionType: {
+  type: String,
+  enum: ['DOCTOR_ADVISED', 'EMERGENCY', 'OBSERVATION']
+},
+bedAllocated: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Bed'
+},
+admittedByRole: {
+  type: String,
+  enum: ['Doctor', 'Reception', 'Admin']
+},
+ipRecommendationNotes: String,
+admissionDate: Date,
+dischargeDate: Date,
+  
   paymentStatus: {
     type: String,
     enum: ['Pending', 'Paid', 'Partially_Paid', 'Insurance'],
@@ -65,6 +86,10 @@ doctor: {
   diagnosis: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Diagnosis'
+  },
+    prescriptionId: { // Make sure this field exists
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Prescription'
   },
   prescriptions: [{
     type: mongoose.Schema.Types.ObjectId,

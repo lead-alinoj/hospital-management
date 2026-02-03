@@ -638,13 +638,25 @@ onSubmit() {
     });
   }
 saveAsRecommendationOnly() {
+  console.log('🟢 Saving IP recommendation...');
+  console.log('👉 Visit ID:', this.data.visitId);
+  console.log('👉 Admission notes:', this.recommendationForm.value.admissionNotes);
+  console.log('👉 Admission type:', this.recommendationForm.value.admissionType);
+
   this.ipService.recommendIpAdmission({
     visitId: this.data.visitId,
     admissionNotes: this.recommendationForm.value.admissionNotes,
     admissionType: this.recommendationForm.value.admissionType
-  }).subscribe(() => {
-    this.showSuccess('IP recommended. Reception will admit.');
-    this.dialogRef.close(true);
+  }).subscribe({
+    next: (response) => {
+      console.log('✅ Recommendation saved:', response);
+      this.showSuccess('IP recommendation saved successfully. Reception will admit.');
+      this.dialogRef.close(true);
+    },
+    error: (error) => {
+      console.error('❌ Error saving recommendation:', error);
+      this.showError(error.error?.message || 'Failed to save recommendation');
+    }
   });
 }
 

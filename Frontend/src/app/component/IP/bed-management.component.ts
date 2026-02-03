@@ -55,7 +55,7 @@ import { Bed } from '../../models/bed.model';
         <td mat-cell *matCellDef="let b">
 
           <button mat-icon-button color="primary"
-            *ngIf="b.status === 'AVAILABLE'"
+*ngIf="b.status === 'AVAILABLE' && !b.currentPatient"
             (click)="setStatus(b,'MAINTENANCE')">
             <mat-icon>build</mat-icon>
           </button>

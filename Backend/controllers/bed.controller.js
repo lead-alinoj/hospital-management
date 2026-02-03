@@ -22,6 +22,14 @@ exports.getBedById = async (req, res) => {
 // Update bed
 exports.updateBed = async (req, res) => {
   try {
+    // 🚫 Prevent illegal occupancy update
+    if (req.body.status === 'OCCUPIED' || req.body.currentPatient) {
+      return res.status(400).json({
+        success: false,
+        message: 'Use allocate bed API for admission'
+      });
+    }
+
     const bed = await Bed.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -33,10 +41,12 @@ exports.updateBed = async (req, res) => {
     }
 
     res.json({ success: true, data: bed });
+
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 exports.createBed = async (req, res) => {
   try {
@@ -111,43 +121,45 @@ exports.allocateBed = async (req, res) => {
   try {
     const { bedId } = req.params;
     const { patientId, visitId } = req.body;
-
-    const bed = await Bed.findById(bedId);
-    if (!bed) {
-      return res.status(404).json({
-        success: false,
-        message: 'Bed not found'
-      });
-    }
-
-    if (bed.status !== 'AVAILABLE') {
-      return res.status(400).json({
-        success: false,
-        message: 'Bed is not available'
-      });
-    }
-// 🔒 CHECK: patient already occupying a bed
-const existingBed = await Bed.findOne({
+// 🔒 ABSOLUTE GUARD
+const alreadyAdmitted = await Bed.findOne({
   currentPatient: patientId,
   status: 'OCCUPIED'
 });
 
-if (existingBed) {
+if (alreadyAdmitted) {
   return res.status(400).json({
     success: false,
-    message: 'Patient is already admitted to another bed'
+    message: 'Patient already admitted in another bed'
   });
 }
 
-    // Update bed status
-    bed.status = 'OCCUPIED';
-    bed.currentPatient = patientId;
-    bed.currentVisit = visitId;
-    bed.admissionDate = new Date();
-    bed.allocatedBy = req.user.id;
-    await bed.save();
+    // 🔒 atomic update
+    const bed = await Bed.findOneAndUpdate(
+      {
+        _id: bedId,
+        status: 'AVAILABLE',
+        isActive: true
+      },
+      {
+        $set: {
+          status: 'OCCUPIED',
+          currentPatient: patientId,
+          currentVisit: visitId,
+          admissionDate: new Date(),
+          allocatedBy: req.user.id
+        }
+      },
+      { new: true }
+    );
 
-    // Update visit with bed allocation
+    if (!bed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bed not available or already occupied'
+      });
+    }
+
     const Visit = require('../models/visit.model');
     await Visit.findByIdAndUpdate(visitId, {
       bedAllocated: bedId,
@@ -157,18 +169,27 @@ if (existingBed) {
 
     res.json({
       success: true,
-      data: bed,
-      message: 'Bed allocated successfully'
+      message: 'Bed allocated successfully',
+      data: bed
     });
+
   } catch (error) {
+    // 🔥 Catch UNIQUE constraint violation
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Patient already admitted to another bed'
+      });
+    }
+
     console.error('Error allocating bed:', error);
     res.status(500).json({
       success: false,
-      message: 'Error allocating bed',
-      error: error.message
+      message: 'Error allocating bed'
     });
   }
 };
+
 
 exports.dischargePatient = async (req, res) => {
   const bed = await Bed.findById(req.params.id);

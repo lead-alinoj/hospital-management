@@ -218,7 +218,7 @@ import { PatientSearchComponent } from './patient-search.component';
     }
 
     mat-card-header {
-      background: linear-gradient(90deg, #489bee 0%, #2196f3 100%);
+      // background: linear-gradient(90deg, #c8cacc 0%, #e8edf1 100%);
       color: white;
       padding: 8px;
       border-radius: 16px 16px 0 0;
@@ -228,10 +228,12 @@ import { PatientSearchComponent } from './patient-search.component';
       font-size: 1.5rem;
       font-weight: 600;
       margin-bottom: 4px;
+  color: #1565c0;
+
     }
 
     mat-card-subtitle {
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(16, 35, 71, 0.9);
       font-size: 0.9rem;
     }
 

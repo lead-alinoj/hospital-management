@@ -26,6 +26,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { IpRecommendationDialogComponent } from './ip-recommendation-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../auth/auth.service';
+import { IpAdmissionService } from '../../service/ip-admission.service';
 
 @Component({
   selector: 'app-consultation',
@@ -243,6 +244,14 @@ import { AuthService } from '../../auth/auth.service';
                     <textarea matInput formControlName="clinicalNotes" rows="4"
                       placeholder="Detailed clinical findings, observations..."></textarea>
                   </mat-form-field>
+                  <mat-form-field appearance="outline" class="half-width">
+  <mat-label>Patient Type</mat-label>
+  <mat-select formControlName="patientType">
+    <mat-option value="OP">OP – Out Patient</mat-option>
+    <mat-option value="IP">IP – In Patient</mat-option>
+  </mat-select>
+</mat-form-field>
+
                 </mat-card-content>
               </mat-card>
 
@@ -649,6 +658,7 @@ export class ConsultationComponent implements OnInit {
   private pdfService = inject(PdfService);
 private dialog = inject(MatDialog);
 private authService = inject(AuthService); // Add this
+private ipAdmissionService = inject(IpAdmissionService);
 
   // private pdfService = inject(PdfService);
 private cdr = inject(ChangeDetectorRef);
@@ -759,6 +769,8 @@ getStockClass(medicineId: string): string {
       diagnosis: ['', Validators.required],
       icd10Code: [''],
       clinicalNotes: [''],
+          patientType: ['OP', Validators.required],
+
       medications: this.fb.array([]),
       followupDate: [''],
       advice: ['']
@@ -925,8 +937,8 @@ async saveConsultation(): Promise<void> {
   : [],
 
       advice: this.consultationForm.get('advice')?.value,
-      followupDate: this.consultationForm.get('followupDate')?.value
-    };
+      followupDate: this.consultationForm.get('followupDate')?.value,
+patientType: this.consultationForm.get('patientType')?.value    };
 
     // Save prescription
     const prescriptionResponse = await this.prescriptionService
@@ -957,16 +969,35 @@ async saveConsultation(): Promise<void> {
     this.isLoading = false;
   }
 }
+// In consultation.component.ts - Update the openIpRecommendation method
 openIpRecommendation(visit: any) {
-  this.dialog.open(IpRecommendationDialogComponent, {
+  console.log('🟢 Recommend IP clicked');
+  
+  const dialogRef = this.dialog.open(IpRecommendationDialogComponent, {
     width: '900px',
     disableClose: true,
     data: {
       visitId: visit._id,
       patient: visit.patient,
-      diagnosis: visit.diagnosis,
+      diagnosis: this.consultationForm.get('diagnosis')?.value || visit.diagnosis,
       vitals: visit.vitals,
-      role: 'Doctor' // ✅ CRITICAL
+      role: 'Doctor'
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result) {
+      this.snackBar.open('IP recommendation saved successfully', 'Close', {
+        duration: 3000,
+        panelClass: ['success-snackbar']
+      });
+      
+      // If successful, update the current visit status locally
+      if (result.success) {
+        this.visit.visitStatus = 'IP_RECOMMENDED';
+        this.visit.admissionStatus = 'NOT_ADMITTED';
+        this.visit.admissionType = result.data?.admissionType;
+      }
     }
   });
 }

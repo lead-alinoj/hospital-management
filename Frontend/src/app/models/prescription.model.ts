@@ -39,6 +39,7 @@ export interface Prescription {
   diagnosis: string;
   icd10Code?: string;
   clinicalNotes?: string;
+  patientType: 'OP' | 'IP'; 
   medicines: PrescriptionMedicine[];
   advice?: string;
   followupDate?: Date;
@@ -61,6 +62,7 @@ export interface CreatePrescriptionRequest {
     quantity: number;
     route?: string;
     timing?: string;
+     patientType: 'OP' | 'IP'; // 
   }[];
   advice?: string;
   followupDate?: Date;

@@ -43,6 +43,8 @@ unitPrice: {
     type: Number,
     min: 0
   },
+
+
   type: {
   type: String,
   enum: ['STOCK', 'MANUAL'],
@@ -66,6 +68,12 @@ const prescriptionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+   patientType: {
+    type: String,
+    enum: ['OP', 'IP'],
+    default: 'OP',
+    index: true
   },
   diagnosis: {
     type: String,

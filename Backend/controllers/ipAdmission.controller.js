@@ -51,7 +51,7 @@ exports.getBedAvailability = async (req, res) => {
 ================================ */
 exports.emergencyAdmission = async (req, res) => {
   try {
-const { patientId, bedId, admissionReason, isObservationCase, shift } = req.body;
+    const { patientId, bedId, admissionReason, isObservationCase, shift } = req.body;
 
     // Validate reception role
     if (req.user.role !== 'Reception' && req.user.role !== 'Admin') {
@@ -61,34 +61,20 @@ const { patientId, bedId, admissionReason, isObservationCase, shift } = req.body
       });
     }
 
-    let visit = await Visit.findOne({
-  patient: patientId,
-  visitType: 'Emergency',
-  admissionStatus: 'NOT_ADMITTED'
-});
+    // ✅ FIRST: Check if patient is already admitted in ANY bed
+    const existingAdmission = await Bed.findOne({
+      currentPatient: patientId,
+      status: 'OCCUPIED'
+    });
 
-if (!visit) {
-  visit = new Visit({
-    patient: patientId,
-    visitType: 'Emergency',
-    priority: 'Emergency',
-    shift,
-    chiefComplaint: 'Emergency Admission',
-    createdBy: req.user.id,
-    visitStatus: 'Waiting',
-    admissionStatus: 'NOT_ADMITTED'
-  });
-
-  await visit.save();
-}
-
-    if (visit.admissionStatus === 'IP_ACTIVE') {
+    if (existingAdmission) {
       return res.status(400).json({ 
         success: false,
-        message: 'Patient already admitted' 
+        message: 'Patient already admitted to another bed' 
       });
     }
 
+    // ✅ Check if bed is available
     const bed = await Bed.findOne({ 
       _id: bedId, 
       status: 'AVAILABLE', 
@@ -98,24 +84,45 @@ if (!visit) {
     if (!bed) {
       return res.status(400).json({ 
         success: false,
-        message: 'Bed not available' 
+        message: 'Bed not available or does not exist' 
       });
     }
 
-    // Update bed status
+    // ✅ Create or find emergency visit
+    let visit = await Visit.findOne({
+      patient: patientId,
+      visitType: 'Emergency',
+      admissionStatus: 'NOT_ADMITTED'
+    });
+
+    if (!visit) {
+      visit = new Visit({
+        patient: patientId,
+        visitType: 'Emergency',
+        priority: 'Emergency',
+        shift: shift || this.getCurrentShift(),
+        chiefComplaint: admissionReason || 'Emergency Admission',
+        createdBy: req.user.id,
+        visitStatus: 'Waiting',
+        admissionStatus: 'NOT_ADMITTED'
+      });
+      await visit.save();
+    }
+
+    // ✅ Update bed status (atomic operation to prevent race conditions)
     bed.status = 'OCCUPIED';
-    bed.currentPatient = visit.patient._id;
+    bed.currentPatient = visit.patient._id || patientId;
     bed.currentVisit = visit._id;
     bed.admissionDate = new Date();
     await bed.save();
 
-    // Update visit with emergency admission
+    // ✅ Update visit with emergency admission
     visit.admissionStatus = 'IP_ACTIVE';
     visit.admissionType = isObservationCase ? 'OBSERVATION' : 'EMERGENCY';
     visit.admissionDate = new Date();
     visit.bedAllocated = bed._id;
     visit.admissionReason = admissionReason;
-    visit.admittedByRole = 'RECEPTION';
+    visit.admittedByRole = 'Reception';
     
     if (isObservationCase) {
       visit.isObservationCase = true;
@@ -123,8 +130,8 @@ if (!visit) {
     
     await visit.save();
 
-    // Update patient type
-    await Patient.findByIdAndUpdate(visit.patient._id, { patientType: 'IP' });
+    // ✅ Update patient type
+    await Patient.findByIdAndUpdate(patientId, { patientType: 'IP' });
 
     res.json({ 
       success: true, 
@@ -133,6 +140,7 @@ if (!visit) {
     });
 
   } catch (error) {
+    console.error('❌ Emergency admission error:', error);
     res.status(500).json({
       success: false,
       message: 'Emergency admission failed',
@@ -140,6 +148,218 @@ if (!visit) {
     });
   }
 };
+
+// Helper function to get current shift
+function getCurrentShift() {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'Morning' : 'Evening';
+}
+/* ==============================
+   DOCTOR → RECOMMEND IP (NO BED)
+================================ */
+/* ==============================
+   DOCTOR → RECOMMEND IP (NO BED)
+================================ */
+// In ipAdmission.controller.js - Update recommendIP
+exports.recommendIP = async (req, res) => {
+  try {
+    console.log('🔵 recommendIP API called');
+    console.log('👉 User:', req.user.id, req.user.role);
+    console.log('👉 Body:', JSON.stringify(req.body, null, 2));
+
+    const { visitId, admissionNotes, admissionType } = req.body;
+
+    // Find visit with all necessary fields
+    const visit = await Visit.findById(visitId)
+      .populate('patient')
+      .populate('doctor');
+
+    if (!visit) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Visit not found',
+        visitId 
+      });
+    }
+
+    console.log('📊 Visit BEFORE update:');
+    console.log('  - ID:', visit._id);
+    console.log('  - Patient:', visit.patient?.fullName);
+    console.log('  - Current visitStatus:', visit.visitStatus);
+    console.log('  - Current admissionStatus:', visit.admissionStatus);
+
+    // Ensure the visit can be recommended for IP
+    if (visit.admissionStatus === 'IP_ACTIVE') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Patient already admitted as IP' 
+      });
+    }
+
+    // Update all necessary fields
+    visit.visitStatus = 'IP_RECOMMENDED';
+    visit.admissionStatus = 'NOT_ADMITTED';
+    visit.admissionType = admissionType || 'DOCTOR_ADVISED';
+    visit.ipRecommendationNotes = admissionNotes;
+    visit.admittedByRole = 'Doctor';
+    visit.updatedAt = new Date();
+
+    // Mark as modified to ensure save
+    visit.markModified('visitStatus');
+    visit.markModified('admissionStatus');
+
+    console.log('📊 Visit AFTER update (before save):');
+    console.log('  - visitStatus:', visit.visitStatus);
+    console.log('  - admissionStatus:', visit.admissionStatus);
+    console.log('  - admissionType:', visit.admissionType);
+    console.log('  - ipRecommendationNotes:', visit.ipRecommendationNotes);
+
+    // Save the visit
+    await visit.save();
+    console.log('✅ Visit saved successfully');
+
+    // Fetch again to verify
+    const updatedVisit = await Visit.findById(visitId)
+      .select('visitStatus admissionStatus admissionType ipRecommendationNotes updatedAt')
+      .lean();
+
+    console.log('✅ Verified from database:');
+    console.log('  - visitStatus:', updatedVisit.visitStatus);
+    console.log('  - admissionStatus:', updatedVisit.admissionStatus);
+    console.log('  - admissionType:', updatedVisit.admissionType);
+    console.log('  - updatedAt:', updatedVisit.updatedAt);
+
+    res.json({
+      success: true,
+      message: 'IP recommended successfully',
+      data: {
+        visitId: visit._id,
+        patientName: visit.patient?.fullName,
+        visitStatus: updatedVisit.visitStatus,
+        admissionStatus: updatedVisit.admissionStatus,
+        admissionType: updatedVisit.admissionType,
+        updatedAt: updatedVisit.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error in recommendIP:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to recommend IP',
+      error: error.message,
+      stack: error.stack
+    });
+  }
+};
+// In ipAdmission.controller.js - Temporary debug version
+exports.getRecommendedIPPatients = async (req, res) => {
+  try {
+    console.log('🔵 getRecommendedIPPatients called - DEBUG MODE');
+    
+    // First, let's see what's in the database
+    const allVisits = await Visit.find({})
+      .populate('patient', 'fullName age gender opNumber')
+      .populate('doctor', 'name')
+      .populate('vitals')
+      .populate({
+        path: 'prescriptionId',
+        select: 'diagnosis medicines',
+        populate: {
+          path: 'medicines.medicineId',
+          select: 'name strength unit price'
+        }
+      })
+      .sort({ updatedAt: -1 })
+      .limit(10);
+
+    console.log('📊 All recent visits (10):');
+    allVisits.forEach(v => {
+      console.log(`  Visit ${v._id}: ${v.patient?.fullName} - Status: ${v.visitStatus}, Admission: ${v.admissionStatus}`);
+    });
+
+    // Now filter for IP_RECOMMENDED
+    const visits = await Visit.find({
+      $or: [
+        { visitStatus: 'IP_RECOMMENDED' },
+        { visitStatus: 'Consultation_Completed' } // For testing
+      ],
+      admissionStatus: 'NOT_ADMITTED'
+    })
+      .populate('patient', 'fullName age gender opNumber')
+      .populate('doctor', 'name')
+      .populate('vitals')
+      .populate({
+        path: 'prescriptionId',
+        select: 'diagnosis medicines',
+        populate: {
+          path: 'medicines.medicineId',
+          select: 'name strength unit price'
+        }
+      })
+      .sort({ updatedAt: -1 });
+
+    console.log('✅ Filtered visits count:', visits.length);
+    console.log('👉 Query used: visitStatus: IP_RECOMMENDED, admissionStatus: NOT_ADMITTED');
+
+    const formattedVisits = visits.map(v => {
+      const medicines = v.prescriptionId?.medicines || [];
+      
+      const formattedMedicines = medicines.map(m => ({
+        medicineName: m.medicineId?.name || m.name || 'Unknown Medicine',
+        strength: m.strength || m.medicineId?.strength,
+        quantity: m.quantity || 1,
+        days: m.days || 1,
+        take: m.take || 'After Food',
+        morning: m.morning,
+        noon: m.noon,
+        evening: m.evening,
+        night: m.night,
+        instructions: m.instructions
+      }));
+
+      return {
+        visitId: v._id,
+        patient: v.patient,
+        doctor: v.doctor,
+        recommendedByRole: v.admittedByRole || 'Doctor',
+        diagnosis: v.prescriptionId?.diagnosis || v.diagnosis || 'No diagnosis',
+        admissionNotes: v.ipRecommendationNotes || v.doctorAdmissionNotes,
+        admissionType: v.admissionType || 'DOCTOR_ADVISED',
+        vitals: v.vitals,
+        medicines: formattedMedicines,
+        recommendedAt: v.updatedAt,
+        // Debug info
+        visitStatus: v.visitStatus,
+        admissionStatus: v.admissionStatus
+      };
+    });
+
+    res.json({
+      success: true,
+      data: formattedVisits,
+      debug: {
+        totalFound: visits.length,
+        query: {
+          visitStatus: 'IP_RECOMMENDED',
+          admissionStatus: 'NOT_ADMITTED'
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ getRecommendedIPPatients ERROR:', err);
+    res.status(500).json({ 
+      success: false,
+      message: err.message,
+      data: [],
+      error: err.stack
+    });
+  }
+};
+
+
 exports.cancelAdmission = async (req, res) => {
   try {
     const { visitId, cancellationReason } = req.body;
@@ -189,69 +409,76 @@ exports.cancelAdmission = async (req, res) => {
     });
   }
 };
-/* ==============================
-   DISCHARGE PATIENT
-================================ */
 exports.dischargePatient = async (req, res) => {
-  try {
-    const { visitId, dischargeNotes } = req.body;
+  const bed = await Bed.findById(req.params.id);
 
-    const visit = await Visit.findById(visitId).populate('bedAllocated');
-    if (!visit || visit.admissionStatus !== 'IP_ACTIVE') {
-      return res.status(400).json({
-        success: false,
-        message: 'Patient not currently admitted'
-      });
-    }
-
-    if (visit.bedAllocated) {
-      const bed = await Bed.findById(visit.bedAllocated._id);
-      if (bed) {
-        bed.status = 'AVAILABLE';
-        bed.currentPatient = null;
-        bed.currentVisit = null;
-        bed.dischargeDate = new Date();
-        bed.cleaned = false;
-        await bed.save();
-      }
-    }
-
-    visit.admissionStatus = 'DISCHARGED';
-    visit.dischargeDate = new Date();
-    visit.dischargeNotes = dischargeNotes;
-    await visit.save();
-
-    await Patient.findByIdAndUpdate(visit.patient, { patientType: 'OP' });
-
-    res.json({
-      success: true,
-      message: 'Patient discharged successfully'
-    });
-
-  } catch (error) {
-    res.status(500).json({
+  if (!bed) {
+    return res.status(404).json({
       success: false,
-      message: 'Discharge failed',
-      error: error.message
+      message: 'Bed not found'
     });
   }
+
+  if (bed.status !== 'OCCUPIED') {
+    return res.status(400).json({
+      success: false,
+      message: 'Bed is not occupied'
+    });
+  }
+
+  const visitId = bed.currentVisit;
+
+  // 🔒 FORCE RESET (NO PARTIAL STATES)
+  bed.status = 'AVAILABLE';
+  bed.currentPatient = null;
+  bed.currentVisit = null;
+  bed.dischargeDate = new Date();
+  bed.cleaned = false;
+
+  await bed.save();
+
+  if (visitId) {
+    await require('../models/visit.model').findByIdAndUpdate(
+      visitId,
+      {
+        admissionStatus: 'DISCHARGED',
+        dischargeDate: bed.dischargeDate
+      }
+    );
+  }
+
+  res.json({
+    success: true,
+    message: 'Patient discharged successfully'
+  });
 };
 
 /* ==============================
    CURRENT IP PATIENTS
 ================================ */
 exports.getCurrentIPPatients = async (req, res) => {
-  const patients = await Visit.find({ admissionStatus: 'IP_ACTIVE' })
-    .populate('patient', 'fullName age gender opNumber')
-    .populate('doctor', 'name')
-    .populate({
-      path: 'bedAllocated',
-      populate: { path: 'careUnit' }
+  try {
+    const visits = await Visit.find({
+      admissionStatus: 'IP_ACTIVE'
     })
-    .sort({ admissionDate: -1 });
+      .populate('patient')
+      .populate('doctor')
+      .populate('bedAllocated');
 
-  res.json({ success: true, data: patients });
+    res.json({
+      success: true,
+      data: visits
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load IP patients',
+      error: error.message
+    });
+  }
 };
+
+
 /* ==============================
    DOCTOR ADVISED ADMISSION
 ================================ */

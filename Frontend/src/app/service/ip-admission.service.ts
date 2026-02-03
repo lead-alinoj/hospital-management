@@ -74,7 +74,9 @@ getAvailablePatients(): Observable<any> {
 getRecommendedIPPatients(): Observable<any> {
   return this.http.get<any>(`${this.apiUrl}/recommended`);
 }
-
+getRecommendedVisitById(visitId: string) {
+  return this.http.get(`${this.apiUrl}/recommended/${visitId}`);
+}
   // === Dashboard ===
   getIPDashboardStats(): Observable<{ success: boolean; data: IPDashboardStats }> {
     return this.http.get<{ success: boolean; data: IPDashboardStats }>(
@@ -87,10 +89,11 @@ recommendIpAdmission(data: {
   admissionNotes: string;
   admissionType: 'DOCTOR_ADVISED' | 'OBSERVATION';
 }) {
-  return this.http.post(
-    `${this.apiUrl}/ip-admission/recommend`,
-    data
-  );
+ return this.http.post(
+  `${this.apiUrl}/recommend`, // ✅
+  data
+);
+
 }
 
 // Reception → Admit patient using recommendation

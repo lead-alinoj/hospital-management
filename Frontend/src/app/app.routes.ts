@@ -145,6 +145,11 @@ export const routes: Routes = [
         data: { roles: ['Nurse'] }
       },
       {
+        path: 'nurse/vitalshistory',
+        component: VitalsHistoryComponent,
+        data: { roles: ['Nurse'] }
+      },
+      {
         path: 'nurse/vitals/view/:visitId',
         component: VitalsViewComponent,
         data: { roles: ['Nurse'] }

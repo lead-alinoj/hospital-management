@@ -20,7 +20,7 @@ router.get(
 
 router.put(
   '/:id',
-  authorize('Admin'),
+  authorize('Admin','Reception'),
   careUnitController.updateCareUnit
 );
 
