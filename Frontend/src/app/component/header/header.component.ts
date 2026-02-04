@@ -109,7 +109,10 @@ export class HeaderComponent implements OnInit {
         /^\/pharmacy\/.*$/,
         /^\/admin\/staff$/,
         /^\/admin\/attendance$/,
-        /^\/admin\/attendance\/history$/
+        /^\/admin\/attendance\/history$/,
+         /^\/pharmacy\/medicines$/,
+  /^\/pharmacy\/categories$/,
+  /^\/pharmacy\/.*$/,
       ],
       'Doctor': [
         /^\/doctor\/.*$/,
@@ -130,6 +133,8 @@ export class HeaderComponent implements OnInit {
         /^\/appointments\/book.*$/,
         /^\/billing\/.*$/,
         /^\/reception\/staff$/,
+        /^\/pharmacy\/medicines$/,
+  /^\/pharmacy\/categories$/,
         /^\/reception\/attendance$/,
         /^\/reception\/ip-admission.*$/,   // ✅ IMPORTANT
   /^\/ip-dashboard.*$/               // ✅ optional but good

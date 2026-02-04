@@ -1,3 +1,4 @@
+// routes/ipBill.routes.js
 const express = require('express');
 const router = express.Router();
 const ipBillController = require('../controllers/ipBill.controller');
@@ -22,6 +23,24 @@ router.get('/items/:visitId',
 router.get('/calculate/:visitId',
   authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
   ipBillController.calculateIPBill
+);
+
+// Add manual bill item
+router.post('/manual-item',
+  authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
+  ipBillController.addManualBillItem
+);
+
+// Mark items as billed
+router.post('/mark-billed/:visitId',
+  authorize('Admin', 'Reception'),
+  ipBillController.markBillItemsAsBilled
+);
+
+// Update bill item
+router.put('/items/:itemId',
+  authorize('Admin', 'Reception'),
+  ipBillController.updateBillItem
 );
 
 // Delete bill item

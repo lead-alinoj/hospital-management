@@ -73,7 +73,7 @@ const prescriptionSchema = new mongoose.Schema({
     type: String,
     enum: ['OP', 'IP'],
     default: 'OP',
-    index: true
+    required: true
   },
   diagnosis: {
     type: String,

@@ -26,8 +26,8 @@ import { AttendanceHistoryComponent } from './component/Staff/attendance-history
 import { AttendanceEntryComponent } from './component/Staff/attendance-entry/attendance-entry.component';
 import { StaffMasterComponent } from './component/Staff/staff-master/staff-master.component';
 import { ShiftMasterComponent } from './component/Staff/shift-master/shift-master.component';
-import { IpAdmissionComponent } from './component/reception/ip-admission.component';
-import { IpDashboardComponent } from './component/reception/ip-dashboard.component';
+import { IpAdmissionComponent } from './component/IP/ip-admission.component';
+import { IpDashboardComponent } from './component/IP/ip-dashboard.component';
 import { BedManagementComponent } from './component/IP/bed-management.component';
 import { CareUnitMasterComponent } from './component/IP/care-unit-master.component';
 import { MainLayoutComponent } from './component/layout/main-layout.component';
@@ -204,12 +204,12 @@ export const routes: Routes = [
       {
         path: 'pharmacy/medicines',
         component: MedicineManagementComponent,
-        data: { roles: ['Pharmacy'] }
+  data: { roles: ['Admin', 'Reception', 'Pharmacy'] }
       },
       {
         path: 'pharmacy/categories',
         component: CategoryManagementComponent,
-        data: { roles: ['Pharmacy'] }
+  data: { roles: ['Admin', 'Reception', 'Pharmacy'] }
       },
 
       // ========== COMMON ROUTES ==========

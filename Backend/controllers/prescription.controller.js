@@ -127,11 +127,16 @@ exports.getPatientHistory = async (req, res) => {
   }
 };
 
+// In prescription.controller.js
 exports.getPrescriptionsForPharmacy = async (req, res) => {
   try {
     const { status = 'Active', fromDate } = req.query;
     
-    let query = { status };
+    // 🔥 IMPORTANT: Filter OUT IP prescriptions
+    let query = { 
+      status,
+      patientType: { $ne: 'IP' } // Only OP prescriptions
+    };
     
     // Filter by date if provided (for today's dispensed)
     if (fromDate) {

@@ -428,7 +428,154 @@ import { IpAdmissionService } from '../../service/ip-admission.service';
     </div>
   `,
   styles: [`
-  .prescription-grid {
+ /* ==============================
+   GLOBAL BASE
+============================== */
+:host {
+  --primary: #1a73e8;
+  --secondary: #0d8a72;
+  --accent: #ff9800;
+  --danger: #e53935;
+
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+}
+
+/* ==============================
+   MAIN CONTAINER
+============================== */
+.consultation-container {
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 1300px;
+  margin: auto;
+  font-family: 'Roboto', 'Segoe UI', sans-serif;
+}
+
+/* ==============================
+   PATIENT HEADER
+============================== */
+.patient-header {
+  background: linear-gradient(135deg, #ffffff, #f1f5f9);
+  border-radius: 14px;
+  border-left: 5px solid var(--primary);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.header-content {
+  padding: 20px;
+}
+
+.patient-name {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.patient-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.detail-item {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ==============================
+   TAB CONTENT
+============================== */
+.tab-content {
+  padding: 20px 5px;
+}
+
+/* ==============================
+   CARD STANDARD
+============================== */
+mat-card {
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.section-card {
+  margin-bottom: 20px;
+}
+
+mat-card-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ==============================
+   VITALS
+============================== */
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+.vital-item {
+  background: #f9fbff;
+  border-left: 4px solid var(--primary);
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.vital-item .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.vital-item .value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ==============================
+   HISTORY
+============================== */
+.history-section {
+  padding: 10px 0;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+/* ==============================
+   PRESCRIPTION
+============================== */
+.medication-row {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.prescription-grid {
   display: grid;
   grid-template-columns:
     40px
@@ -448,202 +595,108 @@ import { IpAdmissionService } from '../../service/ip-admission.service';
 .si-no {
   text-align: center;
   font-weight: 600;
+  color: var(--primary);
 }
 
-.option-row {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
+/* ==============================
+   FORM FIELDS
+============================== */
 mat-form-field {
   width: 100%;
 }
 
-  .stock-box {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 6px;
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  color: var(--border);
+}
+
+.mat-form-field.mat-focused .mat-form-field-outline-thick {
+  color: var(--primary);
+}
+
+/* ==============================
+   BUTTONS
+============================== */
+button[mat-raised-button] {
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+button mat-icon {
+  margin-right: 6px;
+}
+
+/* ==============================
+   EMPTY STATES
+============================== */
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+
+.no-data mat-icon {
+  font-size: 48px;
+  color: #cbd5e1;
+}
+
+/* ==============================
+   SNACKBAR
+============================== */
+::ng-deep .success-snackbar {
+  background: var(--secondary);
   color: #fff;
 }
 
-.stock-green {
-  background-color: #2e7d32; // green
+::ng-deep .error-snackbar {
+  background: var(--danger);
+  color: #fff;
 }
 
-.stock-orange {
-  background-color: #ed6c02; // orange
+/* ==============================
+   RESPONSIVE
+============================== */
+@media (max-width: 1024px) {
+  .prescription-grid {
+    grid-template-columns: 40px 1fr 70px 1fr;
+  }
 }
 
-.stock-red {
-  background-color: #d32f2f; // red
+@media (max-width: 768px) {
+  .patient-details {
+    flex-direction: column;
+  }
+
+  .prescription-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    justify-content: center;
+  }
 }
 
-    .consultation-container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-        background: var(--bg-soft);
+@media (max-width: 480px) {
+  .consultation-container {
+    padding: 10px;
+  }
 
-    }
-    .patient-header {
-      margin-bottom: 20px;
-      background: #f5f5f5;
-    }
-    .header-content {
-      padding: 20px;
-    }
-    .patient-basic {
-      margin-bottom: 15px;
-    }
-    .patient-name {
-      font-size: 24px;
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
-    .patient-details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      color: #666;
-    }
-    .detail-item {
-      padding: 4px 12px;
-      background: white;
-      border-radius: 4px;
-    }
-    .info-item {
-      margin-top: 10px;
-    }
-    .label {
-      font-weight: 500;
-      margin-right: 10px;
-    }
-    .tab-content {
-      padding: 20px 0;
-    }
-    .vitals-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    .vital-item {
-      background: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-      border-left: 4px solid #3f51b5;
-    }
-    .vital-item .label {
-      display: block;
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 5px;
-    }
-    .vital-item .value {
-      font-size: 18px;
-      font-weight: 500;
-    }
-    .remarks-section {
-      margin-top: 20px;
-      padding: 15px;
-      background: #fff8e1;
-      border-radius: 8px;
-    }
-    .record-info {
-      margin-top: 20px;
-      text-align: right;
-      color: #666;
-      font-size: 12px;
-    }
-    .no-data {
-      text-align: center;
-      padding: 40px;
-      color: #666;
-    }
-    .no-data mat-icon {
-      font-size: 48px;
-      height: 48px;
-      width: 48px;
-      margin-bottom: 15px;
-      color: #bbb;
-    }
-    .table-container {
-      overflow-x: auto;
-    }
-    .critical-value {
-      color: #f44336;
-      font-weight: bold;
-    }
-    .status-badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-    }
-    .history-section {
-  padding: 15px;
+  .patient-name {
+    font-size: 20px;
+  }
+
+  mat-card {
+    border-radius: 10px;
+  }
 }
 
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.history-table td {
-  padding: 6px;
-  border-bottom: 1px solid #eee;
-}
-
-    .status-pending {
-      background: #fff3cd;
-      color: #856404;
-    }
-    .status-completed {
-      background: #d1ecf1;
-      color: #0c5460;
-    }
-    .section-card {
-      margin-bottom: 20px;
-    }
-    .medication-row {
-      margin-bottom: 20px;
-      padding: 15px;
-      background: #f9f9f9;
-      border-radius: 8px;
-    }
-    .medication-form {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .med-name { flex: 3; }
-    .med-dosage { flex: 2; }
-    .med-frequency { flex: 2; }
-    .med-duration { flex: 2; }
-    .remove-btn { flex: 0 0 auto; }
-    .no-medications {
-      text-align: center;
-      padding: 20px;
-      color: #666;
-    }
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 30px;
-    }
-    .full-width { width: 100%; }
-    .half-width { width: 48%; }
-    @media (max-width: 768px) {
-      .medication-form { flex-direction: column; }
-      .med-name, .med-dosage, .med-frequency, .med-duration { width: 100%; }
-      .patient-details { flex-direction: column; }
-      .half-width { width: 100%; }
-    }
   `]
 })
 export class ConsultationComponent implements OnInit {
@@ -914,31 +967,34 @@ async saveConsultation(): Promise<void> {
   this.isLoading = true;
   
   try {
+    // Get patient type
+    const patientType = this.consultationForm.get('patientType')?.value;
+    
     // Prepare prescription data
     const prescriptionData = {
       visitId: this.visit._id,
       diagnosis: this.consultationForm.get('diagnosis')?.value,
       icd10Code: this.consultationForm.get('icd10Code')?.value,
       clinicalNotes: this.consultationForm.get('clinicalNotes')?.value,
-    medicines: this.medications.length > 0
-  ? this.medications.value.map((med: any) => ({
-      medicineId: med.medicineId || null,
-      name: med.name,
-      quantity: med.quantity,
-      take: med.take,
-      morning: !!med.morning,
-      noon: !!med.noon,
-      evening: !!med.evening,
-      night: !!med.night,
-      days: med.days,
-      instructions: med.instructions,
-      type: med.medicineId ? 'STOCK' : 'MANUAL'
-    }))
-  : [],
-
+      medicines: this.medications.length > 0
+        ? this.medications.value.map((med: any) => ({
+            medicineId: med.medicineId || null,
+            name: med.name,
+            quantity: med.quantity,
+            take: med.take,
+            morning: !!med.morning,
+            noon: !!med.noon,
+            evening: !!med.evening,
+            night: !!med.night,
+            days: med.days,
+            instructions: med.instructions,
+            type: med.medicineId ? 'STOCK' : 'MANUAL'
+          }))
+        : [],
       advice: this.consultationForm.get('advice')?.value,
       followupDate: this.consultationForm.get('followupDate')?.value,
-patientType: this.consultationForm.get('patientType')?.value    };
+      patientType: patientType
+    };
 
     // Save prescription
     const prescriptionResponse = await this.prescriptionService
@@ -946,13 +1002,24 @@ patientType: this.consultationForm.get('patientType')?.value    };
       .toPromise();
 
     if (prescriptionResponse && (prescriptionResponse as any).success) {
-      // Generate PDF
-      // await this.generateAndDownloadPrescription((prescriptionResponse as any).data);
       
-      this.snackBar.open('Consultation completed & prescription saved!', 'Close', {
-        duration: 5000,
-        panelClass: ['success-snackbar']
-      });
+      // 🔥 CRITICAL: If patientType is IP, DO NOT show in pharmacy
+      if (patientType === 'IP') {
+        // Only show success message for IP - no pharmacy visibility
+        this.snackBar.open('IP admission recommended successfully. Patient details sent to IP dashboard.', 'Close', {
+          duration: 5000,
+          panelClass: ['success-snackbar']
+        });
+      } else {
+        // OP patients - normal flow
+        this.snackBar.open('Consultation completed & prescription sent to pharmacy!', 'Close', {
+          duration: 5000,
+          panelClass: ['success-snackbar']
+        });
+        
+        // Optionally generate PDF for OP
+        // await this.generateAndDownloadPrescription((prescriptionResponse as any).data);
+      }
 
       // Navigate back after delay
       setTimeout(() => {

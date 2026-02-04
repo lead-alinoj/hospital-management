@@ -1,4 +1,4 @@
-import { Component, Inject, inject } from '@angular/core';
+import { Component, Inject, inject,OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -9,10 +9,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MedicineService } from '../../service/medicine.service';
-import { PrescriptionService } from '../../service/prescription.service';
 import { Observable, of } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { PrescriptionService } from '../../service/prescription.service';
+import { MedicineService } from '../../service/medicine.service';
+import { AuthService } from '../../auth/auth.service';
+import { MatOptionModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-add-ip-medicine-dialog',
@@ -27,7 +29,8 @@ import { map, startWith } from 'rxjs/operators';
     MatButtonModule,
     MatIconModule,
     MatAutocompleteModule,
-    MatButtonToggleModule
+    MatButtonToggleModule,
+    MatOptionModule
   ],
   template: `
     <div class="add-ip-medicine-dialog">
@@ -44,8 +47,7 @@ import { map, startWith } from 'rxjs/operators';
           <mat-button-toggle-group [(value)]="selectedItemType" (change)="onItemTypeChange($event)">
             <mat-button-toggle value="Medicine">Medicines</mat-button-toggle>
             <mat-button-toggle value="Consumable">Consumables</mat-button-toggle>
-            <mat-button-toggle value="Cleaning">Cleaning Items</mat-button-toggle>
-            <mat-button-toggle value="Equipment">Equipment</mat-button-toggle>
+          
           </mat-button-toggle-group>
         </div>
         
@@ -57,10 +59,13 @@ import { map, startWith } from 'rxjs/operators';
                 <!-- Item Selection -->
                 <mat-form-field appearance="outline" class="item-name">
                   <mat-label>{{ getItemTypeLabel() }}</mat-label>
-                  <input matInput 
-                         formControlName="name"
-                         [matAutocomplete]="auto"
-                         placeholder="Search or type item...">
+<input matInput
+       formControlName="name"
+       [matAutocomplete]="auto"
+       placeholder="Search or type item..."
+       (input)="filterAutocomplete($any($event.target).value)">
+
+
                   <mat-autocomplete #auto="matAutocomplete"
                     [displayWith]="displayItem"
                     (optionSelected)="onItemSelected($event.option.value, i)">
@@ -244,84 +249,123 @@ import { map, startWith } from 'rxjs/operators';
     }
   `]
 })
-export class AddIpMedicineDialogComponent {
+export class AddIpMedicineDialogComponent{
   private fb = inject(FormBuilder);
   private medicineService = inject(MedicineService);
   private prescriptionService = inject(PrescriptionService);
-  
+  private authService = inject(AuthService);
+
   medicineForm: FormGroup;
   allItems: any[] = [];
+  visibleItems: any[] = [];   // filtered list
+
   filteredItems$!: Observable<any[]>;
-  selectedItemType: 'Medicine' | 'Consumable' | 'Cleaning' | 'Equipment' = 'Medicine';
+  selectedItemType: 'Medicine' | 'Consumable' = 'Medicine';
 
-  constructor(
-    public dialogRef: MatDialogRef<AddIpMedicineDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
-  ) {
-    this.medicineForm = this.fb.group({
-      items: this.fb.array([]),
-      administeredBy: ['Nurse', Validators.required],
-      notes: ['']
+constructor(
+  public dialogRef: MatDialogRef<AddIpMedicineDialogComponent>,
+  @Inject(MAT_DIALOG_DATA) public data: any
+) {
+  this.medicineForm = this.fb.group({
+    items: this.fb.array([]),
+    administeredBy: ['Nurse', Validators.required],
+    notes: ['']
+  });
+  
+  // Initialize filteredItems$ with an empty observable
+  this.filteredItems$ = of([]);
+  
+  // Load items and add initial item
+  this.loadItems();
+  this.addItem();
+}
+filterAutocomplete(value: string): void {
+  const searchTerm = (value || '').toLowerCase().trim();
+
+  this.filteredItems$ = of(
+    this.visibleItems.filter(item =>
+      item.name?.toLowerCase().includes(searchTerm) ||
+      item.genericName?.toLowerCase().includes(searchTerm) ||
+      item.brandName?.toLowerCase().includes(searchTerm)
+    )
+  );
+}
+
+private applyCategoryFilter(): void {
+  // Map selected item type to category type
+  const categoryMap = {
+    'Medicine': 'Medicine',
+    'Consumable': 'Consumable'
+  };
+  
+  const targetCategory = categoryMap[this.selectedItemType];
+  
+  if (targetCategory) {
+    this.visibleItems = this.allItems.filter(item => {
+      // Check multiple possible locations for category type
+      const categoryType = 
+        item.category?.type || 
+        item.categoryType || 
+        (item.category && typeof item.category === 'string' ? item.category : null);
+      
+      console.log(`🔍 Filtering: ${item.name} - Category Type: ${categoryType} - Target: ${targetCategory}`);
+      
+      return categoryType === targetCategory;
     });
-    
-    this.loadItems();
-    this.addItem(); // Add one empty item row
-    
-    // Setup autocomplete filtering
-    this.setupAutocomplete();
+  } else {
+    this.visibleItems = this.allItems;
   }
+  
+  console.log(`✅ Filtered to ${this.visibleItems.length} ${this.selectedItemType}(s)`);
+}
 
-  private loadItems(): void {
-  // Use billable items endpoint instead of all items
+private loadItems(): void {
   this.medicineService.getBillableItems().subscribe({
     next: (response: any) => {
+      console.log('🟢 API Response:', response);
       this.allItems = response.data || [];
-      this.filterItemsByType();
+      
+      console.log('📊 All items loaded:', this.allItems.length);
+      console.log('📝 Sample item:', this.allItems[0]);
+      
+      // Check category structure
+      if (this.allItems.length > 0) {
+        const sample = this.allItems[0];
+        console.log('🔍 Category structure:', {
+          category: sample.category,
+          categoryType: sample.categoryType,
+          hasCategory: !!sample.category,
+          categoryTypeFromCategory: sample.category?.type
+        });
+      }
+      
+      // Filter items based on selected type
+      this.applyCategoryFilter();
+      
+      console.log('✅ Visible items after filter:', this.visibleItems.length);
+      
+      // Initialize filtered items
+      this.filteredItems$ = of(this.visibleItems);
     },
     error: (error) => {
-      console.error('Error loading items:', error);
+      console.error('❌ Error loading items:', error);
       this.allItems = [];
+      this.visibleItems = [];
+      this.filteredItems$ = of([]);
     }
   });
 }
 
-  private filterItemsByType(): void {
-    let filtered = this.allItems;
-    
-    if (this.selectedItemType === 'Medicine') {
-      filtered = this.allItems.filter(item => 
-        item.category?.type === 'Medicine'
-      );
-    } else if (this.selectedItemType === 'Consumable') {
-      filtered = this.allItems.filter(item => 
-        item.category?.type === 'Consumable'
-      );
-    } else if (this.selectedItemType === 'Cleaning') {
-      filtered = this.allItems.filter(item => 
-        item.category?.type === 'Cleaning'
-      );
-    } else if (this.selectedItemType === 'Equipment') {
-      filtered = this.allItems.filter(item => 
-        item.category?.type === 'Equipment'
-      );
-    }
-    
-    this.allItems = filtered;
-  }
 
-  private setupAutocomplete(): void {
-    this.filteredItems$ = this.medicineForm.get('items')!.valueChanges.pipe(
-      startWith(''),
-      map(value => {
-        const search = typeof value === 'string' ? value.toLowerCase() : '';
-        return this.allItems.filter(item =>
-          item.name.toLowerCase().includes(search) ||
-          (item.genericName && item.genericName.toLowerCase().includes(search)) ||
-          (item.brandName && item.brandName.toLowerCase().includes(search))
-        );
-      })
-    );
-  }
+
+
+removeItem(index: number): void {
+  this.items.removeAt(index);
+
+  // refresh autocomplete list
+  this.filteredItems$ = of(this.visibleItems);
+}
+
 
   get items() {
     return this.medicineForm.get('items') as FormArray;
@@ -331,62 +375,85 @@ export class AddIpMedicineDialogComponent {
     switch(this.selectedItemType) {
       case 'Medicine': return 'Medicine';
       case 'Consumable': return 'Consumable';
-      case 'Cleaning': return 'Cleaning Item';
-      case 'Equipment': return 'Equipment';
+  
       default: return 'Item';
     }
   }
-
- onItemTypeChange(event: any): void {
-  this.selectedItemType = event.value as any;
+onItemTypeChange(event: any): void {
+  this.selectedItemType = event.value;
   
-  // Filter categories based on hospital requirements
-  let allowedCategories = ['Medicine', 'Consumable'];
+  // Update category type for all existing items
+  this.items.controls.forEach((control, index) => {
+    const currentValue = control.value;
+    control.patchValue({
+      categoryType: this.selectedItemType,
+      // Reset itemId when changing type
+      itemId: null,
+      name: '',
+      unitPrice: 0
+    });
+  });
   
-  if (this.selectedItemType === 'Medicine') {
-    allowedCategories = ['Medicine'];
-  } else if (this.selectedItemType === 'Consumable') {
-    allowedCategories = ['Consumable'];
-  }
-  
-  // Filter items
-  this.allItems = this.allItems.filter(item => 
-    allowedCategories.includes(item.category?.type)
-  );
+  // Reload filtered items
+  this.applyCategoryFilter();
+  this.filteredItems$ = of(this.visibleItems);
 }
 
-  addItem(): void {
-    const itemGroup = this.fb.group({
-      itemId: [null],
-      name: ['', Validators.required],
-      categoryType: [this.selectedItemType],
-      quantity: [1, [Validators.required, Validators.min(1)]],
-      unitPrice: [0, [Validators.required, Validators.min(0)]],
-      totalPrice: [0],
-      frequency: ['BD'],
-      days: [1, [Validators.required, Validators.min(1)]],
-      instructions: [''],
-      isIPItem: [true]
-    });
-    this.items.push(itemGroup);
-  }
 
-  removeItem(index: number): void {
-    this.items.removeAt(index);
-  }
+addItem(): void {
+  const itemGroup = this.fb.group({
+    itemId: [null],
+    name: ['', Validators.required],
+    categoryType: [this.selectedItemType],
+    quantity: [1, Validators.required],
+    unitPrice: [0],
+    frequency: ['BD'],
+    days: [1],
+    instructions: [''],
+    isIPItem: [true]
+  });
 
-  displayItem(item: any): string {
-    return item ? `${item.name}${item.strength ? ' ' + item.strength + item.unit : ''}` : '';
-  }
+  this.items.push(itemGroup);
 
-  onItemSelected(item: any, index: number): void {
-    const itemGroup = this.items.at(index);
+  this.filteredItems$ = of(this.visibleItems);
+}
+
+
+ displayItem(item: any): string {
+  if (!item) return '';
+  
+  if (typeof item === 'string') {
+    return item;
+  }
+  
+  return item.name || item.medicineName || '';
+}
+
+// Update onItemSelected to properly handle selections
+onItemSelected(selectedItem: any, index: number): void {
+  const itemGroup = this.items.at(index);
+  
+  if (!selectedItem || typeof selectedItem === 'string') {
+    // User typed manually
     itemGroup.patchValue({
-      itemId: item._id,
-      name: item.name,
-      unitPrice: item.price || 0
+      itemId: null,
+      name: selectedItem || '',
+      unitPrice: 0
     });
+    return;
   }
+  
+  // Item selected from dropdown
+  const price = selectedItem.price || selectedItem.unitPrice || 0;
+  
+  itemGroup.patchValue({
+    itemId: selectedItem._id,
+    name: selectedItem.name || selectedItem.medicineName,
+    unitPrice: price,
+    // Auto-set default quantity
+    quantity: 1
+  });
+}
 
   getStockColor(currentStock: number, minStock: number): string {
     if (currentStock === 0) return 'red';
@@ -409,46 +476,60 @@ export class AddIpMedicineDialogComponent {
     );
   }
 
-  onSubmit(): void {
-    if (this.medicineForm.invalid) return;
-    
-    const itemsData = this.items.value.map((item: any) => ({
-      itemId: item.itemId,
-      name: item.name,
-      categoryType: item.categoryType,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      totalPrice: item.quantity * item.unitPrice,
-      frequency: item.frequency,
-      days: item.days,
-      instructions: item.instructions,
-      isIPItem: true
-    }));
+onSubmit(): void {
+  if (this.medicineForm.invalid) return;
+  
+  const itemsData = this.items.value.map((item: any) => ({
+    itemId: item.itemId,
+    name: item.name,
+    categoryType: this.selectedItemType,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    totalPrice: item.quantity * item.unitPrice,
+    frequency: item.frequency,
+    days: item.days,
+    instructions: item.instructions,
+    isIPItem: true
+  }));
 
-    const billData = {
-      visitId: this.data.visitId,
-      items: itemsData,
-      totalAmount: this.getTotalAmount(),
-      administeredBy: this.medicineForm.value.administeredBy,
-      notes: this.medicineForm.value.notes,
-      type: 'IP_BILL_ITEM'
-    };
+  const billData = {
+    visitId: this.data.visitId,
+    items: itemsData,
+    totalAmount: this.getTotalAmount(),
+    administeredBy: this.medicineForm.value.administeredBy
+  };
 
-    this.prescriptionService.addIPBillItems(billData).subscribe({
-      next: (response: any) => {
-        if (response.success) {
-          this.dialogRef.close({ 
-            success: true, 
-            data: response.data,
-            billAmount: this.getTotalAmount()
-          });
-        }
-      },
-      error: (err) => {
-        console.error('Error adding bill items:', err);
+  this.medicineService.addIPBillItems(billData).subscribe({
+    next: (response: any) => {
+      if (response.success) {
+        this.dialogRef.close({ 
+          success: true, 
+          data: response.data,
+          billAmount: this.getTotalAmount()
+        });
       }
-    });
+    },
+    error: (err) => {
+      console.error('Error adding bill items:', err);
+      alert('Failed to add bill items');
+    }
+  });
+}
+
+validateBillItems(): boolean {
+  for (let i = 0; i < this.items.length; i++) {
+    const item = this.items.at(i).value;
+    if (!item.name) {
+      alert(`Item ${i + 1}: Name is required`);
+      return false;
+    }
+    if (!item.quantity || item.quantity < 1) {
+      alert(`Item ${i + 1}: Quantity must be at least 1`);
+      return false;
+    }
   }
+  return true;
+}
 
   onCancel(): void {
     this.dialogRef.close();

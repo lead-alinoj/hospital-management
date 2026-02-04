@@ -55,12 +55,30 @@ const ipBillItemSchema = new mongoose.Schema({
     enum: ['Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Lab'],
     required: true
   },
-  addedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+   addedBy: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    name: String,
+    role: String
+  },
+    isManual: {
+    type: Boolean,
+    default: false
   },
   
+  isBilled: {
+    type: Boolean,
+    default: false
+  },
+  
+  billingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BillingRecord'
+  },
+  
+  billedAt: Date,
   // Status
   isFinalized: {
     type: Boolean,

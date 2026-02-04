@@ -359,6 +359,93 @@ $text-lighter: rgba(255, 255, 255, 0.7);
   }
 }
 
+/* ================= DROPDOWN MENU – FINAL FIX ================= */
+
+/* Dropdown container */
+.menu-group {
+  margin: 0;            /* ✅ FIX */
+  padding: 0;}
+
+/* Dropdown header (Patient / Staff / Management) */
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  color: $text-light;          /* ✅ WHITE TEXT */
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.group-header:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Arrow alignment */
+.group-header .arrow {
+  margin-left: auto;
+  color: $text-light;          /* ✅ WHITE ARROW */
+  font-size: 22px;
+}
+
+/* ================= SUBMENU ================= */
+
+.submenu {
+  margin-left: 24px;
+  margin-top: 6px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Submenu item */
+.submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  margin: 4px 0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: $text-light;          /* ✅ WHITE TEXT */
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+/* Submenu icon */
+.submenu-item mat-icon {
+  font-size: 20px;
+  color: $text-light;          /* ✅ WHITE ICON */
+}
+
+/* Hover effect */
+.submenu-item:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: $white;
+}
+
+/* Active submenu */
+.submenu-item.active {
+  background-color: rgba(255, 255, 255, 0.18);
+  font-weight: 600;
+}
+
+/* ================= COLLAPSED SIDEBAR SUPPORT ================= */
+.sidebar.sidebar-collapsed {
+
+  .group-header {
+    justify-content: center;
+  }
+
+  .group-header span,
+  .group-header .arrow {
+    display: none;
+  }
+
+  .submenu {
+    display: none; /* Clean collapse */
+  }
+}
 
 /* ================= ANIMATIONS ================= */
 @keyframes contentFadeIn {

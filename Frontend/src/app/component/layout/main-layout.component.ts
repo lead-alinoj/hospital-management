@@ -18,9 +18,11 @@ import { HeaderComponent } from '../header/header.component';
 interface SidebarMenuItem {
   icon: string;
   label: string;
-  route: string;
+  route?: string;
   roles: UserRole[];
-  badgeCount?: number;
+  children?: SidebarMenuItem[];
+    expanded?: boolean;   // ✅ ADD THIS LINE
+
 }
 
 @Component({
@@ -59,217 +61,156 @@ export class MainLayoutComponent implements OnInit {
   notificationCount = 0;
 
   // Sidebar menu items (Updated to match your routes)
-  sidebarMenuItems: SidebarMenuItem[] = [
-    // Admin specific
-    {
-      icon: 'dashboard',
-      label: 'Admin Dashboard',
-      route: '/admin/dashboard',
-      roles: ['Admin']
-    },
-    {
-      icon: 'people',
-      label: 'Staff Management',
-      route: '/admin/staff',
-      roles: ['Admin']
-    },
-    {
-      icon: 'schedule',
-      label: 'Shift Master',
-      route: '/admin/shift-master',
-      roles: ['Admin']
-    },
-    {
-      icon: 'check_circle',
-      label: 'Attendance',
-      route: '/admin/attendance',
-      roles: ['Admin']
-    },
-    {
-      icon: 'history',
-      label: 'Attendance History',
-      route: '/admin/attendance/history',
-      roles: ['Admin']
-    },
-    {
-      icon: 'settings',
-      label: 'Hospital Settings',
-      route: '/admin/hospital',
-      roles: ['Admin']
-    },
-    {
-      icon: 'event',
-      label: 'Appointments',
-      route: '/admin/appointments',
-      roles: ['Admin']
-    },
-    {
-      icon: 'manage_accounts',
-      label: 'User Management',
-      route: '/admin/users',
-      roles: ['Admin']
-    },
-    
-    // Doctor specific
-    {
-      icon: 'dashboard',
-      label: 'Doctor Dashboard',
-      route: '/doctor/dashboard',
-      roles: ['Doctor']
-    },
-    {
-      icon: 'people',
-      label: 'My Patients',
-      route: '/doctor/patients',
-      roles: ['Doctor']
-    },
-    
-    // Nurse specific
-    {
-      icon: 'dashboard',
-      label: 'Nurse Dashboard',
-      route: '/nurse/dashboard',
-      roles: ['Nurse']
-    },
-    {
-      icon: 'monitor_heart',
-      label: 'Vitals',
-      route: '/nurse/vitalshistory',
-      roles: ['Nurse']
-    },
-    
-    // Reception specific
-    {
-      icon: 'dashboard',
-      label: 'Reception Dashboard',
-      route: '/reception/dashboard',
-      roles: ['Reception']
-    },
-    {
-      icon: 'person_add',
-      label: 'Patient Registration',
-      route: '/reception/patient/register',
-      roles: ['Reception']
-    },
-    {
-      icon: 'event_available',
-      label: 'Create Visit',
-      route: '/reception/visit/create',
-      roles: ['Reception']
-    },
-    {
-      icon: 'search',
-      label: 'Patient Search',
-      route: '/reception/patient/search',
-      roles: ['Reception']
-    },
-    {
-      icon: 'people',
-      label: 'Staff',
-      route: '/reception/staff',
-      roles: ['Reception']
-    },
-    {
-      icon: 'check_circle',
-      label: 'Attendance',
-      route: '/reception/attendance',
-      roles: ['Reception']
-    },
-    
-    // Pharmacy specific
-    {
-      icon: 'dashboard',
-      label: 'Pharmacy Dashboard',
-      route: '/pharmacy/dashboard',
-      roles: ['Pharmacy']
-    },
-    {
-      icon: 'inventory_2',
-      label: 'Medicine Management',
-      route: '/pharmacy/medicines',
-      roles: ['Pharmacy']
-    },
-    {
-      icon: 'category',
-      label: 'Category Management',
-      route: '/pharmacy/categories',
-      roles: ['Pharmacy']
-    },
-    
-    // IP Management (common for multiple roles)
-    {
-      icon: 'hotel',
-      label: 'IP Dashboard',
-      route: '/ip-dashboard',
-      roles: ['Admin', 'Doctor', 'Nurse', 'Reception', 'Pharmacy']
-    },
- // Admin IP Admission
-{
-  icon: 'hotel',
-  label: 'IP Admission',
-  route: '/ip-admission',
-  roles: ['Admin']
-},
+ sidebarMenuItems: SidebarMenuItem[] = [
+
+  // DASHBOARDS
+  {
+    icon: 'dashboard',
+    label: 'Dashboard',
+    route: '/admin/dashboard',
+    roles: ['Admin']
+  },
+  {
+    icon: 'dashboard',
+    label: 'Dashboard',
+    route: '/doctor/dashboard',
+    roles: ['Doctor']
+  },
+  {
+    icon: 'dashboard',
+    label: 'Dashboard',
+    route: '/nurse/dashboard',
+    roles: ['Nurse']
+  },
+  {
+    icon: 'dashboard',
+    label: 'Dashboard',
+    route: '/reception/dashboard',
+    roles: ['Reception']
+  },
+  {
+    icon: 'dashboard',
+    label: 'Dashboard',
+    route: '/pharmacy/dashboard',
+    roles: ['Pharmacy']
+  },
+
+  // ================= PATIENT =================
+  {
+    icon: 'person',
+    label: 'Patient',
+    roles: ['Reception'],
+    children: [
+      {
+        icon: 'person_add',
+        label: 'Patient Registration',
+        route: '/reception/patient/register',
+        roles: ['Reception']
+      },
+      {
+        icon: 'event_available',
+        label: 'Create Visit',
+        route: '/reception/visit/create',
+        roles: ['Reception']
+      },
+      {
+        icon: 'search',
+        label: 'Patient Search',
+        route: '/reception/patient/search',
+        roles: ['Reception']
+      }
+    ]
+  },
+
+  // ================= STAFF =================
+  {
+    icon: 'groups',
+    label: 'Staff',
+    roles: ['Admin', 'Reception'],
+    children: [
+      {
+        icon: 'people',
+        label: 'Staff Management',
+        route: '/admin/staff',
+        roles: ['Admin']
+      },
+      {
+        icon: 'check_circle',
+        label: 'Attendance',
+        route: '/reception/attendance',
+        roles: ['Admin', 'Reception']
+      },
+      {
+        icon: 'schedule',
+        label: 'Shift Master',
+        route: '/admin/shift-master',
+        roles: ['Admin']
+      }
+    ]
+  },
+
+  // ================= MANAGEMENT =================
+  {
+    icon: 'settings',
+    label: 'Management',
+    roles: ['Admin', 'Reception'],
+    children: [
+      {
+        icon: 'inventory_2',
+        label: 'Medicine Management',
+        route: '/pharmacy/medicines',
+        roles: ['Admin', 'Reception', 'Pharmacy']
+      },
+      {
+        icon: 'category',
+        label: 'Category Management',
+        route: '/pharmacy/categories',
+        roles: ['Admin', 'Reception', 'Pharmacy']
+      },
+      {
+        icon: 'manage_accounts',
+        label: 'User Management',
+        route: '/admin/users',
+        roles: ['Admin']
+      },
+      {
+        icon: 'hotel',
+        label: 'Bed Management',
+        route: '/admin/beds',
+        roles: ['Admin', 'Reception']
+      },
+      {
+        icon: 'domain',
+        label: 'Care Units',
+        route: '/admin/care-units',
+        roles: ['Admin', 'Reception', 'Nurse']
+      }
+    ]
+  },
+
+  // ================= IP =================
+  {
+    icon: 'hotel',
+    label: 'IP Dashboard',
+    route: '/ip-dashboard',
+    roles: ['Admin', 'Doctor', 'Nurse', 'Reception', 'Pharmacy']
+  },
+  {
+    icon: 'hotel',
+    label: 'IP Admission',
+    route: '/ip-admission',
+    roles: ['Admin']
+  },
+  {
+    icon: 'hotel',
+    label: 'IP Admission',
+    route: '/reception/ip-admission',
+    roles: ['Reception']
+  }
+
+];
 
 
-
-// Reception IP Admission ✅
-{
-  icon: 'hotel',
-  label: 'IP Admission',
-  route: '/reception/ip-admission',
-  roles: ['Reception']
-},
-
-  // ===== CARE UNITS =====
-
-// Admin
-{
-  icon: 'domain',
-  label: 'Care Units',
-  route: '/admin/care-units',
-  roles: ['Admin']
-},
-// Reception
-{
-  icon: 'domain',
-  label: 'Care Units',
-  route: '/reception/care-units',
-  roles: ['Reception']
-},
-// Nurse
-{
-  icon: 'domain',
-  label: 'Care Units',
-  route: '/nurse/care-units',
-  roles: ['Nurse']
-},
-
-// ===== BED MANAGEMENT =====
-
-// Admin
-{
-  icon: 'hotel',
-  label: 'Bed Management',
-  route: '/admin/beds',
-  roles: ['Admin']
-},
-// Reception
-{
-  icon: 'hotel',
-  label: 'Bed Management',
-  route: '/reception/beds',
-  roles: ['Reception']
-},
-// Nurse
-{
-  icon: 'hotel',
-  label: 'Bed Status',
-  route: '/nurse/beds',
-  roles: ['Nurse']
-},
-
-  ];
 
   // Filtered menu items for current user role
   filteredMenuItems: SidebarMenuItem[] = [];

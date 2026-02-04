@@ -1,4 +1,5 @@
 const Medicine = require('../models/medicine.model');
+const Prescription = require('../models/prescription.model');
 
 // Create medicine
 exports.createMedicine = async (req, res) => {
@@ -10,26 +11,48 @@ exports.createMedicine = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-// Get items for IP billing (filter non-billable categories)
+
+// In medicine.controller.js - Fix the getBillableItems method
+
 exports.getBillableItems = async (req, res) => {
   try {
-    const items = await Medicine.find({ isActive: true })
-      .populate({
-        path: 'category',
-        match: { 
-          type: { 
-            $in: ['Medicine', 'Consumable'] 
-          } 
-        }
-      })
-      .where('category').ne(null)
-      .sort({ name: 1 });
+    console.log('🟢 getBillableItems called');
+    
+    // Get all active items of type Medicine and Consumable
+    // The issue: 'category.type' might not exist in your schema
+    // Let's check what fields actually exist
+    const items = await Medicine.find({
+      isActive: true
+    })
+    .populate('category', 'name type')
+    .sort({ name: 1 });
+    
+    console.log('📊 Total items found:', items.length);
+    
+    // Filter in JavaScript to see what we're getting
+    const filteredItems = items.filter(item => {
+      // Check if item has category populated
+      if (!item.category) {
+        console.log('❌ Item has no category:', item.name);
+        return false;
+      }
+      
+      // Check category type
+      const categoryType = item.category.type;
+      console.log(`📝 Item: ${item.name}, Category Type: ${categoryType}`);
+      
+      return categoryType === 'Medicine' || categoryType === 'Consumable';
+    });
+    
+    console.log('✅ Filtered items count:', filteredItems.length);
     
     res.json({
       success: true,
-      data: items
+      data: filteredItems,
+      total: filteredItems.length
     });
   } catch (error) {
+    console.error('❌ Error fetching billable items:', error);
     res.status(500).json({
       success: false,
       message: error.message

@@ -23,9 +23,19 @@ router.use(protect);
  * DOCTOR
  */
 router.post('/', authorize('Doctor'), createPrescription);
-router.get('/visit/:visitId', authorize('Doctor', 'Admin'), getPrescriptionByVisit);
-router.get('/patient/:patientId', authorize('Doctor', 'Admin', 'Nurse'), getPatientPrescriptions);
-router.get('/patient/:patientId/history', authorize('Doctor', 'Admin', 'Nurse'), getPatientHistory);
+// In prescription.routes.js - Add logging middleware
+router.get('/visit/:visitId', 
+  protect, 
+  (req, res, next) => {
+    console.log('🟢 GET /prescriptions/visit/:visitId route hit');
+    console.log('👉 Visit ID:', req.params.visitId);
+    console.log('👉 User:', req.user?.id, req.user?.role);
+    next();
+  }, 
+  authorize('Doctor', 'Admin', 'Reception'), 
+  getPrescriptionByVisit
+);router.get('/patient/:patientId', authorize('Doctor', 'Admin', 'Nurse'), getPatientPrescriptions);
+router.get('/patient/:patientId/history', authorize('Doctor', 'Admin', 'Nurse', 'Reception'), getPatientHistory);
 
 /**
  * PHARMACY
