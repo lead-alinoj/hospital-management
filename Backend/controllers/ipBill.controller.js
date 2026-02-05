@@ -170,6 +170,7 @@ exports.getBillableItems = async (req, res) => {
   }
 };
 // Calculate total bill
+// In ipBill.controller.js - Update calculateIPBill method
 exports.calculateIPBill = async (req, res) => {
   try {
     const { visitId } = req.params;
@@ -177,7 +178,7 @@ exports.calculateIPBill = async (req, res) => {
     // Get all bill items
     const billItems = await IPBillItem.find({ visit: visitId });
     
-    // Get visit details for room charges
+    // Get visit details
     const visit = await Visit.findById(visitId)
       .populate('bedAllocated')
       .populate('patient');
@@ -189,20 +190,18 @@ exports.calculateIPBill = async (req, res) => {
       });
     }
     
-    // Calculate room charges
+    // Calculate stay days (for information only)
     const admissionDate = visit.admissionDate || new Date();
     const currentDate = new Date();
     const stayDays = Math.ceil((currentDate - admissionDate) / (1000 * 60 * 60 * 24));
     const roomChargesPerDay = visit.bedAllocated?.room?.chargesPerDay || 0;
     const roomCharges = stayDays * roomChargesPerDay;
     
-    // Calculate item charges
+    // Calculate item charges (only from actual bill items)
     const itemCharges = billItems.reduce((sum, item) => sum + item.totalPrice, 0);
     
-    // Total
-    const subtotal = roomCharges + itemCharges;
-    const tax = subtotal * 0.18; // 18% GST
-    const total = subtotal + tax;
+    // Total (NO GST)
+    const total = itemCharges + roomCharges;
     
     res.json({
       success: true,
@@ -212,9 +211,7 @@ exports.calculateIPBill = async (req, res) => {
         stayDays,
         roomCharges,
         itemCharges,
-        subtotal,
-        tax,
-        total,
+        total, // No subtotal or tax
         items: billItems
       }
     });
@@ -227,75 +224,172 @@ exports.calculateIPBill = async (req, res) => {
   }
 };
 
-// Add manual bill item
+// Add manual bill item - UPDATED
 exports.addManualBillItem = async (req, res) => {
   try {
+    console.log('📝 Adding manual bill item:', req.body);
+    console.log('👤 User:', req.user);
+    
+    // Extract data from request
+    const { visit, patient, name, categoryType, quantity, unitPrice, totalPrice, 
+            instructions, notes, billGroup = 'SERVICE' } = req.body;
+    
+    // Validate required fields
+    if (!visit || !patient || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: visit, patient, name are required'
+      });
+    }
+    
+    // Calculate total price if not provided
+    const qty = quantity || 1;
+    const uPrice = unitPrice || 0;
+    const calculatedTotalPrice = totalPrice || (qty * uPrice);
+    
+    // Map category to valid enum if needed
+    const validCategory = mapToValidCategory(categoryType || 'OTHER');
+    
+    console.log('🔧 Creating manual item with:', {
+      visit, patient, name, 
+      categoryType: validCategory,
+      quantity: qty,
+      unitPrice: uPrice,
+      totalPrice: calculatedTotalPrice,
+      billGroup
+    });
+    
     const manualItem = new IPBillItem({
-      ...req.body,
+      visit,
+      patient,
+      name,
+      categoryType: validCategory,
+      quantity: qty,
+      unitPrice: uPrice,
+      totalPrice: calculatedTotalPrice,
+      instructions: instructions || '',
+      administeredBy: 'System', // Default for service items
       addedBy: {
         id: req.user.id,
         name: req.user.name,
         role: req.user.role
       },
       isManual: true,
+      billGroup: billGroup,
+      notes: notes || '',
       createdAt: new Date()
     });
 
+    console.log('💾 Saving manual item...');
     const savedItem = await manualItem.save();
+    console.log('✅ Manual item saved:', savedItem._id);
+
+    // Populate addedBy information
+    const populatedItem = await IPBillItem.findById(savedItem._id)
+      .populate('addedBy.id', 'name role')
+      .lean();
 
     res.json({
       success: true,
-      data: savedItem,
+      data: populatedItem,
       message: 'Manual charge added successfully'
     });
   } catch (error) {
-    console.error('Error adding manual charge:', error);
+    console.error('❌ Error adding manual charge:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
+      errors: error.errors ? Object.keys(error.errors) : [],
+      errorDetails: error.errors
     });
   }
 };
 
-// Mark Items as Billed
+// Helper function to map category to valid enum
+function mapToValidCategory(category) {
+  if (!category) return 'OTHER';
+  
+  const categoryMap = {
+    'ROOM': 'ROOM',
+    'NURSING': 'NURSING',
+    'DOCTOR': 'DOCTOR',
+    'CONSULTATION': 'DOCTOR',
+    'PROCEDURE': 'PROCEDURE',
+    'LAB': 'LAB',
+    'OTHER': 'OTHER',
+    'Medicine': 'Medicine',
+    'Consumable': 'Consumable'
+  };
+  
+  return categoryMap[category] || 'OTHER';
+}
+
+// In ipBill.controller.js - Update markBillItemsAsBilled method
 exports.markBillItemsAsBilled = async (req, res) => {
   try {
     const { visitId } = req.params;
     const paymentData = req.body;
 
+    console.log('🔵 Marking items as billed for visit:', visitId);
+    console.log('📊 Payment data:', paymentData);
+
+    // Get all unbilled items
+    const unbilledItems = await IPBillItem.find({ 
+      visit: visitId, 
+      isBilled: false 
+    });
+
+    if (unbilledItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No unbilled items found'
+      });
+    }
+
     // Update all items
-    await IPBillItem.updateMany(
+    const result = await IPBillItem.updateMany(
       { visit: visitId, isBilled: false },
       {
         isBilled: true,
-        billingId: new mongoose.Types.ObjectId(),
-        billedAt: new Date()
+        billedAt: new Date(),
+        paymentMethod: paymentData.paymentMethod
       }
     );
+
+    console.log('✅ Updated items:', result.modifiedCount);
 
     // Create billing record
     const billingRecord = new BillingRecord({
       visit: visitId,
-      patient: req.body.patientId,
+      patient: paymentData.patientId,
       totalAmount: paymentData.totalAmount,
-      paidAmount: paymentData.paymentAmount,
+      paidAmount: paymentData.paymentAmount || paymentData.totalAmount,
       paymentMethod: paymentData.paymentMethod,
       paymentStatus: paymentData.paymentAmount >= paymentData.totalAmount ? 'PAID' : 'PARTIAL',
-      generatedBy: req.user.id
+      insuranceId: paymentData.insuranceId || '',
+      notes: paymentData.notes || '',
+      generatedBy: req.user.id,
+      items: unbilledItems.map(item => item._id)
     });
 
     await billingRecord.save();
 
+    console.log('✅ Billing record created:', billingRecord._id);
+
     res.json({
       success: true,
-      data: billingRecord,
+      data: {
+        billingRecord,
+        itemsUpdated: result.modifiedCount
+      },
       message: 'Bill items marked as billed'
     });
   } catch (error) {
-    console.error('Error marking items as billed:', error);
+    console.error('❌ Error marking items as billed:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
+      error: error.stack
     });
   }
 };
@@ -329,7 +423,92 @@ exports.updateBillItem = async (req, res) => {
     });
   }
 };
+// Get service bill items only
+// Get service bill items only
+exports.getServiceBillItems = async (req, res) => {
+  try {
+    const { visitId } = req.params;
+    console.log('📋 Getting service bill items for visit:', visitId);
+    
+    const items = await IPBillItem.find({ 
+      visit: visitId,
+      // Filter by service categories OR billGroup = 'SERVICE'
+      $or: [
+        { categoryType: { $in: ['ROOM', 'NURSING', 'DOCTOR', 'PROCEDURE', 'LAB', 'OTHER'] } },
+        { billGroup: 'SERVICE' }
+      ]
+    })
+    .populate('addedBy.id', 'name role')
+    .sort({ createdAt: -1 });
 
+    console.log(`✅ Found ${items.length} service items`);
+    
+    res.json({
+      success: true,
+      data: items,
+      total: items.length
+    });
+  } catch (error) {
+    console.error('❌ Error fetching service bill items:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Mark service items as billed
+exports.markServiceItemsAsBilled = async (req, res) => {
+  try {
+    const { visitId, itemIds, paymentData } = req.body;
+    
+    // Update service items
+    const result = await IPBillItem.updateMany(
+      { 
+        _id: { $in: itemIds },
+        visit: visitId,
+        categoryType: { $in: ['ROOM', 'NURSING', 'DOCTOR', 'PROCEDURE', 'LAB', 'CONSULTATION', 'OTHER'] }
+      },
+      {
+        isBilled: true,
+        billedAt: new Date(),
+        paymentMethod: paymentData.paymentMethod
+      }
+    );
+    
+    // Create service billing record
+    const serviceBilling = new ServiceBillingRecord({
+      visit: visitId,
+      patient: paymentData.patientId,
+      billType: 'SERVICE',
+      totalAmount: paymentData.totalAmount,
+      paidAmount: paymentData.paymentAmount || paymentData.totalAmount,
+      paymentMethod: paymentData.paymentMethod,
+      paymentStatus: paymentData.paymentAmount >= paymentData.totalAmount ? 'PAID' : 'PARTIAL',
+      insuranceId: paymentData.insuranceId || '',
+      notes: paymentData.notes || '',
+      generatedBy: req.user.id,
+      items: itemIds
+    });
+    
+    await serviceBilling.save();
+    
+    res.json({
+      success: true,
+      data: {
+        billingRecord: serviceBilling,
+        itemsUpdated: result.modifiedCount
+      },
+      message: 'Service bill generated successfully'
+    });
+  } catch (error) {
+    console.error('Error marking service items as billed:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 // Delete bill item
 exports.deleteBillItem = async (req, res) => {
   try {

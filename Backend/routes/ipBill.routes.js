@@ -24,7 +24,16 @@ router.get('/calculate/:visitId',
   authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
   ipBillController.calculateIPBill
 );
+// Service bill routes
+router.get('/service-items/:visitId',
+  authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
+  ipBillController.getServiceBillItems
+);
 
+router.post('/mark-service-billed',
+  authorize('Reception', 'Admin','Pharmacy'),
+  ipBillController.markServiceItemsAsBilled
+);
 // Add manual bill item
 router.post('/manual-item',
   authorize('Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Admin'),
@@ -33,19 +42,19 @@ router.post('/manual-item',
 
 // Mark items as billed
 router.post('/mark-billed/:visitId',
-  authorize('Admin', 'Reception'),
+  authorize('Admin', 'Reception', 'Pharmacy'),
   ipBillController.markBillItemsAsBilled
 );
 
 // Update bill item
 router.put('/items/:itemId',
-  authorize('Admin', 'Reception'),
+  authorize('Admin', 'Reception','Pharmacy'),
   ipBillController.updateBillItem
 );
 
 // Delete bill item
 router.delete('/items/:itemId',
-  authorize('Admin', 'Reception'),
+  authorize('Admin', 'Reception','Pharmacy'),
   ipBillController.deleteBillItem
 );
 

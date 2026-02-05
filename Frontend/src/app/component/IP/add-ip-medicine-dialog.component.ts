@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Observable, of } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { PrescriptionService } from '../../service/prescription.service';
@@ -30,7 +31,8 @@ import { MatOptionModule } from '@angular/material/core';
     MatIconModule,
     MatAutocompleteModule,
     MatButtonToggleModule,
-    MatOptionModule
+    MatOptionModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="add-ip-medicine-dialog">
@@ -254,6 +256,7 @@ export class AddIpMedicineDialogComponent{
   private medicineService = inject(MedicineService);
   private prescriptionService = inject(PrescriptionService);
   private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
 
   medicineForm: FormGroup;
   allItems: any[] = [];
@@ -477,7 +480,13 @@ onItemSelected(selectedItem: any, index: number): void {
   }
 
 onSubmit(): void {
-  if (this.medicineForm.invalid) return;
+  if (this.medicineForm.invalid) {
+    this.snackBar.open('Please fill all required fields', 'Close', { duration: 3000 });
+    return;
+  }
+  
+  // Validate items
+  if (!this.validateBillItems()) return;
   
   const itemsData = this.items.value.map((item: any) => ({
     itemId: item.itemId,
@@ -486,17 +495,19 @@ onSubmit(): void {
     quantity: item.quantity,
     unitPrice: item.unitPrice,
     totalPrice: item.quantity * item.unitPrice,
-    frequency: item.frequency,
-    days: item.days,
-    instructions: item.instructions,
+    frequency: item.frequency || '',
+    days: item.days || 1,
+    instructions: item.instructions || '',
     isIPItem: true
   }));
 
   const billData = {
     visitId: this.data.visitId,
+    patientId: this.data.patient?._id,
     items: itemsData,
     totalAmount: this.getTotalAmount(),
-    administeredBy: this.medicineForm.value.administeredBy
+    administeredBy: this.medicineForm.value.administeredBy,
+    notes: this.medicineForm.value.notes || ''
   };
 
   this.medicineService.addIPBillItems(billData).subscribe({
@@ -511,11 +522,13 @@ onSubmit(): void {
     },
     error: (err) => {
       console.error('Error adding bill items:', err);
-      alert('Failed to add bill items');
+      this.snackBar.open('Failed to add bill items: ' + err.message, 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
     }
   });
 }
-
 validateBillItems(): boolean {
   for (let i = 0; i < this.items.length; i++) {
     const item = this.items.at(i).value;

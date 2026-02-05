@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { PdfService } from '../../service/pdf.service';
 
 @Component({
   selector: 'app-final-bill-dialog',
@@ -36,50 +37,49 @@ import { MatDividerModule } from '@angular/material/divider';
       </div>
       
       <!-- Bill Summary -->
-      <div class="bill-summary">
-        <h4>Bill Summary</h4>
-        
-        <div class="summary-section">
-          <div class="summary-item">
-            <span>Room Charges ({{ data.stayDays }} days):</span>
-            <span>₹{{ data.roomCharges | number:'1.2-2' }}</span>
+      <!-- Bill Summary -->
+<div class="bill-summary">
+  <h4>Bill Summary</h4>
+  
+  <div class="summary-section">
+    <!-- Only show actual charges -->
+    <div *ngIf="data.billItems && data.billItems.length > 0; else noItems">
+      <!-- Group charges by category -->
+      <div *ngFor="let category of getGroupedCharges()">
+        <div class="category-header">{{ category.name }}</div>
+        <div *ngFor="let item of category.items" class="bill-item">
+          <div class="item-name">{{ item.name }}</div>
+          <div class="item-details">
+            <span>{{ item.quantity }} × ₹{{ item.unitPrice | number:'1.2-2' }}</span>
+            <span *ngIf="item.days"> × {{ item.days }} days</span>
+            <strong>₹{{ item.totalPrice | number:'1.2-2' }}</strong>
           </div>
-          <div class="summary-item">
-            <span>Doctor Consultation:</span>
-            <span>₹{{ data.doctorFees | number:'1.2-2' }}</span>
-          </div>
-          <div class="summary-item">
-            <span>Nursing Charges:</span>
-            <span>₹{{ data.nursingCharges | number:'1.2-2' }}</span>
-          </div>
-          
-          <mat-divider></mat-divider>
-          
-          <!-- Itemized Charges -->
-          <div *ngFor="let item of data.billItems" class="bill-item">
-            <div class="item-name">{{ item.name }}</div>
-            <div class="item-details">
-              <span>{{ item.quantity }} × ₹{{ item.unitPrice | number:'1.2-2' }}</span>
-              <strong>₹{{ item.totalPrice | number:'1.2-2' }}</strong>
-            </div>
-          </div>
-          
-          <mat-divider></mat-divider>
-          
-          <div class="summary-item">
-            <span>Subtotal:</span>
-            <span>₹{{ data.subtotal | number:'1.2-2' }}</span>
-          </div>
-          <div class="summary-item">
-            <span>Tax (GST 18%):</span>
-            <span>₹{{ data.tax | number:'1.2-2' }}</span>
-          </div>
-          <div class="summary-item grand-total">
-            <strong>Grand Total:</strong>
-            <strong>₹{{ data.total | number:'1.2-2' }}</strong>
+          <div *ngIf="item.instructions" class="item-instructions">
+            <small>{{ item.instructions }}</small>
           </div>
         </div>
       </div>
+    </div>
+    
+    <ng-template #noItems>
+      <div class="no-items-message">
+        <mat-icon>receipt</mat-icon>
+        <p>No charges added to bill</p>
+      </div>
+    </ng-template>
+    
+    <mat-divider></mat-divider>
+    
+    <div class="summary-item">
+      <span>Subtotal:</span>
+      <span>₹{{ getSubtotal() | number:'1.2-2' }}</span>
+    </div>
+    <div class="summary-item grand-total">
+      <strong>Grand Total:</strong>
+      <strong>₹{{ getTotal() | number:'1.2-2' }}</strong>
+    </div>
+  </div>
+</div>
       
       <!-- Payment Form -->
       <form [formGroup]="paymentForm" class="payment-form">
@@ -119,10 +119,10 @@ import { MatDividerModule } from '@angular/material/divider';
           <textarea matInput formControlName="notes" rows="2"></textarea>
         </mat-form-field>
         
-        <div class="balance-info" *ngIf="paymentForm.get('paymentAmount')?.value < data.total">
-          <mat-icon color="warn">warning</mat-icon>
-          <span>Balance: ₹{{ data.total - (paymentForm.get('paymentAmount')?.value || 0) | number:'1.2-2' }}</span>
-        </div>
+        <div class="balance-info" *ngIf="paymentForm.get('paymentAmount')?.value < getTotal()">
+  <mat-icon color="warn">warning</mat-icon>
+  <span>Balance: ₹{{ getTotal() - (paymentForm.get('paymentAmount')?.value || 0) | number:'1.2-2' }}</span>
+</div>
       </form>
     </mat-dialog-content>
     
@@ -187,7 +187,34 @@ import { MatDividerModule } from '@angular/material/divider';
       justify-content: space-between;
       color: #666;
     }
-    
+    .item-instructions {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.category-header {
+  font-weight: 600;
+  color: #1976d2;
+  padding: 10px 0 5px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 10px;
+}
+
+.no-items-message {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+}
+
+.no-items-message mat-icon {
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+  margin-bottom: 10px;
+  color: #ccc;
+}
     .payment-form {
       margin-top: 20px;
     }
@@ -211,6 +238,8 @@ import { MatDividerModule } from '@angular/material/divider';
 })
 export class FinalBillDialogComponent {
   private fb = inject(FormBuilder);
+    private pdfService = inject(PdfService); // Add this
+
   paymentForm: FormGroup;
 
   constructor(
@@ -227,17 +256,89 @@ export class FinalBillDialogComponent {
 
   onSubmit(): void {
     if (this.paymentForm.valid) {
-      this.dialogRef.close({
-        success: true,
-        paymentData: {
-          ...this.paymentForm.value,
-          totalAmount: this.data.total,
-          billingDate: new Date()
-        }
+      // Generate PDF first, then close dialog
+      this.generateAndDownloadPDF().then(() => {
+        this.dialogRef.close({
+          success: true,
+          paymentData: {
+            ...this.paymentForm.value,
+            totalAmount: this.data.total,
+            billingDate: new Date()
+          }
+        });
       });
     }
   }
+    private async generateAndDownloadPDF(): Promise<void> {
+    try {
+      const pdf = await this.pdfService.generateIPBillPDF(
+        {
+          billItems: this.data.billItems,
+          subtotal: this.getSubtotal(),
+          total: this.getTotal()
+        },
+        {
+          paymentAmount: this.paymentForm.get('paymentAmount')?.value,
+          paymentMethod: this.paymentForm.get('paymentMethod')?.value,
+          insuranceId: this.paymentForm.get('insuranceId')?.value,
+          notes: this.paymentForm.get('notes')?.value
+        },
+        this.data.patient,
+        this.data.stayDays || 1
+      );
 
+      // Generate filename
+      const patientName = this.data.patient.patient?.fullName || 'patient';
+      const fileName = `IP_Bill_${patientName.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+      
+      // Save PDF
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // Continue even if PDF fails
+    }
+  }
+  getGroupedCharges(): any[] {
+    if (!this.data.billItems || this.data.billItems.length === 0) {
+      return [];
+    }
+    
+    const categories: {[key: string]: {name: string, items: any[]}} = {};
+    const categoryNames: {[key: string]: string} = {
+      'ROOM': 'Room Charges',
+      'DOCTOR': 'Doctor Consultation',
+      'NURSING': 'Nursing Care',
+      'MEDICINE': 'Medicines',
+      'CONSUMABLE': 'Consumables',
+      'PROCEDURE': 'Procedures',
+      'LAB': 'Lab Tests',
+      'OTHER': 'Other Charges'
+    };
+    
+    this.data.billItems.forEach((item: any) => {
+      const category = item.categoryType || 'OTHER';
+      if (!categories[category]) {
+        categories[category] = {
+          name: categoryNames[category] || category,
+          items: []
+        };
+      }
+      categories[category].items.push(item);
+    });
+    
+    return Object.values(categories);
+  }
+
+  getSubtotal(): number {
+    if (!this.data.billItems) return 0;
+    return this.data.billItems.reduce((sum: number, item: any) => 
+      sum + (item.totalPrice || 0), 0
+    );
+  }
+
+  getTotal(): number {
+    return this.getSubtotal(); // No tax for now
+  }
   onCancel(): void {
     this.dialogRef.close();
   }

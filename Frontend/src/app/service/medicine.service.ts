@@ -86,7 +86,39 @@ deleteBillItem(itemId: string): Observable<any> {
   return this.http.delete(`${environment.apiUrl}/ipbill/items/${itemId}`);
 }
 addManualBillItem(data: any): Observable<any> {
-  return this.http.post(`${environment.apiUrl}/ipbill/manual-item`, data);
+  // Prepare data with defaults
+  const serviceItemData = {
+    ...data,
+    administeredBy: data.administeredBy || 'System',
+    billGroup: 'SERVICE',
+    quantity: data.quantity || 1,
+    unitPrice: data.unitPrice || (data.amount / (data.quantity || 1)),
+    totalPrice: data.totalPrice || data.amount,
+    categoryType: this.mapCategoryToValidEnum(data.categoryType || 'OTHER')
+  };
+  
+  console.log('📤 Sending manual bill item:', serviceItemData);
+  
+  return this.http.post(`${environment.apiUrl}/ipbill/manual-item`, serviceItemData);
+}
+
+// Helper method to map category to valid enum value
+private mapCategoryToValidEnum(category: string): string {
+  if (!category) return 'OTHER';
+  
+  const categoryMap: {[key: string]: string} = {
+    'ROOM': 'ROOM',
+    'NURSING': 'NURSING',
+    'DOCTOR': 'DOCTOR',
+    'CONSULTATION': 'DOCTOR',
+    'PROCEDURE': 'PROCEDURE',
+    'LAB': 'LAB',
+    'OTHER': 'OTHER',
+    'Medicine': 'Medicine',
+    'Consumable': 'Consumable'
+  };
+  
+  return categoryMap[category] || 'OTHER';
 }
 getReceptionItems(): Observable<any> {
     return this.http.get(`${this.apiUrl}/medicines/reception-ip`);
@@ -104,5 +136,17 @@ getIPBillItems(visitId: string): Observable<any> {
 // Calculate IP bill
 calculateIPBill(visitId: string): Observable<any> {
   return this.http.get(`${environment.apiUrl}/ipbill/calculate/${visitId}`);
+}
+getIPServiceItems(visitId: string): Observable<any> {
+  return this.http.get<any>(`${environment.apiUrl}/ipbill/service-items/${visitId}`);
+}
+
+// Mark service items as billed - CORRECTED ENDPOINT
+markServiceBillItemsAsBilled(visitId: string, itemIds: string[], paymentData: any): Observable<any> {
+  return this.http.post<any>(`${environment.apiUrl}/ipbill/mark-service-billed`, {
+    visitId,
+    itemIds,
+    paymentData
+  });
 }
 }

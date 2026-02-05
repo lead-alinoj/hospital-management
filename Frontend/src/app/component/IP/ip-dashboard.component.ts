@@ -22,6 +22,7 @@ import { PrescriptionService } from '../../service/prescription.service';
 import { ManualChargeDialogComponent } from './manual-charge-dialog.component';
 import { AddIpMedicineDialogComponent } from './add-ip-medicine-dialog.component';
 import { EditBillItemDialogComponent } from './edit-bill-item-dialog.component';
+import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.component";
 @Component({
   selector: 'app-ip-dashboard',
   standalone: true,
@@ -33,8 +34,9 @@ import { EditBillItemDialogComponent } from './edit-bill-item-dialog.component';
     MatIconModule,
     MatTabsModule,
     MatChipsModule,
-    MatTooltipModule
-  ],
+    MatTooltipModule,
+    PaymentSummaryComponent
+],
   template: `
     <div class="ip-dashboard">
       <h1>In-Patient Management</h1>
@@ -188,74 +190,67 @@ import { EditBillItemDialogComponent } from './edit-bill-item-dialog.component';
         </div>
         
         <!-- Bill Summary -->
-        <div class="bill-summary-card">
-          <div class="summary-header">
-            <h4>Bill Summary</h4>
-            <span class="last-updated">Updated: {{ lastUpdated | date:'medium' }}</span>
-          </div>
-          
-          <div class="summary-grid">
-            <!-- Itemized Charges -->
-            <div class="summary-section">
-              <h5>Itemized Charges</h5>
-              <div class="summary-item" *ngFor="let category of itemizedCharges">
-                <span>{{ category.name }}</span>
-                <span>₹{{ category.amount | number:'1.2-2' }}</span>
-              </div>
-            </div>
-            
-            <!-- Room Charges -->
-            <div class="summary-section">
-              <h5>Room Charges</h5>
-              <div class="summary-item">
-                <span>Room Charges ({{ stayDays }} days)</span>
-                <span>₹{{ roomCharges | number:'1.2-2' }}</span>
-              </div>
-              <div class="summary-item">
-                <span>Doctor Consultation</span>
-                <span>₹{{ doctorFees | number:'1.2-2' }}</span>
-              </div>
-              <div class="summary-item">
-                <span>Nursing Charges</span>
-                <span>₹{{ nursingCharges | number:'1.2-2' }}</span>
-              </div>
-            </div>
-            
-            <!-- Total Section -->
-            <div class="summary-section total-section">
-              <div class="summary-item">
-                <span>Subtotal:</span>
-                <span>₹{{ calculateSubtotal() | number:'1.2-2' }}</span>
-              </div>
-              <div class="summary-item">
-                <span>Tax (GST 18%):</span>
-                <span>₹{{ calculateTax() | number:'1.2-2' }}</span>
-              </div>
-              <div class="summary-item grand-total">
-                <strong>Grand Total:</strong>
-                <strong>₹{{ calculateGrandTotal() | number:'1.2-2' }}</strong>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Payment Status -->
-          <div class="payment-status">
-            <mat-chip-set>
-              <mat-chip [color]="paymentStatus === 'PAID' ? 'primary' : undefined"
-                        [highlighted]="paymentStatus === 'PAID'">
-                Paid: ₹{{ paidAmount | number:'1.2-2' }}
-              </mat-chip>
-              <mat-chip [color]="paymentStatus === 'PENDING' ? 'warn' : undefined"
-                        [highlighted]="paymentStatus === 'PENDING'">
-                Pending: ₹{{ pendingAmount | number:'1.2-2' }}
-              </mat-chip>
-              <mat-chip [color]="paymentStatus === 'PARTIAL' ? 'accent' : undefined"
-                        [highlighted]="paymentStatus === 'PARTIAL'">
-                Balance: ₹{{ balanceAmount | number:'1.2-2' }}
-              </mat-chip>
-            </mat-chip-set>
-          </div>
+       <!-- In ip-dashboard.component.html - Update the bill summary section -->
+<!-- Bill Summary -->
+<div class="bill-summary-card">
+  <div class="summary-header">
+    <h4>Bill Summary</h4>
+    <span class="last-updated">Updated: {{ lastUpdated | date:'medium' }}</span>
+  </div>
+  
+  <div class="summary-grid">
+    <!-- Itemized Charges ONLY -->
+    <div class="summary-section">
+      <h5>All Charges</h5>
+      <div *ngIf="itemizedCharges.length > 0; else noCharges">
+        <div class="summary-item" *ngFor="let category of itemizedCharges">
+          <span>{{ category.name }}</span>
+          <span>₹{{ category.amount | number:'1.2-2' }}</span>
         </div>
+      </div>
+      <ng-template #noCharges>
+        <div class="no-charges-message">
+          <mat-icon>receipt</mat-icon>
+          <p>No charges added yet</p>
+        </div>
+      </ng-template>
+    </div>
+    
+    <!-- Total Section -->
+    <div class="summary-section total-section">
+      <div class="summary-item">
+        <span>Subtotal:</span>
+        <span>₹{{ calculateSubtotal() | number:'1.2-2' }}</span>
+      </div>
+      <!-- <div class="summary-item">
+        <span>Tax (GST 18%):</span>
+        <span>₹{{ calculateTax() | number:'1.2-2' }}</span>
+      </div> -->
+      <div class="summary-item grand-total">
+        <strong>Grand Total:</strong>
+        <strong>₹{{ calculateGrandTotal() | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Payment Status -->
+  <div class="payment-status">
+    <mat-chip-set>
+      <mat-chip [color]="paymentStatus === 'PAID' ? 'primary' : undefined"
+                [highlighted]="paymentStatus === 'PAID'">
+        Paid: ₹{{ paidAmount | number:'1.2-2' }}
+      </mat-chip>
+      <mat-chip [color]="paymentStatus === 'PENDING' ? 'warn' : undefined"
+                [highlighted]="paymentStatus === 'PENDING'">
+        Pending: ₹{{ pendingAmount | number:'1.2-2' }}
+      </mat-chip>
+      <mat-chip [color]="paymentStatus === 'PARTIAL' ? 'accent' : undefined"
+                [highlighted]="paymentStatus === 'PARTIAL'">
+        Balance: ₹{{ balanceAmount | number:'1.2-2' }}
+      </mat-chip>
+    </mat-chip-set>
+  </div>
+</div>
       </div>
       
       <!-- No Bill Items State -->
@@ -270,7 +265,16 @@ import { EditBillItemDialogComponent } from './edit-bill-item-dialog.component';
           <button mat-raised-button color="accent" (click)="addManualCharge(selectedPatient)">
             <mat-icon>receipt</mat-icon> Add Manual Charge
           </button>
+          
         </div>
+      </div>
+      <div class="payment-summary-section" *ngIf="selectedPatient">
+        <app-payment-summary
+          [visitId]="selectedPatient._id"
+          [patientId]="selectedPatient.patient?._id"
+          [totalBillAmount]="calculateGrandTotal()"
+          (paymentAdded)="loadBillItems(selectedPatient._id)">
+        </app-payment-summary>
       </div>
     </div>
   </div>
@@ -539,6 +543,15 @@ import { EditBillItemDialogComponent } from './edit-bill-item-dialog.component';
       font-weight: bold; 
       margin: 10px 0;
     }
+
+  /* Add to ip-dashboard.component.css styles */
+.payment-summary-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
     /* Add to ip-dashboard.component.css */
 .bill-header {
   display: flex;
@@ -813,7 +826,42 @@ import { EditBillItemDialogComponent } from './edit-bill-item-dialog.component';
   padding: 4px 8px;
   border-bottom: 1px solid #eee;
 }
+/* Add to ip-dashboard.component.css */
+.no-charges-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
 
+.no-charges-message mat-icon {
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+  margin-bottom: 10px;
+  color: #ccc;
+}
+
+.category-header {
+  font-weight: 600;
+  color: #1976d2;
+  padding: 10px 0 5px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 10px;
+}
+
+.no-items-message {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+}
+
+.no-items-message mat-icon {
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+  margin-bottom: 10px;
+  color: #ccc;
+}
 .no-medicines {
   color: #888;
   font-style: italic;
@@ -944,27 +992,28 @@ calculateBillSummary(visitId: string): void {
     next: (visitResponse: any) => {
       const visit = visitResponse.data || visitResponse;
       
-      // Calculate stay days
+      // Calculate stay days only (for display purposes)
       if (visit.admissionDate) {
         const admissionDate = new Date(visit.admissionDate);
         const today = new Date();
         this.stayDays = Math.max(1, Math.ceil((today.getTime() - admissionDate.getTime()) / (1000 * 60 * 60 * 24)));
-        this.roomCharges = this.stayDays * (visit.bedAllocated?.room?.chargesPerDay || 500);
+        
+        // NO automatic room charges calculation
+        // User must add room charges manually if needed
+        this.roomCharges = 0;
       }
       
-      // Calculate doctor fees (consultation fee from prescription)
-      this.prescriptionService.getPrescriptionByVisit(visitId).subscribe({
-        next: (prescriptionRes: any) => {
-          const prescription = prescriptionRes.data || prescriptionRes;
-          this.doctorFees = prescription.billing?.consultationFee || 500;
-        }
-      });
+      // NO automatic doctor fees calculation
+      this.doctorFees = 0;
       
-      // Calculate nursing charges (₹100 per day)
-      this.nursingCharges = this.stayDays * 100;
+      // NO automatic nursing charges calculation
+      this.nursingCharges = 0;
       
-      // Update itemized charges
+      // Update itemized charges (only from manual items)
       this.calculateItemizedCharges();
+      
+      // Calculate payment status
+      this.calculatePaymentStatus();
       
       this.lastUpdated = new Date();
     }
@@ -987,9 +1036,10 @@ calculatePaymentStatus(): void {
     this.paymentStatus = 'PARTIAL';
   }
 }
+// Update generateFinalBill method
 generateFinalBill(patient: any): void {
   if (this.billItems.length === 0) {
-    this.snackBar.open('No bill items to generate final bill', 'Close', {
+    this.snackBar.open('No charges added to generate bill', 'Close', {
       duration: 3000,
       panelClass: ['error-snackbar']
     });
@@ -1001,13 +1051,9 @@ generateFinalBill(patient: any): void {
     data: {
       patient: patient,
       billItems: this.billItems,
-      roomCharges: this.roomCharges,
-      doctorFees: this.doctorFees,
-      nursingCharges: this.nursingCharges,
-      stayDays: this.stayDays,
       subtotal: this.calculateSubtotal(),
-      tax: this.calculateTax(),
-      total: this.calculateGrandTotal()
+      total: this.calculateGrandTotal(),
+      stayDays: this.calculateStayDays(patient.admissionDate)
     }
   });
   
@@ -1019,7 +1065,14 @@ generateFinalBill(patient: any): void {
 }
 
 markItemsAsBilled(visitId: string, paymentData: any): void {
-  this.medicineService.markBillItemsAsBilled(visitId, paymentData).subscribe({
+  // Add missing required fields
+  const completePaymentData = {
+    ...paymentData,
+    patientId: this.selectedPatient.patient._id,
+    totalAmount: this.calculateGrandTotal()
+  };
+
+  this.medicineService.markBillItemsAsBilled(visitId, completePaymentData).subscribe({
     next: (response: any) => {
       if (response.success) {
         // Refresh bill items
@@ -1033,21 +1086,27 @@ markItemsAsBilled(visitId: string, paymentData: any): void {
     },
     error: (err) => {
       console.error('Error generating bill:', err);
-      this.snackBar.open('Failed to generate final bill', 'Close', {
-        duration: 3000,
+      this.snackBar.open('Failed to generate final bill: ' + err.message, 'Close', {
+        duration: 5000,
         panelClass: ['error-snackbar']
       });
     }
   });
 }
+calculateGrandTotal(): number {
+  return this.calculateSubtotal(); // No GST
+}
 calculateItemizedCharges(): void {
   const categories: { [key: string]: { name: string; amount: number } } = {};
   
+  // Add ONLY bill items (including any manual charges for room/doctor/nursing)
   this.billItems.forEach(item => {
     const category = item.categoryType || 'OTHER';
+    const displayName = this.getCategoryDisplayName(category);
+    
     if (!categories[category]) {
       categories[category] = {
-        name: category,
+        name: displayName,
         amount: 0
       };
     }
@@ -1056,20 +1115,34 @@ calculateItemizedCharges(): void {
   
   this.itemizedCharges = Object.values(categories);
 }
+getCategoryDisplayName(category: string): string {
+  const displayNames: {[key: string]: string} = {
+    'ROOM': 'Room Charges',
+    'DOCTOR': 'Doctor Consultation',
+    'NURSING': 'Nursing Care',
+    'MEDICINE': 'Medicines',
+    'CONSUMABLE': 'Consumables',
+    'PROCEDURE': 'Procedures',
+    'LAB': 'Lab Tests',
+    'CONSULTATION': 'Consultations',
+    'MANUAL': 'Manual Charges',
+    'OTHER': 'Other Charges'
+  };
+  return displayNames[category] || category;
+}
 // Calculate subtotal
 calculateSubtotal(): number {
-  const itemTotal = this.billItems.reduce((sum: number, item: any) => 
+  return this.billItems.reduce((sum: number, item: any) => 
     sum + (item.totalPrice || 0), 0
   );
-  return itemTotal + this.roomCharges + this.doctorFees + this.nursingCharges;
 }
 calculateTax(): number {
   return this.calculateSubtotal() * 0.18; // 18% GST
 }
 // Calculate grand total
-calculateGrandTotal(): number {
-  return this.calculateSubtotal() + this.calculateTax();
-}
+// calculateGrandTotal(): number {
+//   return this.calculateSubtotal() + this.calculateTax();
+// }
 // Delete bill item
 deleteBillItem(item: any): void {
   if (confirm('Are you sure you want to delete this bill item?')) {
@@ -1126,16 +1199,28 @@ addManualCharge(patient: any): void {
     }
   });
 }
+// Update addManualBillItem method
 addManualBillItem(visitId: string, chargeData: any): void {
+  // Map category to proper categoryType
+  const categoryMap: {[key: string]: string} = {
+    'CONSULTATION': 'DOCTOR',
+    'PROCEDURE': 'PROCEDURE',
+    'LAB': 'LAB',
+    'NURSING': 'NURSING',
+    'OTHER': 'OTHER'
+  };
+  
+  const categoryType = categoryMap[chargeData.category] || chargeData.category;
+  
   const manualItem = {
     visit: visitId,
     patient: this.selectedPatient.patient._id,
     name: chargeData.description,
-    categoryType: chargeData.category || 'MANUAL',
+    categoryType: categoryType,
     quantity: 1,
     unitPrice: chargeData.amount,
     totalPrice: chargeData.amount,
-    instructions: chargeData.notes,
+    instructions: chargeData.notes || '',
     addedBy: {
       id: chargeData.user.id,
       name: chargeData.user.name,
@@ -1148,9 +1233,10 @@ addManualBillItem(visitId: string, chargeData: any): void {
   this.medicineService.addManualBillItem(manualItem).subscribe({
     next: (response: any) => {
       if (response.success) {
+        // Add to beginning of array and refresh
         this.billItems.unshift(response.data);
         this.calculateItemizedCharges();
-        this.snackBar.open('Manual charge added successfully', 'Close', {
+        this.snackBar.open('Charge added successfully', 'Close', {
           duration: 3000,
           panelClass: ['success-snackbar']
         });
@@ -1158,8 +1244,8 @@ addManualBillItem(visitId: string, chargeData: any): void {
     },
     error: (err) => {
       console.error('Error adding manual charge:', err);
-      this.snackBar.open('Failed to add manual charge', 'Close', {
-        duration: 3000,
+      this.snackBar.open('Failed to add charge: ' + err.message, 'Close', {
+        duration: 5000,
         panelClass: ['error-snackbar']
       });
     }

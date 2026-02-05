@@ -33,6 +33,7 @@ import { CareUnitMasterComponent } from './component/IP/care-unit-master.compone
 import { MainLayoutComponent } from './component/layout/main-layout.component';
 import { VitalsViewComponent } from './component/nurse/vitals -view.component';
 import { IpRecommendationDialogComponent } from './component/doctor/ip-recommendation-dialog.component';
+import { IpServiceBillComponent } from './component/IP/ip-service-bill.component';
 
 export const routes: Routes = [
   // Public routes - No layout
@@ -270,7 +271,11 @@ export const routes: Routes = [
         component: VitalsHistoryComponent,
         data: { roles: ['Nurse', 'Doctor'] }
       },
-
+{
+  path: 'ip-service-bill',
+  component: IpServiceBillComponent,
+  data: { roles: ['Doctor', 'Nurse', 'Reception', 'Admin'] }
+}
       // Default redirect
       // {
       //   path: '',

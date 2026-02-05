@@ -152,10 +152,9 @@ export class IpBillingComponent implements OnInit {
   calculateTotalBill(patient: any): number {
     const roomCharges = this.calculateRoomCharges(patient);
     const medicineTotal = this.calculateMedicineTotal(patient);
-    const doctorFees = 500; // Default doctor fee
     const otherCharges = patient.additionalCharges || 0;
     
-    return roomCharges + medicineTotal + doctorFees + otherCharges;
+    return roomCharges + medicineTotal  + otherCharges;
   }
 
   generateBill(patient: any): void {

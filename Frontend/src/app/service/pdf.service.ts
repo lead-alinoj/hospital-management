@@ -176,8 +176,351 @@ private async getImageBase64(imageUrl: string): Promise<string | null> {
     img.src = imageUrl;
   });
 }
+async generateIPBillPDF(
+  billData: any,
+  paymentData: any,
+  patient: any,
+  stayDays: number
+): Promise<jsPDF> {
+  try {
+    const hospital = await this.getHospital();
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Page dimensions
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = margin;
+    
+    // ===== COMPACT HOSPITAL HEADER =====
+    if (hospital.logo) {
+      try {
+        const logoBase64 = await this.getImageBase64('assets/images/logo.png');
+        if (logoBase64) {
+          doc.addImage(logoBase64, 'PNG', margin, y, 15, 15);
+        }
+      } catch (error) {
+        console.log('Logo not found, continuing without it');
+      }
+    }
+    
+    // Hospital Name (Compact)
+    doc.setFontSize(12).setFont('helvetica', 'bold');
+    doc.text(hospital.name || 'HOSPITAL', margin + 20, y + 5);
+    
+    // Hospital Details (small)
+    doc.setFontSize(8).setFont('helvetica', 'normal');
+    const hospitalInfo = `${hospital.address || ''}, ${hospital.city || ''}`;
+    const contactInfo = `Ph: ${hospital.phone || ''} ${hospital.email ? '| Email: ' + hospital.email : ''}`;
+    
+    doc.text(hospitalInfo, margin + 20, y + 10);
+    doc.text(contactInfo, margin + 20, y + 14);
+    
+    // Bill Title
+    doc.setFontSize(14).setFont('helvetica', 'bold');
+    doc.text('INPATIENT FINAL BILL', pageWidth - margin, y + 10, { align: 'right' });
+    
+    y += 25;
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+    
+    // ===== BILL HEADER (2 columns) =====
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    
+    // Left column: Bill Info
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bill No:', margin, y);
+    const billNumber = `IP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    doc.setFont('helvetica', 'normal');
+    doc.text(billNumber, margin + 15, y);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Date:', margin, y + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.text(new Date().toLocaleDateString(), margin + 15, y + 5);
+    
+    // Right column: Time
+    doc.setFont('helvetica', 'bold');
+    doc.text('Time:', pageWidth - 30, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), pageWidth - 20, y);
+    
+    y += 12;
+    
+    // ===== PATIENT INFO =====
+    doc.setFont('helvetica', 'bold');
+    doc.text('PATIENT DETAILS', margin, y);
+    y += 5;
+    
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    doc.text(`Name: ${patient.patient?.fullName || 'N/A'}`, margin, y);
+    doc.text(`OP No: ${patient.patient?.opNumber || 'N/A'}`, pageWidth / 2, y);
+    y += 4;
+    
+    doc.text(`Room: ${patient.bedAllocated?.room?.roomNumber || 'N/A'}`, margin, y);
+    doc.text(`Bed: ${patient.bedAllocated?.bedNumber || 'N/A'}`, pageWidth / 2, y);
+    y += 4;
+    
+    doc.text(`Admission: ${new Date(patient.admissionDate).toLocaleDateString()}`, margin, y);
+    doc.text(`Stay: ${stayDays} days`, pageWidth / 2, y);
+    
+    y += 8;
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 5;
+    
+    // ===== BILL ITEMS TABLE =====
+    if (billData.billItems && billData.billItems.length > 0) {
+      doc.setFontSize(10).setFont('helvetica', 'bold');
+      doc.text('BILL BREAKDOWN', margin, y);
+      y += 6;
+      
+      // Group items by category
+      const groupedItems = this.groupBillItemsByCategory(billData.billItems);
+      
+      Object.entries(groupedItems).forEach(([category, items]: [string, any]) => {
+        const categoryTotal = items.reduce((sum: number, item: any) => sum + (item.totalPrice || 0), 0);
+        
+        // Category header
+        doc.setFontSize(9).setFont('helvetica', 'bold');
+        doc.text(category.toUpperCase(), margin, y);
+        doc.text(`₹${categoryTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+        y += 4;
+        
+        // Items in the category
+        items.forEach((item: any) => {
+          if (y > 250) { // Check if we need new page
+            doc.addPage();
+            y = margin;
+          }
+          
+          doc.setFontSize(8).setFont('helvetica', 'normal');
+          
+          // Item name (truncate if too long)
+          let itemName = item.name;
+          if (itemName.length > 40) {
+            itemName = itemName.substring(0, 37) + '...';
+          }
+          
+          doc.text(itemName, margin + 5, y);
+          
+          // Quantity and price
+          const qtyInfo = `${item.quantity} × ₹${item.unitPrice?.toFixed(2) || '0.00'}`;
+          doc.text(qtyInfo, pageWidth - 70, y);
+          
+          // Total for this item
+          doc.text(`₹${item.totalPrice?.toFixed(2) || '0.00'}`, pageWidth - margin, y, { align: 'right' });
+          
+          y += 4;
+          
+          // Show days if applicable
+          if (item.days && item.days > 1) {
+            doc.setFont('helvetica', 'italic');
+            doc.text(`For ${item.days} days`, margin + 10, y);
+            doc.setFont('helvetica', 'normal');
+            y += 3;
+          }
+          
+          // Show instructions if available (small)
+          if (item.instructions) {
+            doc.setFontSize(7).setFont('helvetica', 'italic');
+            const instruction = item.instructions.length > 50 ? 
+              item.instructions.substring(0, 47) + '...' : item.instructions;
+            doc.text(`Note: ${instruction}`, margin + 10, y);
+            doc.setFontSize(8);
+            y += 3;
+          }
+          
+          y += 2;
+        });
+        
+        y += 3;
+      });
+    } else {
+      doc.setFont('helvetica', 'italic');
+      doc.text('No bill items', margin, y);
+      y += 10;
+    }
+    
+    // Ensure we have space for summary
+    if (y > 220) {
+      doc.addPage();
+      y = margin;
+    }
+    
+    // ===== BILL SUMMARY =====
+    const subtotal = billData.subtotal || 0;
+    const total = billData.total || 0;
+    const paid = paymentData.paymentAmount || 0;
+    const balance = total - paid;
+    
+    y += 5;
+    doc.setFontSize(10).setFont('helvetica', 'bold');
+    doc.text('BILL SUMMARY', margin, y);
+    y += 6;
+    
+    // Summary lines
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    doc.text('Subtotal:', margin + 5, y);
+    doc.text(`₹${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    y += 5;
+    
+    // Tax line (commented out)
+    // doc.text('Tax (GST 18%):', margin + 5, y);
+    // doc.text(`₹${(subtotal * 0.18).toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    // y += 5;
+    
+    doc.setFontSize(10).setFont('helvetica', 'bold');
+    doc.text('Grand Total:', margin + 5, y);
+    doc.text(`₹${total.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    y += 10;
+    
+    // ===== PAYMENT DETAILS =====
+    doc.setFontSize(10).setFont('helvetica', 'bold');
+    doc.text('PAYMENT DETAILS', margin, y);
+    y += 6;
+    
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    doc.text('Amount Paid:', margin + 5, y);
+    doc.text(`₹${paid.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+    y += 5;
+    
+    doc.text('Payment Mode:', margin + 5, y);
+    doc.text(paymentData.paymentMethod || 'Cash', pageWidth - margin, y, { align: 'right' });
+    y += 5;
+    
+    if (balance > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 0, 0); // Red for balance
+      doc.text('Balance Due:', margin + 5, y);
+      doc.text(`₹${balance.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+      doc.setTextColor(0, 0, 0); // Reset color
+      y += 8;
+      
+      doc.setFontSize(10);
+      doc.text(`BALANCE DUE: ₹${balance.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 128, 0); // Green for paid
+      doc.text('Payment Status:', margin + 5, y);
+      doc.text('FULLY PAID', pageWidth - margin, y, { align: 'right' });
+      doc.setTextColor(0, 0, 0); // Reset color
+      y += 8;
+      
+      doc.setFontSize(10);
+      doc.text('✓ PAYMENT COMPLETED', pageWidth / 2, y, { align: 'center' });
+    }
+    
+    y += 15;
+    
+    // ===== SIGNATURE AREA =====
+    if (y > 270) {
+      doc.addPage();
+      y = margin;
+    }
+    
+    doc.setFontSize(8);
+    doc.line(margin, y, margin + 40, y);
+    doc.line(pageWidth - margin - 40, y, pageWidth - margin, y);
+    y += 4;
+    
+    doc.text('Patient/Caretaker', margin + 20, y, { align: 'center' });
+    doc.text('Hospital Authority', pageWidth - margin - 20, y, { align: 'center' });
+    
+    // ===== FOOTER =====
+    doc.setFontSize(7);
+    y = 285;
+    
+    // Thank you message
+    doc.text('Thank you for choosing our services. Wishing you a speedy recovery!', 
+             pageWidth / 2, y, { align: 'center' });
+    y += 4;
+    
+    // Contact info
+    doc.text(`For queries, contact: ${hospital.phone || ''}`, 
+             pageWidth / 2, y, { align: 'center' });
+    y += 4;
+    
+    // Terms
+    const terms = [
+      '• Computer generated bill - No signature required',
+      '• Please preserve this bill for future reference',
+      `• Generated on: ${new Date().toLocaleString()}`
+    ];
+    
+    terms.forEach((term, index) => {
+      doc.text(term, margin, 290 + (index * 4));
+    });
+    
+    return doc;
+    
+  } catch (error) {
+    console.error('Error generating IP bill PDF:', error);
+    const doc = new jsPDF();
+    doc.text('Error generating bill PDF', 20, 20);
+    return Promise.resolve(doc);
+  }
+}
 
+// Helper method for grouping items
+private groupBillItemsByCategory(billItems: any[]): { [key: string]: any[] } {
+  const categoryNames: { [key: string]: string } = {
+    'ROOM': 'Room Charges',
+    'DOCTOR': 'Doctor Consultation',
+    'NURSING': 'Nursing Care',
+    'MEDICINE': 'Medicines',
+    'CONSUMABLE': 'Consumables',
+    'PROCEDURE': 'Procedures',
+    'LAB': 'Lab Tests',
+    'OTHER': 'Other Charges',
+    'Medicine': 'Medicines',
+    'Consumable': 'Consumables'
+  };
+  
+  const grouped: { [key: string]: any[] } = {};
+  
+  // First, categorize all items
+  billItems.forEach(item => {
+    let category = item.categoryType || 'OTHER';
+    
+    // Map to display name
+    const categoryName = categoryNames[category] || category;
+    
+    if (!grouped[categoryName]) {
+      grouped[categoryName] = [];
+    }
+    grouped[categoryName].push(item);
+  });
+  
+  // Sort categories by typical order
+  const preferredOrder = [
+    'Room Charges',
+    'Doctor Consultation', 
+    'Nursing Care',
+    'Medicines',
+    'Consumables',
+    'Procedures',
+    'Lab Tests',
+    'Other Charges'
+  ];
+  
+  const sortedGrouped: { [key: string]: any[] } = {};
+  
+  // Add in preferred order
+  preferredOrder.forEach(category => {
+    if (grouped[category]) {
+      sortedGrouped[category] = grouped[category];
+      delete grouped[category];
+    }
+  });
+  
+  // Add remaining categories
+  Object.keys(grouped).forEach(category => {
+    sortedGrouped[category] = grouped[category];
+  });
+  
+  return sortedGrouped;
+}
 
+// OP 
   /**
    * Generate Hospital Visit Summary PDF dynamically
    * @param prescription Prescription object (from backend)

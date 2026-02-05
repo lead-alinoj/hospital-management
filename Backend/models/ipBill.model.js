@@ -21,27 +21,39 @@ const ipBillItemSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // FIXED: Added all service categories to enum
   categoryType: {
     type: String,
-    enum: ['Medicine', 'Consumable', 'Lab', 'Procedure', 'Blood', 'Miscellaneous'],
-    required: true
+    enum: [
+      // Pharmacy categories
+      'Medicine', 'Consumable', 
+      // Service categories (NEW)
+      'ROOM', 'NURSING', 'DOCTOR', 'PROCEDURE', 'LAB', 'OTHER',
+      // Other existing categories
+      'Lab', 'Procedure', 'Blood', 'Miscellaneous'
+    ],
+    required: true,
+    default: 'OTHER'
   },
   
   // Pricing
   quantity: {
     type: Number,
     required: true,
-    min: 1
+    min: 1,
+    default: 1
   },
   unitPrice: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    default: 0
   },
   totalPrice: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    default: 0
   },
   
   // For Medicines
@@ -49,13 +61,15 @@ const ipBillItemSchema = new mongoose.Schema({
   days: Number,
   instructions: String,
   
-  // Tracking
+  // Tracking - Make required but with default
   administeredBy: {
     type: String,
-    enum: ['Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Lab'],
-    required: true
+    enum: ['Doctor', 'Nurse', 'Pharmacy', 'Reception', 'Lab', 'System'],
+    required: true,
+    default: 'System'
   },
-   addedBy: {
+  
+  addedBy: {
     id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
@@ -63,7 +77,8 @@ const ipBillItemSchema = new mongoose.Schema({
     name: String,
     role: String
   },
-    isManual: {
+  
+  isManual: {
     type: Boolean,
     default: false
   },
@@ -73,13 +88,19 @@ const ipBillItemSchema = new mongoose.Schema({
     default: false
   },
   
+  billGroup: {
+    type: String,
+    enum: ['PHARMACY', 'SERVICE'],
+    default: 'SERVICE'
+  },
+
   billingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'BillingRecord'
   },
   
   billedAt: Date,
-  // Status
+  
   isFinalized: {
     type: Boolean,
     default: false
@@ -91,7 +112,28 @@ const ipBillItemSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+});
+
+// Indexes
+ipBillItemSchema.index({ visit: 1, billGroup: 1 });
+ipBillItemSchema.index({ categoryType: 1, isBilled: 1 });
+ipBillItemSchema.index({ visit: 1, isBilled: 1 });
+
+// Update the updatedAt timestamp on save
+ipBillItemSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  
+  // Auto-calculate totalPrice if not set
+  if (!this.totalPrice && this.quantity && this.unitPrice) {
+    this.totalPrice = this.quantity * this.unitPrice;
+  }
+  
 });
 
 module.exports = mongoose.model('IPBillItem', ipBillItemSchema);

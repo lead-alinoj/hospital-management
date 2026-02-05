@@ -29,6 +29,7 @@ const ipadmissionRoutes = require('./routes/ipAdmission.routes');
 const ipBillRoutes = require('./routes/ipBill.routes');
 const bedRoutes = require('./routes/bed.routes');
 const careUnitRoutes = require('./routes/careUnit.routes');
+const paymentRoutes = require('./routes/payment.routes');
 // Routes
 
 app.use('/api/auth', authRoutes);
@@ -58,7 +59,7 @@ app.use('/api/ip-admission', ipadmissionRoutes);
 app.use('/api/ipbill', ipBillRoutes);
 app.use('/api/bed', bedRoutes);
 app.use('/api/care-units', careUnitRoutes);
-
+app.use('/api/ip/payments', paymentRoutes);
 // Example route
 app.get('/', (req, res) => {
   res.send('HMS Backend Running');

@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from "@angular/material/icon";
 
 @Component({
   selector: 'app-manual-charge-dialog',
@@ -17,8 +18,9 @@ import { MatButtonModule } from '@angular/material/button';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatButtonModule
-  ],
+    MatButtonModule,
+    MatIconModule
+],
   template: `
     <h2 mat-dialog-title>Add Manual Charge</h2>
     <mat-dialog-content>
@@ -28,16 +30,35 @@ import { MatButtonModule } from '@angular/material/button';
           <input matInput formControlName="description" placeholder="Enter charge description">
         </mat-form-field>
         
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Category</mat-label>
-          <mat-select formControlName="category">
-            <mat-option value="CONSULTATION">Consultation</mat-option>
-            <mat-option value="PROCEDURE">Procedure</mat-option>
-            <mat-option value="LAB">Lab Test</mat-option>
-            <mat-option value="NURSING">Nursing Care</mat-option>
-            <mat-option value="OTHER">Other</mat-option>
-          </mat-select>
-        </mat-form-field>
+<mat-form-field appearance="outline" class="full-width">
+  <mat-label>Category</mat-label>
+  <mat-select formControlName="category">
+    <mat-option value="ROOM">
+      <mat-icon>hotel</mat-icon> Room Charges
+    </mat-option>
+    <mat-option value="DOCTOR">
+      <mat-icon>medical_services</mat-icon> Doctor Consultation
+    </mat-option>
+    <mat-option value="NURSING">
+      <mat-icon>healing</mat-icon> Nursing Care
+    </mat-option>
+    <mat-option value="MEDICINE">
+      <mat-icon>medication</mat-icon> Medicines
+    </mat-option>
+    <mat-option value="PROCEDURE">
+      <mat-icon>medical_services</mat-icon> Procedure
+    </mat-option>
+    <mat-option value="LAB">
+      <mat-icon>science</mat-icon> Lab Test
+    </mat-option>
+    <mat-option value="CONSULTATION">
+      <mat-icon>groups</mat-icon> Specialist Consultation
+    </mat-option>
+    <mat-option value="OTHER">
+      <mat-icon>receipt</mat-icon> Other
+    </mat-option>
+  </mat-select>
+</mat-form-field>
         
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Amount (₹)</mat-label>
@@ -63,29 +84,79 @@ export class ManualChargeDialogComponent {
   private fb = inject(FormBuilder);
   chargeForm: FormGroup;
 
-  constructor(
-    public dialogRef: MatDialogRef<ManualChargeDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
-  ) {
+// In the constructor, update form initialization:
+constructor(
+  public dialogRef: MatDialogRef<ManualChargeDialogComponent>,
+  @Inject(MAT_DIALOG_DATA) public data: any
+) {
+  // Use service categories only
+  const categoryOptions = [
+    'ROOM', 'DOCTOR', 'NURSING', 'PROCEDURE', 'LAB', 'OTHER'
+  ];
+  
+  // Pre-fill if provided
+  if (data.prefill) {
+    this.chargeForm = this.fb.group({
+      description: [data.prefill.description || '', Validators.required],
+      category: [data.prefill.category || 'OTHER', Validators.required],
+      amount: [data.prefill.amount || 0, [Validators.required, Validators.min(0)]],
+      quantity: [data.prefill.quantity || 1, [Validators.required, Validators.min(1)]],
+      unitPrice: [data.prefill.unitPrice || 0],
+      notes: [data.prefill.notes || '']
+    });
+  } else {
     this.chargeForm = this.fb.group({
       description: ['', Validators.required],
       category: ['OTHER', Validators.required],
       amount: [0, [Validators.required, Validators.min(0)]],
+      quantity: [1, [Validators.required, Validators.min(1)]],
+      unitPrice: [0],
       notes: ['']
     });
   }
-
-  onSubmit(): void {
-    if (this.chargeForm.valid) {
-      this.dialogRef.close({
-        success: true,
-        data: {
-          ...this.chargeForm.value,
-          user: this.data.user
-        }
-      });
-    }
+  
+  // Auto-calculate unit price when amount or quantity changes
+  this.chargeForm.get('amount')?.valueChanges.subscribe(() => this.calculateUnitPrice());
+  this.chargeForm.get('quantity')?.valueChanges.subscribe(() => this.calculateUnitPrice());
+}
+private calculateUnitPrice(): void {
+  const amount = this.chargeForm.get('amount')?.value || 0;
+  const quantity = this.chargeForm.get('quantity')?.value || 1;
+  const unitPrice = quantity > 0 ? amount / quantity : 0;
+  this.chargeForm.patchValue({ unitPrice: parseFloat(unitPrice.toFixed(2)) }, { emitEvent: false });
+}
+onSubmit(): void {
+  if (this.chargeForm.valid) {
+    const formValue = this.chargeForm.value;
+    
+    // Calculate unit price
+    const quantity = formValue.quantity || 1;
+    const unitPrice = formValue.unitPrice || (formValue.amount / quantity);
+    
+    this.dialogRef.close({
+      success: true,
+      data: {
+        description: formValue.description,
+        category: formValue.category,
+        amount: formValue.amount,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        notes: formValue.notes || '',
+        user: this.data.user,
+        patientId: this.data.patient?._id,
+        visitId: this.data.visitId
+      }
+    });
+  } else {
+    // Show validation errors
+    Object.keys(this.chargeForm.controls).forEach(key => {
+      const control = this.chargeForm.get(key);
+      if (control?.invalid) {
+        console.error(`${key} is invalid:`, control.errors);
+      }
+    });
   }
+}
 
   onCancel(): void {
     this.dialogRef.close();

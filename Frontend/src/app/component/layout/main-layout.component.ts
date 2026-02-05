@@ -177,7 +177,7 @@ export class MainLayoutComponent implements OnInit {
         icon: 'hotel',
         label: 'Bed Management',
         route: '/admin/beds',
-        roles: ['Admin', 'Reception']
+        roles: ['Admin', 'Reception', 'Nurse']
       },
       {
         icon: 'domain',
