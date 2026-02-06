@@ -234,7 +234,7 @@ import { MatOptionModule } from '@angular/material/core';
       border-bottom: 1px dashed #ddd;
     }
     .summary-item.total {
-      border-top: 2px solid #333;
+      border-top: 2px solid #3977b1;
       margin-top: 10px;
       padding-top: 10px;
     }

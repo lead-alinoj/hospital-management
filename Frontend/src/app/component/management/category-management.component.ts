@@ -94,126 +94,223 @@ import { CategoryService } from '../../service/category.service';
   </div>
   `,
   styles: [`
-   /* Page background */
+/* ===============================
+   CATEGORY MASTER – PREMIUM UI
+   =============================== */
+
 .category-management {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eef3f9 0%, #f8fafc 100%);
-  padding: 70px 35px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  padding: 42px 24px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
 }
 
-/* Main container */
+/* Page Title */
 .category-management > h2 {
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto 16px;
-  font-size: 22px;
+  max-width: 960px;
+  margin: 0 auto 20px;
+  font-size: 24px;
   font-weight: 600;
   color: #0f172a;
+  letter-spacing: 0.3px;
+  position: relative;
+  padding-left: 10px;
 }
 
-/* Card-style layout */
-.category-management {
-  max-width: 900px;
-  margin: 0 auto;
+.category-management > h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 4px;
+  height: 70%;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2563eb, #38bdf8);
 }
 
-/* Form container */
+/* ===============================
+   FORM CARD
+   =============================== */
+
 form {
+  width: 100%;
+  max-width: 960px;
   background: #ffffff;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  padding: 24px 26px;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
   margin-bottom: 28px;
+  border: 1px solid #e5e7eb;
 }
 
 /* Form row */
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-  align-items: end;
+  gap: 20px;
+  align-items: stretch; /* ✅ FIX: prevents hanging */
 }
 
-/* Form fields */
+/* Material fields */
 mat-form-field {
   width: 100%;
 }
 
-/* Primary button */
-button[mat-raised-button] {
+/* Align buttons with inputs */
+.form-row button {
+  margin-top: 22px; /* ✅ aligns with mat-form-field baseline */
   height: 44px;
-  border-radius: 10px;
-  font-weight: 500;
-  padding: 0 22px;
+  align-self: flex-start;
 }
 
-/* Secondary button */
+/* Remove extra Material bottom spacing */
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* Buttons */
+button[mat-raised-button] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0 16px;
+  letter-spacing: 0.3px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+button[mat-raised-button]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
+}
+
 button[mat-button] {
   height: 44px;
+  border-radius: 12px;
   font-weight: 500;
   color: #475569;
 }
 
-/* Table wrapper */
+/* ===============================
+   TABLE CARD
+   =============================== */
+
 table {
   width: 100%;
+  max-width: 960px;
   background: #ffffff;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
-/* Table header */
+/* Table Header */
 th {
   background: #f1f5f9;
   font-size: 13px;
   font-weight: 600;
   color: #334155;
+  padding: 14px 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Table cells */
+/* Table Body */
 td {
-  font-size: 13px;
+  font-size: 14px;
   color: #1e293b;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-/* Hover effect */
+/* Hover */
 tr.mat-row:hover {
   background: #f8fafc;
 }
 
 /* Action buttons */
-td mat-icon-button {
-  border-radius: 8px;
+td button[mat-icon-button] {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
-/* Responsive adjustments */
+td button[mat-icon-button]:hover {
+  background: #f1f5f9;
+}
+
+/* ===============================
+   RESPONSIVE DESIGN
+   =============================== */
+
+@media (max-width: 1024px) {
+  .category-management {
+    padding: 48px 20px;
+  }
+
+  .category-management > h2 {
+    font-size: 22px;
+  }
+}
+
 @media (max-width: 768px) {
   .category-management {
-    padding: 20px 12px;
+    padding: 28px 14px;
   }
 
   form {
-    padding: 16px;
+    padding: 18px;
   }
 
-  button[mat-raised-button],
-  button[mat-button] {
+  .form-row button {
     width: 100%;
+    margin-top: 0;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
   }
 }
 
 @media (max-width: 480px) {
   .category-management > h2 {
-    font-size: 18px;
+    font-size: 20px;
   }
 
-  th, td {
+  th,
+  td {
     font-size: 12px;
+    padding: 12px;
   }
 }
+
+/* ===============================
+   SCROLLBAR
+   =============================== */
+
+table::-webkit-scrollbar {
+  height: 8px;
+}
+
+table::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+table::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  border-radius: 10px;
+}
+
 
   `]
 })

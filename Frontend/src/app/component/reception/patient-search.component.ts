@@ -122,16 +122,23 @@ import { PatientService } from '../../service/patient.service';
           </mat-card-header>
           
           <mat-card-content>
-            <div class="export-actions">
-  <button mat-stroked-button color="primary" (click)="exportExcel()">
+ <div class="export-actions premium-export">
+
+  <span class="export-title">
+    <mat-icon>file_download</mat-icon>
+    Export
+  </span>
+
+  <button mat-stroked-button class="export-btn excel" (click)="exportExcel()">
     <mat-icon>table_chart</mat-icon>
-    Export Excel
+    Excel
   </button>
 
-  <button mat-stroked-button color="accent" (click)="exportPDF()">
+  <button mat-stroked-button class="export-btn pdf" (click)="exportPDF()">
     <mat-icon>picture_as_pdf</mat-icon>
-    Export PDF
+    PDF
   </button>
+
 </div>
 
             <!-- Data Table -->
@@ -263,43 +270,64 @@ import { PatientService } from '../../service/patient.service';
         </mat-card>
       </div>
 
-      <!-- Quick Stats -->
-      <div class="quick-stats" *ngIf="!searchPerformed">
-        <mat-card>
-          <mat-card-header>
-            <mat-card-title>Quick Statistics</mat-card-title>
-          </mat-card-header>
-          
-          <mat-card-content>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-number">{{ totalPatients | number }}</div>
-                <div class="stat-label">Total Patients</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ activePatients | number }}</div>
-                <div class="stat-label">Active Patients</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ opPatients | number }}</div>
-                <div class="stat-label">OP Patients</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ ipPatients | number }}</div>
-                <div class="stat-label">IP Patients</div>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+ <!-- ================= QUICK STATS (PREMIUM) ================= -->
+<div class="quick-stats" *ngIf="!searchPerformed">
+  <div class="stats-grid premium-stats">
+
+    <!-- Total Patients -->
+    <mat-card class="stat-card blue">
+      <div class="stat-icon">
+        <mat-icon>groups</mat-icon>
       </div>
-    </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ totalPatients | number }}</div>
+        <div class="stat-label">Total Patients</div>
+      </div>
+    </mat-card>
+
+    <!-- Active Patients -->
+    <mat-card class="stat-card green">
+      <div class="stat-icon">
+        <mat-icon>verified</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ activePatients | number }}</div>
+        <div class="stat-label">Active Patients</div>
+      </div>
+    </mat-card>
+
+    <!-- OP Patients -->
+    <mat-card class="stat-card orange">
+      <div class="stat-icon">
+    <mat-icon>medical_services</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ opPatients | number }}</div>
+        <div class="stat-label">OP Patients</div>
+      </div>
+    </mat-card>
+
+    <!-- IP Patients -->
+    <mat-card class="stat-card purple">
+      <div class="stat-icon">
+        <mat-icon>local_hospital</mat-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">{{ ipPatients | number }}</div>
+        <div class="stat-label">IP Patients</div>
+      </div>
+    </mat-card>
+
+  </div>
+</div>
+
   `,
   styles: [`
     .patient-search-container {
       padding: 20px;
       max-width: 1400px;
       margin: 0 auto;
-      background: #d0dff5;
+      background: #c3d6f8;
     }
     .mat-card-title{
       color: #1565c0;
@@ -318,7 +346,73 @@ import { PatientService } from '../../service/patient.service';
     .search-field {
       flex: 1;
     }
-    
+    /* ================= EXPORT ACTIONS ================= */
+.premium-export {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.export-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-right: 6px;
+}
+
+.export-title mat-icon {
+  font-size: 18px;
+}
+
+/* Export buttons */
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Excel */
+.export-btn.excel {
+  background: #7dd397;
+  color: #1b201c;
+  border-color: rgba(46, 125, 50, 0.3);
+}
+
+.export-btn.excel:hover {
+  background: #7de986;
+}
+
+/* PDF */
+.export-btn.pdf {
+    background: #e6927d;
+
+  color: #c62828;
+  border-color: rgba(198, 40, 40, 0.3);
+}
+
+.export-btn.pdf:hover {
+  background: #ee786b;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .premium-export {
+    flex-wrap: wrap;
+  }
+}
+
     .advanced-search {
       margin-top: 20px;
       padding: 20px;
@@ -394,7 +488,89 @@ import { PatientService } from '../../service/patient.service';
       gap: 8px;
       color: #666;
     }
-    
+    /* ================= PREMIUM QUICK STATS ================= */
+.premium-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14);
+}
+
+.stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon mat-icon {
+  font-size: 24px;
+}
+
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+
+/* ===== COLOR VARIANTS ===== */
+.stat-card.blue .stat-icon {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.stat-card.green .stat-icon {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.stat-card.orange .stat-icon {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.stat-card.purple .stat-icon {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .premium-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
     .detail-icon {
       font-size: 16px;
       height: 16px;
@@ -479,9 +655,11 @@ import { PatientService } from '../../service/patient.service';
     }
     
     .quick-stats {
-      margin-top: 20px;
+  padding: 10px 0 0;
     }
-    
+    .premium-stats mat-card {
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -594,6 +772,7 @@ currentUserId: string = ''; // Get from auth service
   ngOnInit(): void {
     this.initForm();
     this.loadRecentPatients();
+    this.loadPatientStats()
   }
   canEdit(): boolean {
   // Reception and Admin can edit
@@ -935,6 +1114,21 @@ exportPDF(): void {
 
       doc.save(`patients_${Date.now()}.pdf`);
     });
+  });
+}
+private loadPatientStats(): void {
+  this.patientService.getPatientStats().subscribe({
+    next: (res) => {
+      this.totalPatients = res.data.totalPatients;
+      this.activePatients = res.data.activePatients;
+      this.opPatients = res.data.opPatients;
+      this.ipPatients = res.data.ipPatients;
+    },
+    error: () => {
+      this.snackBar.open('Failed to load patient statistics', 'Close', {
+        duration: 3000
+      });
+    }
   });
 }
 

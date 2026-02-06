@@ -1,4 +1,4 @@
-<div class="login-container" >
+<div class="login-container" *ngIf="!isBlocked">
     <mat-card class="login-card">
      <button mat-icon-button class="close-btn" (click)="closeLogin()">
     <mat-icon>close</mat-icon>

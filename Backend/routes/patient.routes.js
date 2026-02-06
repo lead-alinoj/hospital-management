@@ -27,6 +27,10 @@ router.get('/',
   authorize('Admin'),
   patientController.getAllPatients
 );
+router.get('/stats',
+  authorize('Reception', 'Admin', 'Doctor', 'Nurse'),
+  patientController.getPatientStats
+);
 
 // MUST be last
 router.get('/:id',

@@ -370,8 +370,9 @@ $text-lighter: rgba(255, 255, 255, 0.7);
 .group-header {
   display: flex;
   align-items: center;
-  gap: 16px;
   padding: 14px 20px;
+    margin: 4px 12px;              /* ✅ SAME AS .menu-item */
+
   border-radius: 8px;
   color: $text-light;          /* ✅ WHITE TEXT */
   cursor: pointer;
@@ -381,18 +382,39 @@ $text-lighter: rgba(255, 255, 255, 0.7);
 .group-header:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
-
+.group-header mat-icon:first-child {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  margin-right: 16px;            /* ✅ SAME AS .menu-item icon */
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+.menu-item span,
+.group-header span {
+  font-size: 15px;
+  font-weight: 500;
+  flex: 1;
+}
+/* Label */
+.group-header span {
+  font-size: 15px;
+  font-weight: 500;
+  flex: 1;
+}
 /* Arrow alignment */
 .group-header .arrow {
   margin-left: auto;
   color: $text-light;          /* ✅ WHITE ARROW */
   font-size: 22px;
+    opacity: 0.8;
+
 }
 
 /* ================= SUBMENU ================= */
 
 .submenu {
-  margin-left: 24px;
+  margin-left: 52px;
   margin-top: 6px;
   padding-left: 12px;
   border-left: 2px solid rgba(255, 255, 255, 0.3);
@@ -403,6 +425,7 @@ $text-lighter: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   gap: 14px;
+
   padding: 10px 16px;
   margin: 4px 0;
   border-radius: 6px;
@@ -415,6 +438,8 @@ $text-lighter: rgba(255, 255, 255, 0.7);
 /* Submenu icon */
 .submenu-item mat-icon {
   font-size: 20px;
+  width: 20px;
+  height: 20px;
   color: $text-light;          /* ✅ WHITE ICON */
 }
 

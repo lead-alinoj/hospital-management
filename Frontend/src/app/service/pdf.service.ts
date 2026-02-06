@@ -282,7 +282,7 @@ async generateIPBillPDF(
         // Category header
         doc.setFontSize(9).setFont('helvetica', 'bold');
         doc.text(category.toUpperCase(), margin, y);
-        doc.text(`₹${categoryTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+doc.text(`Rs. ${categoryTotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
         y += 4;
         
         // Items in the category
@@ -303,11 +303,11 @@ async generateIPBillPDF(
           doc.text(itemName, margin + 5, y);
           
           // Quantity and price
-          const qtyInfo = `${item.quantity} × ₹${item.unitPrice?.toFixed(2) || '0.00'}`;
+const qtyInfo = `${item.quantity} × Rs. ${item.unitPrice?.toFixed(2) || '0.00'}`;
           doc.text(qtyInfo, pageWidth - 70, y);
           
           // Total for this item
-          doc.text(`₹${item.totalPrice?.toFixed(2) || '0.00'}`, pageWidth - margin, y, { align: 'right' });
+doc.text(`Rs. ${item.totalPrice?.toFixed(2) || '0.00'}`, pageWidth - margin, y, { align: 'right' });
           
           y += 4;
           
@@ -360,7 +360,7 @@ async generateIPBillPDF(
     // Summary lines
     doc.setFontSize(9).setFont('helvetica', 'normal');
     doc.text('Subtotal:', margin + 5, y);
-    doc.text(`₹${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+doc.text(`Rs. ${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 5;
     
     // Tax line (commented out)
@@ -370,7 +370,7 @@ async generateIPBillPDF(
     
     doc.setFontSize(10).setFont('helvetica', 'bold');
     doc.text('Grand Total:', margin + 5, y);
-    doc.text(`₹${total.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+doc.text(`Rs. ${total.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 10;
     
     // ===== PAYMENT DETAILS =====
@@ -380,7 +380,7 @@ async generateIPBillPDF(
     
     doc.setFontSize(9).setFont('helvetica', 'normal');
     doc.text('Amount Paid:', margin + 5, y);
-    doc.text(`₹${paid.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+doc.text(`Rs. ${paid.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
     y += 5;
     
     doc.text('Payment Mode:', margin + 5, y);
@@ -391,7 +391,7 @@ async generateIPBillPDF(
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(255, 0, 0); // Red for balance
       doc.text('Balance Due:', margin + 5, y);
-      doc.text(`₹${balance.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
+doc.text(`Rs. ${balance.toFixed(2)}`, pageWidth - margin, y, { align: 'right' });
       doc.setTextColor(0, 0, 0); // Reset color
       y += 8;
       

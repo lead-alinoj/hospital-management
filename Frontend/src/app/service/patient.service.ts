@@ -47,6 +47,9 @@ deactivatePatient(id: string): Observable<any> {
 getDoctors(): Observable<User[]> {
   return this.http.get<User[]>(`${this.apiUrl}/auth/users/doctors`);
 }
+getPatientStats(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/stats`);
+}
 
 
   updatePatient(id: string, updates: Partial<Patient>): Observable<any> {

@@ -34,6 +34,11 @@ export const hmsRoleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
     return false;
   };
 };
+export const ipAdmissionGuard = hmsRoleGuard([
+  'Admin',
+  'Reception',
+  'Pharmacy'
+]);
 
 // Individual role guards for convenience
 export const adminGuard = hmsRoleGuard(['Admin']);

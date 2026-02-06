@@ -70,12 +70,19 @@ export class MainLayoutComponent implements OnInit {
     route: '/admin/dashboard',
     roles: ['Admin']
   },
+  // {
+  //   icon: 'dashboard',
+  //   label: 'Dashboard',
+  //   route: '/doctor/placeholder',
+  //   roles: ['Doctor']
+  // },
   {
-    icon: 'dashboard',
-    label: 'Dashboard',
-    route: '/doctor/dashboard',
-    roles: ['Doctor']
-  },
+  icon: 'people',
+  label: 'My Patients',
+  route: '/doctor/dashboard',
+  roles: ['Doctor']
+},
+
   {
     icon: 'dashboard',
     label: 'Dashboard',
@@ -96,95 +103,192 @@ export class MainLayoutComponent implements OnInit {
   },
 
   // ================= PATIENT =================
-  {
-    icon: 'person',
-    label: 'Patient',
-    roles: ['Reception'],
-    children: [
-      {
-        icon: 'person_add',
-        label: 'Patient Registration',
-        route: '/reception/patient/register',
-        roles: ['Reception']
-      },
-      {
-        icon: 'event_available',
-        label: 'Create Visit',
-        route: '/reception/visit/create',
-        roles: ['Reception']
-      },
-      {
-        icon: 'search',
-        label: 'Patient Search',
-        route: '/reception/patient/search',
-        roles: ['Reception']
-      }
-    ]
-  },
+{
+  icon: 'person',
+  label: 'Patient',
+  roles: ['Admin', 'Reception'],
+  children: [
+    {
+      icon: 'person_add',
+      label: 'Patient Registration',
+      route: '/reception/patient/register',
+      roles: ['Admin', 'Reception']
+    },
+    {
+      icon: 'event_available',
+      label: 'Create Visit',
+      route: '/reception/visit/create',
+      roles: ['Admin', 'Reception']
+    },
+    {
+      icon: 'search',
+      label: 'Patient Search',
+      route: '/reception/patient/search',
+      roles: ['Admin', 'Reception']
+    }
+  ]
+}
+,
 
   // ================= STAFF =================
-  {
-    icon: 'groups',
-    label: 'Staff',
-    roles: ['Admin', 'Reception'],
-    children: [
-      {
-        icon: 'people',
-        label: 'Staff Management',
-        route: '/admin/staff',
-        roles: ['Admin']
-      },
-      {
-        icon: 'check_circle',
-        label: 'Attendance',
-        route: '/reception/attendance',
-        roles: ['Admin', 'Reception']
-      },
-      {
-        icon: 'schedule',
-        label: 'Shift Master',
-        route: '/admin/shift-master',
-        roles: ['Admin']
-      }
-    ]
-  },
+ {
+  icon: 'groups',
+  label: 'Staff',
+  roles: ['Admin', 'Reception'],
+  children: [
+    // Admin
+    {
+  icon: 'manage_accounts',
+  label: 'User Management',
+  route: '/admin/users',
+  roles: ['Admin']
+},
+
+    {
+      icon: 'people',
+      label: 'Staff Management',
+      route: '/admin/staff',
+      roles: ['Admin']
+    },
+    {
+      icon: 'check_circle',
+      label: 'Attendance',
+      route: '/admin/attendance',
+      roles: ['Admin']
+    },
+     {
+      icon: 'history',
+      label: 'Attendance History',
+      route: '/admin/attendance/history',
+      roles: ['Admin']
+    },
+    {
+      icon: 'schedule',
+      label: 'Shift Master',
+      route: '/admin/shift-master',
+      roles: ['Admin']
+    },
+{
+  icon: 'check_circle',
+  label: 'Attendance',
+  route: '/pharmacy/attendance',
+  roles: ['Pharmacy']
+},
+
+    // Reception
+    {
+      icon: 'people',
+      label: 'Staff Management',
+      route: '/reception/staff',
+      roles: ['Reception']
+    },
+    {
+      icon: 'check_circle',
+      label: 'Attendance',
+      route: '/reception/attendance',
+      roles: ['Reception']
+    },
+    {
+      icon: 'schedule',
+      label: 'Shift Master',
+      route: '/reception/shift-master',
+      roles: ['Reception']
+    },
+    {
+  icon: 'history',
+  label: 'Attendance History',
+  route: '/reception/attendance/history',
+  roles: ['Reception']
+}
+
+  ]
+},
+
 
   // ================= MANAGEMENT =================
+  
   {
-    icon: 'settings',
-    label: 'Management',
-    roles: ['Admin', 'Reception'],
-    children: [
-      {
-        icon: 'inventory_2',
-        label: 'Medicine Management',
-        route: '/pharmacy/medicines',
-        roles: ['Admin', 'Reception', 'Pharmacy']
-      },
-      {
-        icon: 'category',
-        label: 'Category Management',
-        route: '/pharmacy/categories',
-        roles: ['Admin', 'Reception', 'Pharmacy']
-      },
-      {
-        icon: 'manage_accounts',
-        label: 'User Management',
-        route: '/admin/users',
-        roles: ['Admin']
-      },
-      {
-        icon: 'hotel',
-        label: 'Bed Management',
-        route: '/admin/beds',
-        roles: ['Admin', 'Reception', 'Nurse']
-      },
-      {
-        icon: 'domain',
-        label: 'Care Units',
-        route: '/admin/care-units',
-        roles: ['Admin', 'Reception', 'Nurse']
-      }
+  icon: 'settings',
+  label: 'Management',
+  roles: ['Admin', 'Reception', 'Pharmacy'],
+  children: [
+    {
+      icon: 'inventory_2',
+      label: 'Medicine Management',
+      route: '/pharmacy/medicines',
+      roles: ['Admin', 'Reception', 'Pharmacy']
+    },
+    {
+      icon: 'category',
+      label: 'Category Management',
+      route: '/pharmacy/categories',
+      roles: ['Admin', 'Reception', 'Pharmacy']
+    },
+
+    // Admin
+    {
+      icon: 'hotel',
+      label: 'Bed Management',
+      route: '/admin/beds',
+      roles: ['Admin']
+    },
+    {
+      icon: 'domain',
+      label: 'Care Units',
+      route: '/admin/care-units',
+      roles: ['Admin']
+    },
+{
+  icon: 'hotel',
+  label: 'Bed Management',
+  route: '/pharmacy/beds',
+  roles: ['Pharmacy']
+},
+{
+  icon: 'domain',
+  label: 'Care Units',
+  route: '/pharmacy/care-units',
+  roles: ['Pharmacy']
+},
+
+    // Reception
+    {
+      icon: 'hotel',
+      label: 'Bed Management',
+      route: '/reception/beds',
+      roles: ['Reception']
+    },
+    {
+      icon: 'domain',
+      label: 'Care Units',
+      route: '/reception/care-units',
+      roles: ['Reception']
+    },
+     {
+      icon: 'local_hospital',
+      label: 'Hospital Settings',
+      route: '/admin/hospital',
+      roles: ['Admin']
+    },
+    {
+      icon: 'event',
+      label: 'Appointments',
+      route: '/admin/appointments',
+      roles: ['Admin']
+    },
+    {
+      icon: 'local_hospital',
+      label: 'Hospital Settings',
+      route: '/reception/hospital',
+      roles: ['Reception']
+    },
+    {
+      icon: 'event',
+      label: 'Appointments',
+      route: '/reception/appointments',
+      roles: ['Reception']
+    }
+
     ]
   },
 
@@ -198,7 +302,7 @@ export class MainLayoutComponent implements OnInit {
   {
     icon: 'hotel',
     label: 'IP Admission',
-    route: '/ip-admission',
+  route: '/reception/ip-admission',
     roles: ['Admin']
   },
   {
@@ -264,11 +368,18 @@ export class MainLayoutComponent implements OnInit {
       return;
     }
     
-    this.filteredMenuItems = this.sidebarMenuItems.filter(item => 
-      item.roles.includes(this.userRole as UserRole)
-    );
+  this.filteredMenuItems = this.sidebarMenuItems
+  .filter(item => item.roles.includes(this.userRole as UserRole))
+  .map(item => ({
+    ...item,
+    children: item.children
+      ? item.children.filter(child =>
+          child.roles.includes(this.userRole as UserRole)
+        )
+      : undefined
+    }));
+    
   }
-
   private loadNotifications(): void {
     setTimeout(() => {
       this.notificationCount = 3;

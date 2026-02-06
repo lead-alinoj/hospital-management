@@ -42,7 +42,6 @@ import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.comp
       <h1>In-Patient Management</h1>
       
       <mat-tab-group>
-    // In ip-dashboard.component.html - Update the IP Billing tab
 <mat-tab label="IP Billing">
   <div class="tab-content">
     <!-- Patient Selection for Billing -->
@@ -64,7 +63,7 @@ import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.comp
             <p><strong>Admitted:</strong> {{ patient.admissionDate | date:'short' }}</p>
             <p><strong>Doctor:</strong> Dr. {{ patient.doctor?.name }}</p>
             <p><strong>Stay Duration:</strong> {{ calculateStayDays(patient.admissionDate) }} days</p>
-            <p><strong>Current Bill:</strong> ₹{{ patient.currentBillAmount || 0 | number:'1.2-2' }}</p>
+            <!-- <p><strong>Current Bill:</strong> ₹{{ patient.currentBillAmount || 0 | number:'1.2-2' }}</p> -->
           </mat-card-content>
         </mat-card>
       </div>
@@ -76,7 +75,7 @@ import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.comp
         <button mat-button (click)="selectedPatient = null; billItems = []">
           <mat-icon>arrow_back</mat-icon> Back to Patients
         </button>
-        <h3>Bill Items for {{ selectedPatient.patient?.fullName }}</h3>
+        <h3>{{ selectedPatient.patient?.fullName }}</h3>
         <div class="bill-actions">
           <button mat-raised-button color="primary" (click)="addBillItem(selectedPatient)">
             <mat-icon>add</mat-icon> Add Bill Item
@@ -369,12 +368,12 @@ import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.comp
                       <button mat-button color="primary" (click)="addMedicine(patient)">
                         <mat-icon>medication</mat-icon> Add Medicine
                       </button>
-                      <button mat-button color="accent" (click)="viewVitals(patient)">
+                      <!-- <button mat-button color="accent" (click)="viewVitals(patient)">
                         <mat-icon>monitor_heart</mat-icon> Vitals
                       </button>
                       <button mat-button color="warn" (click)="dischargePatient(patient)">
                         <mat-icon>logout</mat-icon> Discharge
-                      </button>
+                      </button> -->
                     </div>
                   </div>
                 </mat-card-content>
@@ -493,242 +492,1025 @@ import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.comp
     </div>
   `,
   styles: [`
-    .ip-dashboard { padding: 20px; }
-    .cards-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px; 
-      margin-top: 20px;
+    /* Medical Hospital Dashboard - Modern Calm Theme */
+.ip-dashboard {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fdff 0%, #f0f9ff 100%);
+  min-height: 100vh;
+  
+  h1 {
+    color: #1a73e8;
+    font-size: 2.2rem;
+    font-weight: 500;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e3f2fd;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #1a73e8, #00bcd4);
+      border-radius: 2px;
     }
-    .patient-card { 
-      transition: all 0.3s; 
-      cursor: pointer;
-    }
-    .patient-card:hover { 
-      transform: translateY(-5px); 
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    .patient-details p { margin: 5px 0; }
-    .actions { 
-      display: flex; 
-      gap: 10px; 
-      margin-top: 15px;
-      flex-wrap: wrap;
-    }
-    .no-data { 
-      text-align: center; 
-      padding: 50px; 
-      color: #666;
-    }
-    .no-data mat-icon { 
-      font-size: 64px; 
-      margin-bottom: 20px;
-      color: #ccc;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    .stat-card { 
-      text-align: center; 
-      padding: 20px;
-    }
-    .stat-card.available { border-left: 4px solid #4CAF50; }
-    .stat-card.occupied { border-left: 4px solid #F44336; }
-    .stat-card.maintenance { border-left: 4px solid #FF9800; }
-    .stat-number { 
-      font-size: 36px; 
-      font-weight: bold; 
-      margin: 10px 0;
-    }
-
-  /* Add to ip-dashboard.component.css styles */
-.payment-summary-section {
-  margin-top: 30px;
-  padding: 20px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  }
 }
-    /* Add to ip-dashboard.component.css */
+
+/* Tab Group Styling */
+::ng-deep .mat-mdc-tab-group {
+  background: transparent;
+  border-radius: 16px;
+  
+  .mat-mdc-tab-header {
+    background: white;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 2px 12px rgba(26, 115, 232, 0.08);
+    margin-bottom: 24px;
+    
+    .mat-mdc-tab-label-container {
+      padding: 0 24px;
+    }
+    
+    .mdc-tab {
+      min-width: 160px;
+      padding: 0 24px;
+      height: 56px;
+      
+      .mdc-tab__text-label {
+        color: #5f6368;
+        font-weight: 500;
+        font-size: 14px;
+        letter-spacing: 0.25px;
+      }
+      
+      .mat-mdc-tab-ripple {
+        border-radius: 12px 12px 0 0;
+      }
+    }
+    
+    .mdc-tab-indicator__content--underline {
+      border-radius: 2px;
+      height: 3px;
+    }
+    
+    .mat-mdc-tab.mdc-tab--active {
+      .mdc-tab__text-label {
+        color: #1a73e8;
+        font-weight: 600;
+      }
+    }
+  }
+  
+  .mat-mdc-tab-body-wrapper {
+    background: transparent;
+    min-height: 600px;
+  }
+}
+
+.tab-content {
+  padding: 24px 0;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Patient Selection Grid */
+.patient-selection {
+  padding: 32px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  margin-bottom: 32px;
+  
+  h3 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    &::before {
+      content: '👤';
+      font-size: 1.8rem;
+    }
+  }
+}
+
+.patient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+.patient-billing-card {
+  border-radius: 16px;
+  border: 1px solid #e8f4fd;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #1a73e8, #00bcd4);
+  }
+  
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(26, 115, 232, 0.15);
+    border-color: #1a73e8;
+    
+    .mat-mdc-card-header {
+      .mat-mdc-card-title {
+        color: #1a73e8;
+      }
+    }
+  }
+  
+  .mat-mdc-card-header {
+    padding: 20px 20px 12px 24px;
+    
+    .mat-mdc-card-title {
+      color: #2c3e50;
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      transition: color 0.3s ease;
+    }
+    
+    .mat-mdc-card-subtitle {
+      color: #5f6368;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      &::before {
+        content: '🆔';
+        font-size: 14px;
+      }
+    }
+  }
+  
+  .mat-mdc-card-content {
+    padding: 0 24px 20px;
+    
+    p {
+      margin: 8px 0;
+      color: #5f6368;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      
+      strong {
+        color: #2c3e50;
+        font-weight: 500;
+        min-width: 120px;
+      }
+    }
+    
+    p:last-child {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed #e8f4fd;
+      color: #1a73e8;
+      font-weight: 600;
+      font-size: 15px;
+      
+      strong {
+        color: #1a73e8;
+      }
+    }
+  }
+}
+
+/* Billing Section */
+.billing-section {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
 .bill-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px;
-  color: white;
-}
-
-.bill-header h3 {
-  margin: 0;
-  color: white;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0f7ff;
+  
+  button[mat-button] {
+    color: #5f6368;
+    font-weight: 500;
+    border-radius: 12px;
+    padding: 8px 20px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: #f0f7ff;
+      color: #1a73e8;
+    }
+    
+    mat-icon {
+      margin-right: 8px;
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+  }
+  
+  h3 {
+    color: #2c3e50;
+    font-size: 1.6rem;
+    font-weight: 500;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+  }
 }
 
 .bill-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  
+  button {
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
+    
+    mat-icon {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+    
+    &[color="primary"] {
+      background: linear-gradient(135deg, #1a73e8, #4285f4);
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(26, 115, 232, 0.35);
+      }
+    }
+    
+    &[color="accent"] {
+      background: linear-gradient(135deg, #00bcd4, #26c6da);
+      box-shadow: 0 4px 12px rgba(0, 188, 212, 0.25);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 188, 212, 0.35);
+      }
+    }
+    
+    &[color="warn"] {
+      background: linear-gradient(135deg, #ef5350, #f44336);
+      box-shadow: 0 4px 12px rgba(239, 83, 80, 0.25);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 83, 80, 0.35);
+      }
+      
+      &:disabled {
+        background: #e0e0e0;
+        box-shadow: none;
+        color: #9e9e9e;
+      }
+    }
+  }
 }
 
+/* Bill Items Table */
 .bill-items-section {
-  margin-top: 20px;
+  margin-top: 32px;
 }
 
 .table-container {
   overflow-x: auto;
-  margin-bottom: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 32px;
+  border-radius: 16px;
+  border: 1px solid #e8f4fd;
+  background: white;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+  
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    
+    th {
+      background: #f8fdff;
+      color: #2c3e50;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 18px 16px;
+      border-bottom: 2px solid #e8f4fd;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      padding: 16px;
+      border-bottom: 1px solid #f0f7ff;
+      color: #126cdb;
+      font-size: 14px;
+    }
+    
+    tbody tr {
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: #f8fdff;
+        td {
+          color: #2c3e50;
+        }
+      }
+      
+      &:last-child td {
+        border-bottom: none;
+      }
+    }
+  }
 }
 
 .item-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  
+  strong {
+    color: #2c3e50;
+    font-weight: 500;
+  }
 }
 
 .category-badge {
   background: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 8px;
+  color: #1a73e8;
+  padding: 4px 12px;
   border-radius: 12px;
   font-size: 11px;
+  font-weight: 500;
   display: inline-block;
+  width: fit-content;
+  letter-spacing: 0.3px;
 }
 
 .instructions {
   font-size: 12px;
-  color: #666;
+  color: #78909c;
   font-style: italic;
+  line-height: 1.4;
+  background: #f9f9f9;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border-left: 3px solid #e0e0e0;
 }
 
 .days-info {
-  font-size: 11px;
-  color: #666;
-  margin-top: 2px;
+  font-size: 12px;
+  color: #00bcd4;
+  font-weight: 500;
+  background: #e0f7fa;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-top: 4px;
 }
 
 .added-by {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  
+  span {
+    color: #2c3e50;
+    font-weight: 500;
+  }
+  
+  small {
+    font-size: 11px;
+    color: #78909c;
+  }
 }
 
-.added-by small {
-  font-size: 11px;
-  color: #666;
+/* Status Chips */
+::ng-deep .mat-mdc-chip {
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.3px !important;
+  border-radius: 12px !important;
+  min-height: 24px !important;
+  padding: 2px 12px !important;
+  
+  &.mat-mdc-chip-selected {
+    &.mat-primary {
+      background: linear-gradient(135deg, #1a73e8, #4285f4) !important;
+      color: white !important;
+    }
+    
+    &.mat-accent {
+      background: linear-gradient(135deg, #00bcd4, #26c6da) !important;
+      color: white !important;
+    }
+    
+    &.mat-warn {
+      background: linear-gradient(135deg, #ef5350, #f44336) !important;
+      color: white !important;
+    }
+  }
 }
 
+/* Bill Summary Card */
 .bill-summary-card {
   background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-  margin-top: 30px;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e8f4fd;
+  margin-top: 32px;
 }
 
 .summary-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f7ff;
+  
+  h4 {
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    &::before {
+      content: '📊';
+      font-size: 1.6rem;
+    }
+  }
 }
 
 .last-updated {
   font-size: 12px;
-  color: #666;
+  color: #78909c;
+  background: #f5f5f5;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+  margin-bottom: 24px;
 }
 
 .summary-section {
-  padding: 15px;
-  background: #f9f9f9;
-  border-radius: 6px;
-}
-
-.summary-section h5 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-weight: 600;
+  padding: 20px;
+  background: #f8fdff;
+  border-radius: 12px;
+  border: 1px solid #e8f4fd;
+  
+  h5 {
+    margin: 0 0 20px 0;
+    color: #1a73e8;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0f2ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    &::before {
+      content: '💊';
+      font-size: 1.2rem;
+    }
+  }
 }
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.summary-item:last-child {
-  border-bottom: none;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f7ff;
+  font-size: 14px;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  span {
+    color: #5f6368;
+    
+    &:first-child {
+      color: #2c3e50;
+      font-weight: 500;
+    }
+  }
 }
 
 .total-section {
-  background: #f0f8ff;
-  border: 2px solid #1976d2;
+  background: linear-gradient(135deg, #f0f7ff, #e8f4fd);
+  border: 2px solid #1a73e8;
+  
+  h5 {
+    color: #1a73e8;
+    
+    &::before {
+      content: '💰';
+    }
+  }
+  
+  .summary-item {
+    border-bottom-color: rgba(26, 115, 232, 0.2);
+  }
+  
+  .grand-total {
+    font-size: 1.2em;
+    color: #1a73e8;
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 2px solid rgba(26, 115, 232, 0.3);
+    
+    strong {
+      font-weight: 600;
+    }
+  }
 }
 
-.grand-total {
-  font-size: 1.2em;
-  color: #1976d2;
-}
-
+/* Payment Status */
 .payment-status {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 2px solid #f0f0f0;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid #f0f7ff;
+  
+  ::ng-deep .mat-mdc-chip-set {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 }
 
+/* No Bill Items State */
 .no-bill-items {
   text-align: center;
-  padding: 60px 20px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
-.no-bill-items mat-icon {
-  font-size: 64px;
-  height: 64px;
-  width: 64px;
-  margin-bottom: 20px;
-  color: #ccc;
+  padding: 60px 32px;
+  background: linear-gradient(135deg, #f8fdff, #f0f9ff);
+  border-radius: 16px;
+  border: 2px dashed #c2e7ff;
+  margin-top: 32px;
+  
+  mat-icon {
+    font-size: 64px;
+    height: 64px;
+    width: 64px;
+    margin-bottom: 20px;
+    color: #90caf9;
+  }
+  
+  p {
+    color: #5f6368;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
 }
 
 .empty-subtext {
-  color: #666;
-  margin-bottom: 30px;
+  color: #78909c !important;
+  font-size: 14px !important;
+  margin-bottom: 32px !important;
 }
 
 .action-buttons {
   display: flex;
-  gap: 15px;
+  gap: 16px;
   justify-content: center;
+  flex-wrap: wrap;
+  
+  button {
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
+    
+    mat-icon {
+      margin-right: 10px;
+      font-size: 20px;
+    }
+    
+    &[color="primary"] {
+      background: linear-gradient(135deg, #1a73e8, #4285f4);
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(26, 115, 232, 0.35);
+      }
+    }
+    
+    &[color="accent"] {
+      background: linear-gradient(135deg, #00bcd4, #26c6da);
+      box-shadow: 0 4px 12px rgba(0, 188, 212, 0.25);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 188, 212, 0.35);
+      }
+    }
+  }
 }
 
-/* Responsive adjustments */
+/* Payment Summary Section */
+.payment-summary-section {
+  margin-top: 40px;
+  padding: 28px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e8f4fd;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Cards Grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.patient-card {
+  border-radius: 16px;
+  border: 1px solid #e8f4fd;
+  background: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00bcd4, #4caf50);
+  }
+  
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 188, 212, 0.15);
+    border-color: #00bcd4;
+  }
+  
+  .mat-mdc-card-header {
+    padding: 20px 20px 12px 24px;
+    
+    .mat-mdc-card-title {
+      color: #2c3e50;
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .mat-mdc-card-subtitle {
+      color: #5f6368;
+      font-size: 13px;
+    }
+  }
+  
+  .mat-mdc-card-content {
+    padding: 0 24px 20px;
+    
+    p {
+      margin: 8px 0;
+      color: #5f6368;
+      font-size: 14px;
+      
+      b {
+        color: #2c3e50;
+        font-weight: 500;
+        min-width: 120px;
+        display: inline-block;
+      }
+    }
+  }
+}
+
+/* Vitals & Medicine Boxes */
+.vitals-box {
+  background: #e8f5e9;
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin: 12px 0;
+  font-size: 13px;
+  color: #2e7d32;
+  border-left: 4px solid #4caf50;
+  
+  b {
+    color: #2e7d32;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  
+  span {
+    margin-right: 12px;
+    
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+.medicine-box {
+  background: #f0f7ff;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 12px 0;
+  border: 1px solid #e8f4fd;
+  
+  h4 {
+    color: #1a73e8;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    &::before {
+      content: '💊';
+      font-size: 16px;
+    }
+  }
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  
+  tr {
+    border-bottom: 1px solid #e8f4fd;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  
+  td {
+    padding: 6px 8px;
+    color: #5f6368;
+    
+    &:first-child {
+      color: #2c3e50;
+      font-weight: 500;
+    }
+  }
+}
+
+.no-medicines {
+  color: #78909c;
+  font-style: italic;
+  margin: 10px 0;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* Card Actions */
+.mat-mdc-card-actions {
+  padding: 16px 24px 20px !important;
+  display: flex;
+  gap: 12px;
+  
+  button {
+    border-radius: 10px;
+    padding: 8px 20px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    
+    &[color="primary"] {
+      background: linear-gradient(135deg, #1a73e8, #4285f4);
+      box-shadow: 0 2px 8px rgba(26, 115, 232, 0.25);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(26, 115, 232, 0.35);
+      }
+      
+      &:disabled {
+        background: #e0e0e0;
+        box-shadow: none;
+        color: #9e9e9e;
+      }
+    }
+  }
+}
+
+/* No Data States */
+.no-data {
+  text-align: center;
+  padding: 80px 32px;
+  background: linear-gradient(135deg, #f8fdff, #f0f9ff);
+  border-radius: 16px;
+  border: 2px dashed #c2e7ff;
+  margin-top: 32px;
+  
+  mat-icon {
+    font-size: 72px;
+    margin-bottom: 24px;
+    color: #90caf9;
+    opacity: 0.7;
+  }
+  
+  p {
+    color: #5f6368;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  
+  small {
+    color: #78909c;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* Stats Section */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 24px 20px;
+  border-radius: 16px;
+  background: white;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #e0e0e0, #f5f5f5);
+  }
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+  
+h3 {
+  color: #1a73e8;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+  border-bottom: 2px solid #e8f4fd;
+  padding-bottom: 10px;
+  margin-bottom: -12px;
+  display: inline-block;
+}
+  
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 300;
+    margin: 0;
+    color: #2c3e50;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  
+  &.available::before {
+    background: linear-gradient(90deg, #4caf50, #66bb6a);
+  }
+  
+  &.occupied::before {
+    background: linear-gradient(90deg, #ef5350, #f44336);
+  }
+  
+  &.maintenance::before {
+    background: linear-gradient(90deg, #ffb300, #ffca28);
+  }
+}
+
+/* Beds List */
+.beds-list {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e8f4fd;
+  
+  h3 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    &::before {
+      content: '🛏️';
+      font-size: 1.5rem;
+    }
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+  .ip-dashboard {
+    padding: 16px;
+    
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 24px;
+    }
+  }
+  
+  ::ng-deep .mat-mdc-tab-group {
+    .mdc-tab {
+      min-width: 120px;
+      padding: 0 16px;
+    }
+  }
+  
+  .patient-grid,
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .bill-header {
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     text-align: center;
+    
+    h3 {
+      order: -1;
+      margin-bottom: 8px;
+    }
   }
   
   .bill-actions {
     flex-wrap: wrap;
     justify-content: center;
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
   }
   
   .summary-grid {
@@ -737,139 +1519,90 @@ import { PaymentSummaryComponent } from "./ip-pharmacy-bill/payment-summary.comp
   
   .action-buttons {
     flex-direction: column;
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .table-container {
     font-size: 12px;
+    
+    th, td {
+      padding: 12px 8px;
+    }
   }
 }
-    /* Add to ip-dashboard.component.css */
-.vitals-box {
-  background: #f0f8ff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: 10px 0;
-  font-size: 14px;
-}
 
-.medicine-box {
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 6px;
-  margin: 10px 0;
-}
- .patient-selection {
+@media (max-width: 480px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .patient-billing-card,
+  .patient-card {
+    margin: 0;
+  }
+  
+  .bill-summary-card,
+  .payment-summary-section {
     padding: 20px;
   }
-  
-  .patient-billing-card {
-    cursor: pointer;
-    transition: transform 0.2s;
-    margin: 10px;
-  }
-  
-  .patient-billing-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  }
-  
-  .bill-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #f5f5f5;
-    border-radius: 8px;
-  }
-  
-  .bill-summary {
-    margin-top: 30px;
-    padding: 20px;
-    background: #f9f9f9;
-    border-radius: 8px;
-  }
-  
-  .summary-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .summary-item.total {
-    border-top: 2px solid #333;
-    font-size: 1.2em;
-    font-weight: bold;
-    margin-top: 10px;
-    padding-top: 15px;
-  }
-  
-  .no-bill-items {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-  }
-  
-  .no-bill-items mat-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    color: #ccc;
-  }
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
 }
 
-.history-table td {
-  padding: 4px 8px;
-  border-bottom: 1px solid #eee;
-}
-/* Add to ip-dashboard.component.css */
-.no-charges-message {
-  text-align: center;
-  padding: 20px;
-  color: #666;
-}
-
-.no-charges-message mat-icon {
-  font-size: 48px;
-  height: 48px;
-  width: 48px;
-  margin-bottom: 10px;
-  color: #ccc;
+/* Loading Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
-.category-header {
-  font-weight: 600;
-  color: #1976d2;
-  padding: 10px 0 5px 0;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 10px;
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-.no-items-message {
-  text-align: center;
-  padding: 30px;
-  color: #666;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.no-items-message mat-icon {
-  font-size: 48px;
-  height: 48px;
-  width: 48px;
-  margin-bottom: 10px;
-  color: #ccc;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
-.no-medicines {
-  color: #888;
-  font-style: italic;
-  margin: 10px 0;
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #1a73e8, #00bcd4);
+  border-radius: 4px;
 }
-    .beds-list { margin-top: 20px; }
-    table { width: 100%; }
-    .tab-content { padding: 20px 0; }
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1565c0, #0097a7);
+}
+
+/* Print Styles */
+@media print {
+  .bill-actions,
+  .mat-mdc-card-actions,
+  button {
+    display: none !important;
+  }
+  
+  .bill-summary-card,
+  .table-container {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
   `]
 })
 export class IpDashboardComponent implements OnInit {
@@ -915,17 +1648,17 @@ ngOnInit(): void {
   const role = user?.role; // Doctor | Nurse | Reception | Admin
 
   // ✅ Active IP Patients → ALL roles
-  if (role && ['Doctor', 'Nurse', 'Reception', 'Admin'].includes(role)) {
+  if (role && ['Doctor', 'Nurse', 'Reception', 'Admin', 'Pharmacy'].includes(role)) {
     this.loadActivePatients();
   }
 
   // ✅ Bed Status → ALL roles
-  if (role && ['Doctor', 'Nurse', 'Reception', 'Admin'].includes(role)) {
+  if (role && ['Doctor', 'Nurse', 'Reception', 'Admin', 'Pharmacy'].includes(role)) {
     this.loadAllBeds();
   }
 
   // ✅ IP Recommendations → ONLY Reception & Admin
-  if (role && ['Reception', 'Admin', 'Nurse'].includes(role)) {
+  if (role && ['Reception', 'Admin', 'Nurse', 'Pharmacy'].includes(role)) {
     this.loadRecommendedPatients();
   }
 }

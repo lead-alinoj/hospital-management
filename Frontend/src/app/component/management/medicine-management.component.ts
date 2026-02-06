@@ -73,6 +73,8 @@ import { CategoryService } from '../../service/category.service';
           <div class="row">
             <mat-form-field appearance="outline" class="half-width">
               <mat-label>Medicine Name *</mat-label>
+  <mat-icon matPrefix>medical_services</mat-icon>
+
               <input matInput formControlName="name" placeholder="e.g., Paracetamol">
               <mat-error *ngIf="medicineForm.get('name')?.hasError('required')">
                 Name is required
@@ -80,6 +82,9 @@ import { CategoryService } from '../../service/category.service';
             </mat-form-field>
 
 <mat-form-field *ngIf="isMedicine" appearance="outline">
+  <!-- Generic Name -->
+<mat-icon matPrefix>science</mat-icon>
+
   <mat-label>Generic Name</mat-label>
   <input matInput formControlName="genericName">
 </mat-form-field>
@@ -89,11 +94,15 @@ import { CategoryService } from '../../service/category.service';
           <!-- Row 2: Brand, Strength, Unit -->
           <div class="row">
             <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Brand Name</mat-label>
+              <mat-icon matPrefix>branding_watermark</mat-icon>
+
+            <mat-label>Brand Name</mat-label>
               <input matInput formControlName="brandName" placeholder="e.g., Crocin">
             </mat-form-field>
 
 <mat-form-field *ngIf="isMedicine" appearance="outline">
+  <mat-icon matPrefix>fitness_center</mat-icon>
+
   <mat-label>Strength *</mat-label>
   <input matInput formControlName="strength">
 </mat-form-field>
@@ -103,6 +112,7 @@ import { CategoryService } from '../../service/category.service';
   *ngIf="isMedicine || isConsumable || isCleaning"
   appearance="outline"
   class="quarter-width">
+<mat-icon matPrefix>straighten</mat-icon>
 
   <mat-label>Unit *</mat-label>
   <mat-select formControlName="unit">
@@ -129,6 +139,8 @@ import { CategoryService } from '../../service/category.service';
           <!-- Row 3: Category & Supplier -->
           <div class="row">
    <mat-form-field appearance="outline">
+      <mat-icon matPrefix>category</mat-icon>
+
   <mat-label>Category</mat-label>
 <mat-select formControlName="category"
   (selectionChange)="categoryChanged($event.value)">
@@ -140,6 +152,7 @@ import { CategoryService } from '../../service/category.service';
 
 
 <mat-form-field *ngIf="!isEquipment || isEquipment"  appearance="outline">
+<mat-icon matPrefix>local_shipping</mat-icon>
 
   <mat-label>Supplier</mat-label>
   <input matInput formControlName="supplier">
@@ -150,7 +163,9 @@ import { CategoryService } from '../../service/category.service';
           <!-- Row 4: Current Stock, Min Stock, Price (Min Stock & Price for Consumables only) -->
           <div class="row">
             <mat-form-field appearance="outline" class="third-width">
-              <mat-label>Current Stock *</mat-label>
+              <mat-icon matPrefix>inventory</mat-icon>
+  
+            <mat-label>Current Stock *</mat-label>
               <input matInput formControlName="stockQty" type="number" min="0">
               <mat-error *ngIf="medicineForm.get('stockQty')?.hasError('required')">
                 Stock quantity is required
@@ -158,6 +173,8 @@ import { CategoryService } from '../../service/category.service';
             </mat-form-field>
 
 <mat-form-field *ngIf="!isEquipment">
+  <mat-icon matPrefix>warning_amber</mat-icon>
+
               <mat-label>Min Stock *</mat-label>
               <input matInput formControlName="minStock" type="number" min="0">
               <mat-error *ngIf="medicineForm.get('minStock')?.hasError('required')">
@@ -166,7 +183,9 @@ import { CategoryService } from '../../service/category.service';
             </mat-form-field>
 
 <mat-form-field *ngIf="isMedicine || isConsumable || isCleaning">
-              <mat-label>Price (₹) *</mat-label>
+  <mat-icon matPrefix>currency_rupee</mat-icon>
+            
+<mat-label>Price (₹) *</mat-label>
               <input matInput formControlName="price" type="number" step="0.01" min="0">
               <mat-error *ngIf="medicineForm.get('price')?.hasError('required')">
                 Price is required
@@ -177,12 +196,16 @@ import { CategoryService } from '../../service/category.service';
           <!-- Row 5: Batch Number & Expiry Date  -->
 <div *ngIf="isMedicine || isConsumable">
             <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Batch Number</mat-label>
+             <mat-icon matPrefix>qr_code</mat-icon>
+ 
+            <mat-label>Batch Number</mat-label>
               <input matInput formControlName="batchNumber" placeholder="e.g., BATCH-2024-001">
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Expiry Date</mat-label>
+            <mat-icon matPrefix>event</mat-icon>
+  
+            <mat-label>Expiry Date</mat-label>
               <input matInput [matDatepicker]="expiryPicker" formControlName="expiryDate">
               <mat-datepicker-toggle matSuffix [for]="expiryPicker"></mat-datepicker-toggle>
               <mat-datepicker #expiryPicker></mat-datepicker>
@@ -444,11 +467,15 @@ import { CategoryService } from '../../service/category.service';
   `,
   styles: [`
     .medicine-management {
-      padding: 72px;
+      padding: 20px;
       max-width: 1400px;
       margin: 0 auto;
-        background: #eff1f3;   /* ⭐ MAIN CONTAINER BACKGROUND */
-  color: #10233d;  
+ background: linear-gradient(
+    180deg,
+    #f4f9ff 0%,
+    #edf4ff 40%,
+    #f7fbff 100%
+  );  color: #10233d;  
     }
 .header-section {
   display: flex;
@@ -459,6 +486,8 @@ import { CategoryService } from '../../service/category.service';
 }
 
 .header-section h1 {
+    color: #0f3d8c;
+
   flex: 1 1 auto;
   min-width: 200px;
   margin: 0;
@@ -468,6 +497,15 @@ import { CategoryService } from '../../service/category.service';
   flex-shrink: 0;
   white-space: nowrap;
 }
+mat-card {
+  background: linear-gradient(180deg, #ffffff, #f6faff);
+  border: 1px solid #e3efff;
+}
+/* Dark blue icons inside Add Medicine form */
+.add-medicine-form mat-icon[matPrefix] {
+  color: #1e40af;        /* dark blue */
+  opacity: 0.95;
+}
 
     .stats-cards {
       display: grid;
@@ -475,9 +513,47 @@ import { CategoryService } from '../../service/category.service';
       gap: 20px;
       margin-bottom: 30px;
     }
-    .stat-card {
-      text-align: center;
-    }
+   /* Base stat card */
+.stat-card {
+  text-align: center;
+  border-radius: 14px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* 1️⃣ Total Medicines – soft blue (slightly darker) */
+.stats-cards mat-card:nth-child(1) {
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  border: 1px solid #bfdbfe;
+}
+
+/* 2️⃣ In Stock – soft green */
+.stats-cards mat-card:nth-child(2) {
+  background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+  border: 1px solid #86efac;
+}
+
+/* 3️⃣ Low Stock – soft amber */
+.stats-cards mat-card:nth-child(3) {
+  background: linear-gradient(135deg, #ffedd5, #fff7ed);
+  border: 1px solid #fdba74;
+}
+
+/* 4️⃣ Out of Stock – soft rose */
+.stats-cards mat-card:nth-child(4) {
+  background: linear-gradient(135deg, #fee2e2, #fff1f2);
+  border: 1px solid #fca5a5;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(30, 64, 175, 0.12);
+}
+/* Icon tone sync */
+.stats-cards mat-card:nth-child(1) mat-icon { color: #2563eb; } /* blue */
+.stats-cards mat-card:nth-child(2) mat-icon { color: #16a34a; } /* green */
+.stats-cards mat-card:nth-child(3) mat-icon { color: #ea580c; } /* orange */
+.stats-cards mat-card:nth-child(4) mat-icon { color: #dc2626; } /* red */
+
     .stat-content {
       display: flex;
       flex-direction: column;
@@ -504,6 +580,9 @@ import { CategoryService } from '../../service/category.service';
       color: #666;
     }
     .filters-card {
+        background: #f8fbff;
+  border: 1px solid #e3efff;
+
       margin-bottom: 30px;
     }
     .filters-grid {
@@ -521,11 +600,22 @@ import { CategoryService } from '../../service/category.service';
       }
     }
     .table-card {
+        background: linear-gradient(180deg, #ffffff, #f9fcff);
+
       margin-bottom: 30px;
     }
     .table-container {
       overflow-x: auto;
     }
+    tr.mat-row:hover {
+  background: #f1f7ff;
+}
+
+    th {
+  background: #eef5ff;
+  color: #1e3a8a;
+}
+
     .medicine-name-cell {
       display: flex;
       flex-direction: column;
@@ -540,6 +630,12 @@ import { CategoryService } from '../../service/category.service';
       font-size: 12px;
       color: #666;
     }
+    mat-chip {
+  background: #e0edff !important;
+  color: #1e40af !important;
+  font-weight: 500;
+}
+
     /* Add to medicine-management.component.css */
 .add-medicine-form {
   margin-bottom: 30px;
@@ -611,14 +707,16 @@ import { CategoryService } from '../../service/category.service';
       font-size: 12px;
       font-weight: 500;
     }
-    .status-badge.active {
-      background: #e8f5e9;
-      color: #2e7d32;
-    }
-    .status-badge.inactive {
-      background: #ffebee;
-      color: #c62828;
-    }
+.status-badge.active {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.status-badge.inactive {
+  background: #fdecec;
+  color: #b91c1c;
+}
+
     .action-buttons {
       display: flex;
       gap: 4px;

@@ -351,6 +351,8 @@ exports.getPatientVisits = async (req, res) => {
     const visits = await Visit.find({ patient: req.params.patientId })
       .populate('doctor', 'name specialization')
       .populate('vitals')
+            .populate('prescriptions') // if ref exists
+
       .sort({ visitDate: -1 });
 
     res.json({

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
-import { adminGuard } from './auth/role.guard';
+import { adminGuard, ipAdmissionGuard } from './auth/role.guard';
 import { UnauthorizedComponent } from './auth/unauthorized/unauthorized.component';
 import { PlaceholderComponent } from './shared/placeholder/placeholder.component';
 import { LoginComponent } from './auth/login/login.component';
@@ -73,6 +73,7 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         data: { roles: ['Admin'] }
       },
+
       {
         path: 'admin/hospital',
         component: HospitalSettingsComponent,
@@ -160,40 +161,62 @@ export const routes: Routes = [
       {
         path: 'reception/staff',
         component: StaffMasterComponent,
-        canActivate: [receptionGuard],
-        data: { roles: ['Reception'] }
+        data: { roles: ['Admin', 'Reception'] }
       },
+      {
+  path: 'reception/attendance/history',
+  component: AttendanceHistoryComponent,
+  data: { roles: ['Admin', 'Reception'] }
+},
+
+      {
+  path: 'reception/shift-master',
+  component: ShiftMasterComponent,
+  data: { roles: ['Admin', 'Reception'] }
+},
+{
+  path: 'reception/appointments',
+  component: AdminAppointmentsComponent,
+  data: { roles: ['Admin', 'Reception'] }
+},
+
+
       {
         path: 'reception/attendance',
         component: AttendanceEntryComponent,
-        canActivate: [receptionGuard],
-        data: { roles: ['Reception'] }
+  data: { roles: ['Admin', 'Reception'] }
       },
       {
         path: 'reception/dashboard',
         component: ReceptionDashboardComponent,
-        data: { roles: ['Reception'] }
+        data: { roles: ['Admin', 'Reception'] }
       },
       {
         path: 'reception/patient/register',
         component: PatientRegistrationComponent,
-        data: { roles: ['Reception'] }
+        data: { roles: ['Admin', 'Reception'] }
       },
       {
         path: 'reception/visit/create',
         component: CreateVisitComponent,
-        data: { roles: ['Reception'] }
+        data: { roles: ['Admin', 'Reception'] }
       },
       {
         path: 'reception/patient/search',
         component: PatientSearchComponent,
-        data: { roles: ['Reception'] }
+  data: { roles: ['Admin', 'Reception', 'Nurse'] }
       },
       {
+  path: 'reception/hospital',
+  component: HospitalSettingsComponent,
+  data: { roles: ['Admin', 'Reception'] }
+},
+
+      {
         path: 'reception/ip-admission',
-          canActivate: [receptionGuard],   // ✅ ADD THIS
+canActivate: [ipAdmissionGuard],
         component: IpAdmissionComponent,
-        data: { roles: ['Reception'] }
+  data: { roles: ['Admin', 'Reception', 'Pharmacy'] }
       },
 
       // ========== PHARMACY ROUTES ==========
@@ -208,6 +231,11 @@ export const routes: Routes = [
   data: { roles: ['Admin', 'Reception', 'Pharmacy'] }
       },
       {
+  path: 'pharmacy/attendance',
+  component: AttendanceEntryComponent,
+  data: { roles: ['Pharmacy'] }
+},
+      {
         path: 'pharmacy/categories',
         component: CategoryManagementComponent,
   data: { roles: ['Admin', 'Reception', 'Pharmacy'] }
@@ -217,6 +245,7 @@ export const routes: Routes = [
       {
         path: 'ip-dashboard',
         component: IpDashboardComponent,
+        
         data: { roles: ['Admin', 'Doctor', 'Nurse', 'Reception', 'Pharmacy'] }
       },
      
@@ -233,7 +262,7 @@ export const routes: Routes = [
   path: 'reception/care-units',
   component: CareUnitMasterComponent,
   canActivate: [receptionGuard],
-  data: { roles: ['Reception'] }
+  data: { roles: ['Admin', 'Reception'] }
 },
 
 // Nurse
@@ -242,6 +271,13 @@ export const routes: Routes = [
   component: CareUnitMasterComponent,
   data: { roles: ['Nurse'] }
 },
+// Pharmacy
+{
+  path: 'pharmacy/care-units',
+  component: CareUnitMasterComponent,
+  data: { roles: ['Pharmacy'] }
+},
+
 // Admin
 {
   path: 'admin/beds',
@@ -255,7 +291,7 @@ export const routes: Routes = [
   path: 'reception/beds',
   component: BedManagementComponent,
   canActivate: [receptionGuard],
-  data: { roles: ['Reception'] }
+  data: { roles: ['Admin', 'Reception'] }
 },
 
 // Nurse (view only)
@@ -263,6 +299,12 @@ export const routes: Routes = [
   path: 'nurse/beds',
   component: BedManagementComponent,
   data: { roles: ['Nurse'] }
+},
+// Pharmacy (view / manage)
+{
+  path: 'pharmacy/beds',
+  component: BedManagementComponent,
+  data: { roles: ['Pharmacy'] }
 },
 
 

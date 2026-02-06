@@ -12,37 +12,37 @@ router.use(protect);
 
 // Bed availability
 router.get('/beds/available',
-  authorize('Reception', 'Doctor', 'Nurse', 'Admin'),
+  authorize('Reception', 'Doctor', 'Nurse', 'Admin', 'Pharmacy'),
   ipController.getBedAvailability
 );
 
 // Current IP patients
 router.get('/current',
-  authorize('Doctor', 'Nurse', 'Admin', 'Reception'),
+  authorize('Doctor', 'Nurse', 'Admin', 'Reception', 'Pharmacy'),
   ipController.getCurrentIPPatients
 );
 
 // Recommended IP patients (from doctor recommendations)
 router.get('/recommended',
-  authorize('Reception', 'Admin', 'Doctor'),
+  authorize('Reception', 'Admin', 'Doctor', 'Nurse', 'Pharmacy'),
   ipController.getRecommendedIPPatients
 );
 
 // Available visits for reception
 router.get('/available-visits',
-  authorize('Reception', 'Admin'),
+  authorize('Reception', 'Admin', 'Pharmacy'),
   ipController.getAvailableVisits
 );
 
 // Allocate bed for recommended admission (Reception only)
 router.post('/allocate-recommended',
-  authorize('Reception', 'Admin'),
+  authorize('Reception', 'Admin', 'Nurse', 'Pharmacy','Doctor'),
   ipController.allocateRecommendedAdmission
 );
 
 // Emergency admission (Reception)
 router.post('/emergency',
-  authorize('Reception', 'Admin', 'Nurse'),
+  authorize('Reception', 'Admin', 'Nurse', 'Pharmacy'),
   ipController.emergencyAdmission
 );
 

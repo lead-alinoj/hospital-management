@@ -57,6 +57,46 @@ exports.getRecentPatients = async (req, res) => {
     });
   }
 };
+// GET /patients/stats
+exports.getPatientStats = async (req, res) => {
+  try {
+    const stats = await Patient.aggregate([
+      {
+        $facet: {
+          totalPatients: [{ $count: 'count' }],
+          activePatients: [
+            { $match: { isActive: true } },
+            { $count: 'count' }
+          ],
+          opPatients: [
+            { $match: { patientType: 'OP', isActive: true } },
+            { $count: 'count' }
+          ],
+          ipPatients: [
+            { $match: { patientType: 'IP', isActive: true } },
+            { $count: 'count' }
+          ]
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalPatients: stats[0].totalPatients[0]?.count || 0,
+        activePatients: stats[0].activePatients[0]?.count || 0,
+        opPatients: stats[0].opPatients[0]?.count || 0,
+        ipPatients: stats[0].ipPatients[0]?.count || 0
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching patient statistics',
+      error: error.message
+    });
+  }
+};
 
 // patient.controller.js
 exports.quickSearchPatients = async (req, res) => {

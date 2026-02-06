@@ -84,10 +84,7 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
                 <div class="stat-number">{{ visitSummary.waiting || 0 }}</div>
                 <div class="stat-label">Waiting</div>
               </div>
-              <div class="stat-card" [ngClass]="getStatusClass('vitals_in_progress')">
-                <div class="stat-number">{{ visitSummary.vitals_in_progress || 0 }}</div>
-                <div class="stat-label">Vitals In Progress</div>
-              </div>
+             
               <div class="stat-card" [ngClass]="getStatusClass('vitals_completed')">
                 <div class="stat-number">{{ visitSummary.vitals_completed || 0 }}</div>
                 <div class="stat-label">Vitals Done</div>
@@ -123,9 +120,9 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
         <span class="doctor">{{ visit.doctor?.name || 'N/A' }}</span>
       </div>
       <div class="visit-actions">
-        <button mat-button color="primary" (click)="viewVisit(visit._id)">
+        <!-- <button mat-button color="primary" (click)="viewVisit(visit._id)">
           View
-        </button>
+        </button> -->
       </div>
     </div>
   </div>
@@ -141,9 +138,9 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
                       <span class="doctor">{{ visit.doctor?.name }}</span>
                     </div>
                     <div class="visit-actions">
-                      <button mat-button color="primary" (click)="viewVisit(visit._id)">
+                      <!-- <button mat-button color="primary" (click)="viewVisit(visit._id)">
                         View
-                      </button>
+                      </button> -->
                     </div>
                   </div>
                 </div>
@@ -1128,6 +1125,8 @@ private loadTodayVisits(): void {
         ];
         this.visits.vitals_completed = response.data.vitals_completed || [];
         this.visitSummary = response.summary.byStatus;
+        this.visitSummary.registered = this.visitSummary.waiting || 0;
+
         this.totalVisits = response.summary.total;
       } else {
         console.error('Failed to load visits:', response.message);

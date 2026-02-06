@@ -133,8 +133,15 @@ export class HeaderComponent implements OnInit {
         /^\/appointments\/book.*$/,
         /^\/billing\/.*$/,
         /^\/reception\/staff$/,
+          /^\/reception\/shift-master.*$/,
+          /^\/reception\/hospital.*$/,
         /^\/pharmacy\/medicines$/,
+          /^\/reception\/beds.*$/,
+          /^\/reception\/care-units.*$/,
   /^\/pharmacy\/categories$/,
+    /^\/reception\/appointments.*$/,
+  /^\/pharmacy\/categories.*$/,
+
         /^\/reception\/attendance$/,
         /^\/reception\/ip-admission.*$/,   // ✅ IMPORTANT
   /^\/ip-dashboard.*$/               // ✅ optional but good
@@ -143,7 +150,14 @@ export class HeaderComponent implements OnInit {
         /^\/pharmacy\/.*$/,
         /^\/inventory\/.*$/,
         /^\/prescriptions\/dispense.*$/,
-        /^\/pharmacy\/categories.*$/
+        /^\/pharmacy\/categories.*$/,
+          /^\/pharmacy\/beds.*$/,
+  /^\/pharmacy\/care-units.*$/,
+  /^\/pharmacy\/staff.*$/,
+  /^\/pharmacy\/attendance.*$/,
+  /^\/pharmacy\/medicines.*$/,
+  /^\/pharmacy\/categories.*$/,
+  /^\/ip-dashboard.*$/ 
       ]
     };
 

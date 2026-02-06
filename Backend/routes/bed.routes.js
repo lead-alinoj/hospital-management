@@ -6,24 +6,24 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 // Get all beds
-router.get('/', authorize('Reception', 'Nurse', 'Doctor', 'Admin', 'Nurse'), bedController.getAllBeds);
+router.get('/', authorize('Reception', 'Nurse', 'Doctor', 'Admin', 'Pharmacy'), bedController.getAllBeds);
 
 // Get available beds
-router.get('/available', authorize('Reception', 'Doctor', 'Admin', 'Nurse'), bedController.getAvailableBeds);
+router.get('/available', authorize('Reception', 'Doctor', 'Admin', 'Nurse', 'Pharmacy'), bedController.getAvailableBeds);
 
 // Get bed by ID
-router.get('/:id', authorize('Reception', 'Nurse', 'Doctor', 'Admin', 'Nurse'), bedController.getBedById);
+router.get('/:id', authorize('Reception', 'Nurse', 'Doctor', 'Admin', 'Pharmacy'), bedController.getBedById);
 
 // Allocate bed to patient
-router.post('/:id/allocate', authorize('Reception', 'Doctor', 'Admin', 'Nurse'), bedController.allocateBed);
+router.post('/:id/allocate', authorize('Reception', 'Doctor', 'Admin', 'Pharmacy'), bedController.allocateBed);
 
 // Discharge patient from bed
-router.post('/:id/discharge', authorize('Reception', 'Doctor', 'Admin', 'Nurse'), bedController.dischargePatient);
+router.post('/:id/discharge', authorize('Reception', 'Doctor', 'Admin', 'Pharmacy'), bedController.dischargePatient);
 
 // Update bed
-router.put('/:id', authorize('Admin','Doctor','Nurse','Reception'), bedController.updateBed);
+router.put('/:id', authorize('Admin','Doctor','Nurse','Reception','Pharmacy'), bedController.updateBed);
 
 // Create new bed
-router.post('/', authorize('Admin','Doctor','Nurse','Reception'), bedController.createBed);
+router.post('/', authorize('Admin','Doctor','Nurse','Reception','Pharmacy'), bedController.createBed);
 
 module.exports = router;

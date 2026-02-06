@@ -45,6 +45,7 @@ hideLogin = false;
   hidePassword = true;
   loading = false;
   returnUrl = '';
+isBlocked = false;
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -58,6 +59,8 @@ hideLogin = false;
     
     // If already logged in, redirect to dashboard
     if (this.authService.isAuthenticated()) {
+          this.isBlocked = true;        // ⛔ block UI immediately
+
       this.redirectToDashboard();
     }
   }

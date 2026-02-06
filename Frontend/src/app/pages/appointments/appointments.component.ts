@@ -88,7 +88,7 @@ import { MatIconModule } from '@angular/material/icon';
   `,
   styles: [`
     .page-container {
-      padding: 100px;
+      padding: 20px 20px 20px;
       background: #f8fafc;
       min-height: 100vh;
     }
@@ -102,6 +102,7 @@ import { MatIconModule } from '@angular/material/icon';
     }
 
     .header h2 {
+      font-size: 24px;
       margin: 0;
       font-weight: 30px;
       color: #0f172a;
