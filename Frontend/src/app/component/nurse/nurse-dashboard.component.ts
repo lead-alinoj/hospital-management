@@ -1,5 +1,5 @@
 // components/nurse/dashboard.component.ts
-import { Component, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy,ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -13,7 +13,18 @@ import { VisitService } from '../../service/visit.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { Subscription, interval } from 'rxjs';
-
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatSortModule, MatSort } from '@angular/material/sort';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { PatientService } from '../../service/patient.service'; // Add this import
 @Component({
   selector: 'app-nurse-dashboard',
   standalone: true,
@@ -28,7 +39,18 @@ import { Subscription, interval } from 'rxjs';
     MatTabsModule,
     MatChipsModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+     MatTableModule,
+  MatPaginatorModule,
+  MatSortModule,
+  MatDialogModule,
+  MatFormFieldModule,
+  MatInputModule,
+  MatSelectModule,
+  MatExpansionModule,
+  MatDatepickerModule,
+  MatNativeDateModule,
+  ReactiveFormsModule
   ],
   template: `
     <div class="nurse-dashboard-container">
@@ -91,7 +113,187 @@ import { Subscription, interval } from 'rxjs';
           </mat-card-content>
         </mat-card>
       </div>
+<!-- Patient History Section -->
+<div class="patient-history-section" *ngIf="!isLoading && !hasError">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="section-icon">history</mat-icon>
+        Patient History & Records
+      </mat-card-title>
+      <button mat-button (click)="togglePatientHistory()">
+        <mat-icon>{{ showPatientHistory ? 'expand_less' : 'expand_more' }}</mat-icon>
+        {{ showPatientHistory ? 'Hide History' : 'Show All Visits History' }}
+      </button>
+    </mat-card-header>
 
+    <mat-card-content *ngIf="showPatientHistory">
+      <!-- Search Bar -->
+      <div class="history-search">
+        <form [formGroup]="historySearchForm" (ngSubmit)="searchPatients()">
+          <div class="search-controls">
+            <mat-form-field appearance="outline" class="search-type">
+              <mat-label>Search By</mat-label>
+              <mat-select formControlName="searchType">
+                <mat-option value="name">Patient Name</mat-option>
+                <mat-option value="mobile">Mobile Number</mat-option>
+                <mat-option value="opNumber">OP Number</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="search-input">
+              <mat-label>Search Patient</mat-label>
+              <input matInput formControlName="searchValue" 
+                placeholder="Enter patient name, mobile, or OP number...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="submit" [disabled]="isSearching">
+              <mat-icon>search</mat-icon>
+              Search
+            </button>
+
+            <button mat-button type="button" (click)="clearSearch()">
+              <mat-icon>clear</mat-icon>
+              Clear
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Search Results -->
+      <div *ngIf="showSearchResults && searchResults.length > 0" class="search-results">
+        <h3>Search Results ({{ searchResults.length }})</h3>
+        <div class="patient-cards">
+          <mat-card *ngFor="let patient of searchResults" class="patient-card" (click)="viewPatientHistory(patient)">
+            <mat-card-content>
+              <div class="patient-info">
+                <mat-icon class="patient-icon">person</mat-icon>
+                <div class="patient-details">
+                  <div class="patient-name">{{ patient.fullName }}</div>
+                  <div class="patient-meta">
+                    <span>OP: {{ patient.opNumber }}</span>
+                    <span>• {{ patient.age }}Y / {{ patient.gender }}</span>
+                    <span>• {{ patient.mobile }}</span>
+                  </div>
+                </div>
+                <button mat-icon-button (click)="viewPatientDetails(patient); $event.stopPropagation()">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- All Visits History Table -->
+      <div class="history-table-section">
+        <div class="table-header">
+          <h3>All Visits History</h3>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filter</mat-label>
+            <input matInput (keyup)="applyHistoryFilter($event)" placeholder="Filter by patient name, token, status...">
+            <mat-icon matSuffix>filter_list</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="table-container">
+          <table mat-table [dataSource]="patientHistoryDataSource" matSort class="mat-elevation-z1">
+            
+            <!-- Visit Date Column -->
+            <ng-container matColumnDef="visitDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+              <td mat-cell *matCellDef="let visit">
+                {{ visit.visitDate | date:'mediumDate' }}
+                <div class="visit-time">{{ visit.createdAt | date:'shortTime' }}</div>
+              </td>
+            </ng-container>
+
+            <!-- Token Number Column -->
+            <ng-container matColumnDef="tokenNumber">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Token</th>
+              <td mat-cell *matCellDef="let visit">
+                <span class="token-badge">#{{ visit.tokenNumber }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Patient Name Column -->
+            <ng-container matColumnDef="patientName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+              <td mat-cell *matCellDef="let visit">
+                <div class="patient-cell">
+                  <mat-icon class="patient-icon-small">person</mat-icon>
+                  <div>
+                    <div class="patient-name">{{ getPatientName(visit) }}</div>
+                    <div class="patient-demographics">
+                      {{ getPatientAge(visit) }}Y • {{ getPatientGender(visit) }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Doctor Name Column -->
+            <ng-container matColumnDef="doctorName">
+              <th mat-header-cell *matHeaderCellDef>Doctor</th>
+              <td mat-cell *matCellDef="let visit">
+                {{ getDoctorName(visit) || 'Not assigned' }}
+              </td>
+            </ng-container>
+
+            <!-- Visit Status Column -->
+            <ng-container matColumnDef="visitStatus">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let visit">
+                <span class="status-badge" [ngClass]="getStatusClass(visit.visitStatus)">
+                  {{ visit.visitStatus }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let visit">
+                <div class="action-buttons">
+                  <button mat-icon-button color="primary" 
+                    matTooltip="View Details"
+                    (click)="viewVisitDetails(visit._id)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent" 
+                    matTooltip="View Vitals"
+                    *ngIf="visit.vitals"
+                    (click)="viewVitals(visit._id)">
+                    <mat-icon>monitor_heart</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="patientHistoryDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: patientHistoryDisplayedColumns;"></tr>
+          </table>
+
+          <mat-paginator #historyPaginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+        </div>
+
+        <!-- Loading State for History -->
+        <div *ngIf="isHistoryLoading" class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading patient history...</p>
+        </div>
+
+        <!-- Empty State for History -->
+        <div *ngIf="!isHistoryLoading && patientHistoryDataSource.data.length === 0" class="empty-state">
+          <mat-icon class="empty-icon">history</mat-icon>
+          <h3>No visit history found</h3>
+          <p>Search for a patient to view their visit history</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
       <!-- Today's Visits -->
       <div class="today-visits">
         <mat-card>
@@ -395,7 +597,7 @@ import { Subscription, interval } from 'rxjs';
     }
 
     .welcome-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+background: linear-gradient(135deg, #1e3a8a  0%, #90caf9 50%, #1e3a8a 100%);
       color: white;
     }
 
@@ -774,7 +976,183 @@ import { Subscription, interval } from 'rxjs';
       .visits-list {
         grid-template-columns: 1fr;
       }
+/* Patient History Section Styles */
+.patient-history-section {
+  margin-top: 20px;
+}
 
+.history-search {
+  margin-bottom: 20px;
+}
+
+.search-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-type {
+  width: 150px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-results {
+  margin-bottom: 20px;
+}
+
+.search-results h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.patient-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 15px;
+}
+
+.patient-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.patient-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.patient-icon {
+  color: #3f51b5;
+  font-size: 32px;
+  height: 32px;
+  width: 32px;
+}
+
+.patient-details {
+  flex: 1;
+}
+
+.patient-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.patient-meta {
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.history-table-section {
+  margin-top: 30px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.filter-field {
+  width: 300px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.patient-icon-small {
+  color: #666;
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-registered { background: #bbdefb; color: #1565c0; }
+.status-waiting { background: #fff3e0; color: #ef6c00; }
+.status-vitals_in_progress { background: #e1f5fe; color: #0288d1; }
+.status-vitals_completed { background: #e8f5e9; color: #2e7d32; }
+.status-consultation_in_progress { background: #f3e5f5; color: #7b1fa2; }
+.status-consultation_completed { background: #e8f5e9; color: #1b5e20; }
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.visit-time {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Loading and Empty States */
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+  color: #bbb;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-type, .search-input, .filter-field {
+    width: 100%;
+  }
+  
+  .patient-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+}
       .stats-summary {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -801,9 +1179,21 @@ import { Subscription, interval } from 'rxjs';
 })
 export class NurseDashboardComponent implements OnInit, OnDestroy {
   private visitService = inject(VisitService);
+   private patientService = inject(PatientService); // Add this
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+private dialog = inject(MatDialog); // Add this
+  private fb = inject(FormBuilder); // Add this
 
+ @ViewChild('historyPaginator') historyPaginator!: MatPaginator;
+  @ViewChild(MatSort) historySort!: MatSort; // Use MatSort instead of historySort
+
+  patientHistoryDataSource = new MatTableDataSource<any>([]);
+  patientHistoryDisplayedColumns: string[] = ['visitDate', 'tokenNumber', 'patientName', 'doctorName', 'visitStatus', 'actions']; 
+    isHistoryLoading = false;
+
+  showPatientHistory = false;
+  historySearchForm!: FormGroup
   // Visit data
   visitsByStatus: any = {
     waiting: [],
@@ -811,7 +1201,10 @@ export class NurseDashboardComponent implements OnInit, OnDestroy {
     vitals_completed: [],
     consultation_in_progress: []
   };
-  
+   searchQuery = '';
+  searchResults: any[] = [];
+  isSearching = false;
+  showSearchResults = false;
   totalVisits = 0;
   pendingVitalsCount = 0;
   vitalsCompletedCount = 0;
@@ -833,23 +1226,239 @@ export class NurseDashboardComponent implements OnInit, OnDestroy {
   // Auto-refresh subscription
   private refreshSubscription?: Subscription;
 
-  ngOnInit(): void {
-    this.loadTodayVisits();
-    
-    // Auto-refresh every 60 seconds (instead of 30)
-    this.refreshSubscription = interval(60000).subscribe(() => {
-      if (!this.isLoading) {
-        this.refreshVisits();
-      }
-    });
+ngOnInit(): void {
+  this.loadTodayVisits();
+  
+  // Initialize history search form
+  this.historySearchForm = this.fb.group({
+    searchType: ['name'],
+    searchValue: [''],
+    startDate: [''],
+    endDate: ['']
+  });
+  
+  // Auto-refresh every 60 seconds
+  this.refreshSubscription = interval(60000).subscribe(() => {
+    if (!this.isLoading) {
+      this.refreshVisits();
+    }
+  });
+}
+getStatusClass(status: string): string {
+  const statusMap: Record<string, string> = {
+    'Registered': 'status-registered',
+    'Waiting': 'status-waiting',
+    'Vitals_In_Progress': 'status-vitals_in_progress',
+    'Vitals_Completed': 'status-vitals_completed',
+    'Consultation_In_Progress': 'status-consultation_in_progress',
+    'Consultation_Completed': 'status-consultation_completed'
+  };
+  return statusMap[status] || '';
+}
+
+viewVisitDetails(visitId: string): void {
+  this.router.navigate(['/nurse/vitals/view', visitId]);
+}
+togglePatientHistory(): void {
+  this.showPatientHistory = !this.showPatientHistory;
+  if (this.showPatientHistory && this.patientHistoryDataSource.data.length === 0) {
+    this.loadAllVisitsHistory();
   }
+}
 
   ngOnDestroy(): void {
     if (this.refreshSubscription) {
       this.refreshSubscription.unsubscribe();
     }
   }
+  // Update the loadAllVisitsHistory method to handle different response formats
+  loadAllVisitsHistory(): void {
+  this.isHistoryLoading = true;
+  
+  // Use the new getAllVisits method
+  this.visitService.getAllVisits(1, 100).subscribe({
+    next: (response: any) => {
+      if (response && response.success) {
+        this.patientHistoryDataSource.data = response.data || [];
+        
+        // Set up paginator and sort
+        setTimeout(() => {
+          this.patientHistoryDataSource.paginator = this.historyPaginator;
+          this.patientHistoryDataSource.sort = this.historySort;
+        });
+      }
+      this.isHistoryLoading = false;
+    },
+    error: (error: any) => {
+      console.error('Error loading all visits:', error);
+      
+      // Fallback to today's visits if the new endpoint fails
+      this.fallbackToTodayVisits();
+    }
+  });
+}
+  private handleVisitHistoryResponse(response: any): void {
+    if (Array.isArray(response)) {
+      // Response is directly an array of visits
+      this.patientHistoryDataSource.data = response;
+    } else if (response && response.success) {
+      // Response has success property
+      this.patientHistoryDataSource.data = response.data || [];
+    } else if (response && response.data) {
+      // Response has data property
+      this.patientHistoryDataSource.data = response.data;
+    } else {
+      this.patientHistoryDataSource.data = [];
+    }
+    
+    // Set up paginator and sort
+    setTimeout(() => {
+      this.patientHistoryDataSource.paginator = this.historyPaginator;
+      this.patientHistoryDataSource.sort = this.historySort;
+    });
+  }
 
+private fallbackToTodayVisits(): void {
+  this.visitService.getTodayVisits().subscribe({
+    next: (response: any) => {
+      if (response && response.success) {
+        let allVisits: any[] = [];
+        
+        if (response.data && typeof response.data === 'object') {
+          // Extract visits from grouped response
+          const statusArrays = response.data;
+          allVisits = [
+            ...(statusArrays.waiting || []),
+            ...(statusArrays.vitals_in_progress || []),
+            ...(statusArrays.vitals_completed || []),
+            ...(statusArrays.consultation_in_progress || []),
+            ...(statusArrays.consultation_completed || []),
+            ...(statusArrays.pharmacy || []),
+            ...(statusArrays.completed || [])
+          ];
+        }
+        
+        // Add a note that these are today's visits only
+        allVisits = allVisits.map(visit => ({
+          ...visit,
+          note: 'Today\'s visit only'
+        }));
+        
+        this.patientHistoryDataSource.data = allVisits;
+        
+        // Set up paginator and sort
+        setTimeout(() => {
+          this.patientHistoryDataSource.paginator = this.historyPaginator;
+          this.patientHistoryDataSource.sort = this.historySort;
+        });
+        
+        this.snackBar.open('Showing today\'s visits only. All visits endpoint is being set up.', 'Close', {
+          duration: 5000
+        });
+      }
+      this.isHistoryLoading = false;
+    },
+    error: (error: any) => {
+      console.error('Error loading today visits as fallback:', error);
+      this.patientHistoryDataSource.data = [];
+      this.isHistoryLoading = false;
+    }
+  });
+}
+  searchPatients(): void {
+    const searchValue = this.historySearchForm.get('searchValue')?.value?.trim();
+    if (!searchValue) {
+      this.snackBar.open('Please enter search criteria', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.isSearching = true;
+    this.patientService.searchPatients(searchValue, 1, 20).subscribe({
+      next: (response: any) => {
+        if (response && response.success) {
+          this.searchResults = response.data || [];
+        } else if (Array.isArray(response)) {
+          // If response is directly an array
+          this.searchResults = response;
+        }
+        this.showSearchResults = true;
+        this.isSearching = false;
+      },
+      error: (error: any) => {
+        console.error('Error searching patients:', error);
+        this.snackBar.open('Error searching patients', 'Close', { duration: 3000 });
+        this.isSearching = false;
+      }
+    });
+  }
+
+  // Update the viewPatientHistory method
+  viewPatientHistory(patient: any): void {
+    this.isHistoryLoading = true;
+    this.showPatientHistory = true;
+    
+    this.visitService.getPatientVisits(patient._id).subscribe({
+      next: (response: any) => {
+        if (response && Array.isArray(response)) {
+          // If response is directly an array of visits
+          this.patientHistoryDataSource.data = response;
+        } else if (response && response.success) {
+          this.patientHistoryDataSource.data = response.data || [];
+        }
+        
+        // Set up paginator and sort after data is loaded
+        setTimeout(() => {
+          this.patientHistoryDataSource.paginator = this.historyPaginator;
+          this.patientHistoryDataSource.sort = this.historySort;
+        });
+        
+        this.isHistoryLoading = false;
+      },
+      error: (error: any) => {
+        console.error('Error loading patient visits:', error);
+        this.isHistoryLoading = false;
+      }
+    });
+  }
+
+ viewPatientDetailsFromDialog(patient: any): void {
+    // You need to import PatientDetailsComponent or create it
+    // For now, I'll comment this out to fix the compilation error
+    /*
+    const dialogRef = this.dialog.open(PatientDetailsComponent, {
+      width: '900px',
+      maxHeight: '90vh',
+      data: { patient }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'create-visit') {
+        // Handle create visit action if needed
+      }
+    });
+    */
+    // Temporary implementation until PatientDetailsComponent is available
+    this.snackBar.open(`Viewing details for ${patient.fullName}`, 'Close', {
+      duration: 3000
+    });
+  }
+
+
+clearSearch(): void {
+  this.historySearchForm.reset({ searchType: 'name' });
+  this.searchResults = [];
+  this.showSearchResults = false;
+}
+
+// Add this method for filtering history
+applyHistoryFilter(event: Event): void {
+  const filterValue = (event.target as HTMLInputElement).value;
+  this.patientHistoryDataSource.filter = filterValue.trim().toLowerCase();
+
+  if (this.patientHistoryDataSource.paginator) {
+    this.patientHistoryDataSource.paginator.firstPage();
+  }
+}
   private getCurrentShift(): string {
     const hour = new Date().getHours();
     return hour < 12 ? 'Morning' : 'Evening';
@@ -1095,11 +1704,9 @@ startVitals(visitId: string): void {
     window.open(`/nurse/vitals/print/${visitId}`, '_blank');
   }
 
-  viewPatientDetails(visit: any): void {
-    // Show patient details in a dialog or navigate
+viewPatientDetails(visit: any): void {
     const patientId = visit.patient?._id || visit.patientId?._id || visit.patientId;
     if (patientId) {
-      // Open patient details modal or navigate
       this.snackBar.open(`Viewing details for ${this.getPatientName(visit)}`, 'Close', { 
         duration: 2000 
       });

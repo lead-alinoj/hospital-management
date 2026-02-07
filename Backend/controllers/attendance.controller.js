@@ -5,93 +5,212 @@ const PDFDocument = require('pdfkit');
 const Shift = require('../models/shift.model');
 
 exports.markAttendance = async (req, res) => {
-  const { staffId, staffName, jobRole, shiftId } = req.body;
+  try {
+    const { staffId, staffName, jobRole, shiftId } = req.body;
 
-  if (!shiftId) {
-    return res.status(400).json({ error: 'Shift ID missing' });
-  }
+    if (!shiftId) {
+      return res.status(400).json({ error: 'Shift ID missing' });
+    }
 
-  const shift = await Shift.findById(shiftId);
-  if (!shift) {
-    return res.status(400).json({ error: 'Invalid shift' });
-  }
+    const shift = await Shift.findById(shiftId);
+    if (!shift) {
+      return res.status(400).json({ error: 'Invalid shift' });
+    }
 
-  const now = new Date();
-  const attendanceDate = new Date(now);
-  attendanceDate.setHours(0, 0, 0, 0);
+    // ✅ 4. CHECK IF SHIFT IS ACTIVE
+    if (!shift.active) {
+      return res.status(400).json({ error: 'Shift is inactive' });
+    }
 
-  // ✅ Convert HH:mm → Date
-  const [h, m] = req.body.inTime.split(':');
-  const inTime = new Date(attendanceDate);
-  inTime.setHours(+h, +m, 0, 0);
+    const now = new Date();
+    const attendanceDate = new Date(now);
+    attendanceDate.setHours(0, 0, 0, 0);
 
-  // ✅ Check open attendance ONLY for today
-const open = await Attendance.findOne({
-  staffId,
-  shiftId,
-  outTime: null,
-});
+    // ✅ Convert HH:mm → Date
+    const [h, m] = req.body.inTime.split(':');
+    const inTime = new Date(attendanceDate);
+    inTime.setHours(+h, +m, 0, 0);
 
+    // ✅ FIXED: ENHANCED OPEN ATTENDANCE CHECK
+    const openAttendance = await Attendance.findOne({
+      staffId,
+      outTime: null,
+      date: { $gte: new Date(attendanceDate.getTime() - 24 * 60 * 60 * 1000) }
+    }).populate('shiftId');
 
-  if (open) {
-    return res.status(400).json({ error: 'Previous attendance not closed' });
-  }
+    if (openAttendance) {
+      const shiftEnd = calculateShiftEnd(openAttendance.date, openAttendance.shiftId);
+      const currentTime = new Date();
+      
+      const gracePeriod = 30; // minutes
+      const shiftEndWithGrace = new Date(shiftEnd.getTime() + gracePeriod * 60000);
+      
+      if (currentTime > shiftEndWithGrace) {
+        // Auto-close previous attendance as admin
+        openAttendance.outTime = shiftEnd;
+        openAttendance.adminLogout = true;
+        openAttendance.logoutReason = 'Auto-closed for next shift';
+        openAttendance.adminClosedBy = 'System';
+        await openAttendance.save();
+      } else {
+        return res.status(400).json({ 
+          error: 'Previous attendance not closed. Please mark out time first.',
+          openAttendanceId: openAttendance._id 
+        });
+      }
+    }
 
-  const attendance = await Attendance.create({
-    staffId,
-    staffName,
-    jobRole,
-    shiftId,
-    date: attendanceDate,
-    inTime,
+    // ✅ FIXED: SHIFT BOUNDARY VALIDATION FOR NIGHT SHIFTS
+    const shiftStart = calculateShiftStart(attendanceDate, shift);
+    let shiftEnd = calculateShiftEnd(attendanceDate, shift);
+    
+    const gracePeriod = 60; // 1 hour grace for early/late
+    
+    // For overnight shifts, adjust validation logic
+    if (shift.isOvernight) {
+      // For night shifts ending the next day
+      const nextDay = new Date(attendanceDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      // Earliest allowed is 1 hour before shift start
+      const earliestAllowed = new Date(shiftStart.getTime() - gracePeriod * 60000);
+      
+      // Latest allowed is 1 hour after shift end (which is on next day)
+      const latestAllowed = new Date(shiftEnd.getTime() + gracePeriod * 60000);
+      
+      // Special case: If marking attendance for night shift in the morning after it ended
+      // (e.g., shift ended at 06:00, marking at 08:00 for the previous night)
+      const shiftEndTimeOnly = new Date(attendanceDate);
+      const [endH, endM] = shift.endTime.split(':');
+      shiftEndTimeOnly.setHours(+endH, +endM, 0, 0);
+      
+      // If inTime is after shift end time but before midnight, it's still valid for night shift
+      if (inTime >= shiftEndTimeOnly && inTime < latestAllowed) {
+        // This is acceptable for night shift logging
+      } else if (inTime < earliestAllowed) {
+        return res.status(400).json({ 
+          error: `Cannot mark attendance more than ${gracePeriod} minutes before shift starts (${shift.startTime})` 
+        });
+      } else if (inTime > latestAllowed) {
+        return res.status(400).json({ 
+          error: `Cannot mark attendance more than ${gracePeriod} minutes after shift ends (${shift.endTime})` 
+        });
+      }
+    } else {
+      // Regular shift validation
+      const earliestAllowed = new Date(shiftStart.getTime() - gracePeriod * 60000);
+      const latestAllowed = new Date(shiftEnd.getTime() + gracePeriod * 60000);
+      
+      if (inTime < earliestAllowed) {
+        return res.status(400).json({ 
+          error: `Cannot mark attendance more than ${gracePeriod} minutes before shift starts (${shift.startTime})` 
+        });
+      }
+      
+      if (inTime > latestAllowed) {
+        return res.status(400).json({ 
+          error: `Cannot mark attendance more than ${gracePeriod} minutes after shift ends (${shift.endTime})` 
+        });
+      }
+    }
+
+    const attendance = await Attendance.create({
+      staffId,
+      staffName,
+      jobRole,
+      shiftId,
+      date: attendanceDate,
+      inTime,
       remarks: req.body.remarks || '',
-    enteredBy: req.user?.email || 'System'
-  });
+      enteredBy: req.user?.email || 'System'
+    });
 
-  res.json({ success: true, data: attendance });
+    res.json({ success: true, data: attendance });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
+// Helper function to calculate shift start
+const calculateShiftStart = (date, shift) => {
+  const start = new Date(date);
+  const [h, m] = shift.startTime.split(':');
+  start.setHours(+h, +m, 0, 0);
+  return start;
+};
 
-
-exports.updateAttendance = async (req, res) => {
-  const attendance = await Attendance.findById(req.params.id).populate('shiftId');
-
-  if (!attendance || attendance.outTime) {
-    return res.status(400).json({ error: 'Invalid logout' });
-  }
-
-  // ✅ USE PROVIDED OUT TIME IF SENT
- let outTime = req.body.outTime
-  ? new Date(req.body.outTime)
-  : new Date();
-
-// 🔥 ADD THIS BLOCK (JUST BELOW)
-const shift = attendance.shiftId;
-if (shift?.isOvernight && outTime < attendance.inTime) {
-  outTime.setDate(outTime.getDate() + 1);
-}
-if (shift && workedMinutes > shift.fullDayMinutes) {
-    attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
-  }
-
-  const workedMinutes = Math.max(
-    Math.floor((outTime - attendance.inTime) / 60000),
-    1
-  );
-
-  attendance.outTime = outTime;
-  attendance.totalMinutes = workedMinutes;
-
-  // ✅ DO NOT CHANGE STATUS
-  attendance.status = attendance.status || 'Present';
-
-  // optional overtime
+// Helper function to calculate shift end
+const calculateShiftEnd = (date, shift) => {
+  const end = new Date(date);
+  const [h, m] = shift.endTime.split(':');
+  end.setHours(+h, +m, 0, 0);
   
-
-  await attendance.save();
-  res.json({ success: true, data: attendance });
+  if (shift.isOvernight && end < date) {
+    end.setDate(end.getDate() + 1);
+  }
+  
+  return end;
 };
+exports.updateAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.findById(req.params.id).populate('shiftId');
 
+    if (!attendance || attendance.outTime) {
+      return res.status(400).json({ error: 'Invalid logout' });
+    }
+
+    // ✅ USE PROVIDED OUT TIME IF SENT
+let outTime;
+
+if (req.body.outTime) {
+  // Expecting "HH:mm"
+  const [h, m] = req.body.outTime.split(':');
+
+  outTime = new Date(attendance.date);
+  outTime.setHours(+h, +m, 0, 0);
+} else {
+  outTime = new Date();
+}
+
+    const shift = attendance.shiftId;
+    if (shift?.isOvernight && outTime < attendance.inTime) {
+      outTime.setDate(outTime.getDate() + 1);
+    }
+
+    const workedMinutes = Math.max(
+      Math.floor((outTime - attendance.inTime) / 60000),
+      1
+    );
+
+    attendance.totalMinutes = workedMinutes;
+
+    // ✅ 3. ENHANCED OVERTIME CALCULATION
+    if (shift) {
+      const expectedDuration = shift.fullDayMinutes;
+      const tolerance = 15; // 15-minute tolerance
+      
+      // Only calculate overtime if worked more than expected (with tolerance)
+      if (workedMinutes > (expectedDuration + tolerance)) {
+        attendance.overtimeMinutes = workedMinutes - expectedDuration;
+      } else {
+        attendance.overtimeMinutes = 0;
+      }
+      
+      // Auto-update status based on worked minutes
+      if (workedMinutes >= shift.halfDayMinutes && workedMinutes < shift.fullDayMinutes) {
+        attendance.status = 'Half Day';
+      } else if (workedMinutes >= shift.fullDayMinutes) {
+        attendance.status = 'Present';
+      }
+    }
+
+    attendance.outTime = outTime;
+    await attendance.save();
+    res.json({ success: true, data: attendance });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 
 exports.adminCloseAttendance = async (req, res) => {
@@ -110,13 +229,17 @@ const shift = attendance.shiftId;
 if (shift?.isOvernight && forcedOut < attendance.inTime) {
   forcedOut.setDate(forcedOut.getDate() + 1);
 }
-  const workedMinutes = Math.max(
-    Math.floor((forcedOut - attendance.inTime) / 60000),
-    1
-  );
+ const workedMinutes = Math.max(
+  Math.floor((forcedOut - attendance.inTime) / 60000),
+  1
+);
 
-  attendance.outTime = forcedOut;
-  attendance.totalMinutes = workedMinutes;
+attendance.totalMinutes = workedMinutes;
+
+if (shift && workedMinutes > shift.fullDayMinutes) {
+  attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
+}
+
 
   // ✅ VERY IMPORTANT: KEEP STATUS SAFE
   attendance.status = attendance.status || 'Present';
@@ -245,7 +368,7 @@ exports.getAttendanceByDate = async (req, res) => {
 // Get attendance by date range
 exports.getAttendanceByDateRange = async (req, res) => {
   try {
-    const { startDate, endDate, staffId, jobRole } = req.query;
+    const { startDate, endDate, staffId, jobRole,shiftId  } = req.query;
     
     let filter = {};
     
@@ -260,12 +383,11 @@ end.setHours(23, 59, 59, 999);
   filter.date = { $gte: start, $lte: end };
 }
 
-
-    
     
     if (staffId) filter.staffId = staffId;
     if (jobRole) filter.jobRole = jobRole;
-    
+        if (shiftId) filter.shiftId = shiftId; // ✅ ADD THIS
+
     const attendance = await Attendance.find(filter)
       .populate('shiftId')   // ✅ THIS IS WHY UI SHOWS —
   
@@ -342,11 +464,117 @@ end.setHours(23,59,59,999);
     res.status(500).json({ success: false, error: error.message });
   }
 };
+exports.initializeAutoAbsent = () => {
+  // Run daily at 11:59 PM
+  cron.schedule('59 23 * * *', async () => {
+    console.log('Running auto-absent marking job...');
+    await autoMarkAbsent();
+  });
+};
+
+const autoMarkAbsent = async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const activeStaff = await Staff.find({ active: true });
+    const todayAttendance = await Attendance.find({ 
+      date: today,
+      status: { $ne: 'Absent' } // Don't mark absent for already absent
+    });
+    
+    const markedStaffIds = new Set(todayAttendance.map(a => a.staffId));
+    
+    for (const staff of activeStaff) {
+      if (!markedStaffIds.has(staff.staffId)) {
+        await Attendance.create({
+          staffId: staff.staffId,
+          staffName: staff.name,
+          jobRole: staff.jobRole,
+          date: today,
+          status: 'Absent',
+          enteredBy: 'System Auto-Mark'
+        });
+        console.log(`Auto-marked absent: ${staff.name} (${staff.staffId})`);
+      }
+    }
+  } catch (error) {
+    console.error('Auto-absent job error:', error);
+  }
+};
+// ✅ LIVE attendance summary (for dashboard)
+exports.getAttendanceSummaryLive = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const start = startDate
+      ? new Date(startDate)
+      : new Date();
+
+    const end = endDate
+      ? new Date(endDate)
+      : new Date();
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const summary = await Attendance.aggregate([
+      {
+        $match: {
+          date: { $gte: start, $lte: end }
+        }
+      },
+
+      // ⭐ KEY DIFFERENCE
+      {
+        $addFields: {
+          effectiveStatus: {
+            $cond: [
+              { $eq: ['$outTime', null] }, // still working
+              'Present',
+              '$status'
+            ]
+          }
+        }
+      },
+
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: { format: '%Y-%m-%d', date: '$date' }
+            },
+            status: '$effectiveStatus'
+          },
+          count: { $sum: 1 }
+        }
+      },
+
+      {
+        $group: {
+          _id: '$_id.date',
+          attendance: {
+            $push: {
+              status: '$_id.status',
+              count: '$count'
+            }
+          }
+        }
+      },
+
+      { $sort: { _id: -1 } }
+    ]);
+
+    res.json({ success: true, data: summary });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Export attendance
 exports.exportAttendance = async (req, res) => {
   try {
-    const { startDate, endDate, staffId, jobRole, format = 'excel' } = req.query;
+    const { startDate, endDate, staffId, jobRole, shiftId, format = 'excel' } = req.query;
 
     let filter = {};
 

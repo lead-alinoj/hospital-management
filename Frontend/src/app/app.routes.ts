@@ -34,6 +34,7 @@ import { MainLayoutComponent } from './component/layout/main-layout.component';
 import { VitalsViewComponent } from './component/nurse/vitals -view.component';
 import { IpRecommendationDialogComponent } from './component/doctor/ip-recommendation-dialog.component';
 import { IpServiceBillComponent } from './component/IP/ip-service-bill.component';
+import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 
 export const routes: Routes = [
   // Public routes - No layout
@@ -63,7 +64,7 @@ export const routes: Routes = [
       // ========== ADMIN ROUTES ==========
       {
         path: 'admin/dashboard',
-        component: PlaceholderComponent,
+        component: AdminDashboardComponent,
         canActivate: [adminGuard],
         data: { roles: ['Admin'] }
       },

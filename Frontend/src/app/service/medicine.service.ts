@@ -140,6 +140,13 @@ calculateIPBill(visitId: string): Observable<any> {
 getIPServiceItems(visitId: string): Observable<any> {
   return this.http.get<any>(`${environment.apiUrl}/ipbill/service-items/${visitId}`);
 }
+getNearExpiryMedicines(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/near-expiry`);
+}
+
+getExpiredMedicines(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/expired`);
+}
 
 // Mark service items as billed - CORRECTED ENDPOINT
 markServiceBillItemsAsBilled(visitId: string, itemIds: string[], paymentData: any): Observable<any> {

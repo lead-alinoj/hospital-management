@@ -57,7 +57,15 @@ router.get('/pending-consultation',
   authorize('Doctor', 'Admin'),
   visitController.getPendingConsultation
 );
+router.get('/all',
+  authorize('Nurse', 'Doctor', 'Admin', 'Reception'),
+  visitController.getAllVisits
+);
 
+router.get('/recent',
+  authorize('Nurse', 'Doctor', 'Admin', 'Reception'),
+  visitController.getRecentVisits
+);
 // Visit management
 router.get('/:id',
   authorize('Reception', 'Nurse', 'Doctor', 'Admin', 'Pharmacy'),

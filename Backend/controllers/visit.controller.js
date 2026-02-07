@@ -368,3 +368,118 @@ exports.getPatientVisits = async (req, res) => {
     });
   }
 };
+// Add this function to your existing visit.controller.js
+exports.getAllVisits = async (req, res) => {
+  try {
+    // Get query parameters for filtering
+    const { 
+      page = 1, 
+      limit = 100, 
+      status, 
+      patientId, 
+      doctorId, 
+      startDate, 
+      endDate,
+      search 
+    } = req.query;
+    
+    // Build filter object
+    const filter = {};
+    
+    // Filter by status if provided
+    if (status) {
+      filter.visitStatus = status;
+    }
+    
+    // Filter by patient if provided
+    if (patientId) {
+      filter.patient = patientId;
+    }
+    
+    // Filter by doctor if provided
+    if (doctorId) {
+      filter.doctor = doctorId;
+    }
+    
+    // Filter by date range if provided
+    if (startDate || endDate) {
+      filter.visitDate = {};
+      if (startDate) {
+        filter.visitDate.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        filter.visitDate.$lte = new Date(endDate);
+      }
+    }
+    
+    // For search functionality (search by patient name, token, etc.)
+    if (search) {
+      // This would require a more complex query with population
+      // For now, we'll filter after fetching
+    }
+    
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Get visits with pagination
+    const visits = await Visit.find(filter)
+      .populate('patient', 'opNumber fullName gender age mobile')
+      .populate('doctor', 'name specialization')
+      .populate('createdBy', 'name role')
+      .populate('vitals')
+      .sort({ visitDate: -1, tokenNumber: 1 }) // Most recent first
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    // Get total count for pagination
+    const total = await Visit.countDocuments(filter);
+    
+    res.status(200).json({
+      success: true,
+      data: visits,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching all visits:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching visits',
+      error: error.message
+    });
+  }
+};
+
+// Alternative: If you want a simpler version without pagination for the nurse dashboard
+exports.getRecentVisits = async (req, res) => {
+  try {
+    // Get last 100 visits (or adjust as needed)
+    const limit = parseInt(req.query.limit) || 100;
+    
+    const visits = await Visit.find({})
+      .populate('patient', 'opNumber fullName gender age mobile')
+      .populate('doctor', 'name specialization')
+      .populate('vitals')
+      .sort({ visitDate: -1, createdAt: -1 }) // Most recent first
+      .limit(limit);
+    
+    res.status(200).json({
+      success: true,
+      data: visits,
+      count: visits.length
+    });
+    
+  } catch (error) {
+    console.error('Error fetching recent visits:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching recent visits',
+      error: error.message
+    });
+  }
+};

@@ -26,6 +26,8 @@ import { AfterViewInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
 import { PendingLogoutDialogComponent } from '../attendance-pending-logout-dialog/attendance-pending-logout-dialog.component';
+import { ShiftService } from '../../../service/shift.service';
+import { Shift } from '../../../models/shift.model';
 
 @Component({
   selector: 'app-attendance-history',
@@ -64,35 +66,43 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
   filteredData: Attendance[] = [];
   staffList: Staff[] = [];
   roles: string[] = [];
-  
+  shifts: Shift[] = [];
+
+  totalOvertimeHours = 0;
+  avgAttendanceHours = 0;
+
   displayedColumns: string[] = [
     'date',
     'staffDetails',
     'shiftDetails',
     'duration',
+    'overtime',
     'status',
     'enteredBy',
     'remarks'
   ];
-dataSource = new MatTableDataSource<Attendance>([]);
+  
+  dataSource = new MatTableDataSource<Attendance>([]);
   
   isLoading = false;
   totalRecords = 0;
-  // 🔥 Today summary
-totalStaffCount = 0;
-todayPresentCount = 0;
-todayAbsentCount = 0;
-todayHalfDayCount = 0;
+  
+  // Today summary
+  totalStaffCount = 0;
+  todayPresentCount = 0;
+  todayAbsentCount = 0;
+  todayHalfDayCount = 0;
+  todayOvertimeCount = 0;
 
   selectedFilters: string[] = [];
 
   constructor(
     private attendanceService: AttendanceService,
     private staffService: StaffService,
+    private shiftService: ShiftService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-      private dialog: MatDialog
-
+    private dialog: MatDialog
   ) {
     // Set default date range (last 30 days)
     const endDate = new Date();
@@ -108,74 +118,86 @@ todayHalfDayCount = 0;
       startDate: [formatDate(startDate)],
       endDate: [formatDate(endDate)],
       staffId: [''],
-      jobRole: ['']
+      jobRole: [''],
+      shiftId: [''] // ✅ ADD SHIFT FILTER
     });
   }
 
   ngOnInit(): void {
     this.loadStaff();
+    this.loadShifts();
     this.loadAttendance();
-     this.loadTodaySummary();
-     this.loadPendingLogoutCount();
-
+    this.loadTodaySummary();
+    this.loadPendingLogoutCount();
   }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
-resetDateRange(): void {
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  
-  this.filterForm.patchValue({
-    startDate: firstDayOfMonth,
-    endDate: today
-  });
-  
-  this.loadAttendance();
-}
-loadTodaySummary(): void {
-  // 1️⃣ Load total active staff
-  this.staffService.getActiveStaff().subscribe({
-    next: staffRes => {
-      const activeStaff = staffRes.data;
-      this.totalStaffCount = activeStaff.length;
 
-      // 2️⃣ Load today's attendance
-      this.attendanceService.getTodayAttendance().subscribe({
-        next: attRes => {
-          const todayData = attRes.data;
+  resetDateRange(): void {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    this.filterForm.patchValue({
+      startDate: firstDayOfMonth,
+      endDate: today
+    });
+    
+    this.loadAttendance();
+  }
 
-          // Present
-          this.todayPresentCount =
-            todayData.filter(a => a.status === 'Present').length;
+  loadShifts(): void {
+    this.shiftService.getShifts().subscribe({
+      next: (res) => {
+        this.shifts = res.data;
+      },
+      error: (error) => {
+        console.error('Error loading shifts:', error);
+      }
+    });
+  }
 
-          // Half Day
-          this.todayHalfDayCount =
-            todayData.filter(a => a.status === 'Half Day').length;
+  loadTodaySummary(): void {
+    // Load total active staff
+    this.staffService.getActiveStaff().subscribe({
+      next: staffRes => {
+        const activeStaff = staffRes.data;
+        this.totalStaffCount = activeStaff.length;
 
-          // Explicit Absent (manually marked)
-          const explicitAbsentCount =
-            todayData.filter(a => a.status === 'Absent').length;
+        // Load today's attendance
+        this.attendanceService.getTodayAttendance().subscribe({
+          next: attRes => {
+            const todayData = attRes.data;
 
-          // Staff who marked ANY attendance today
-          const markedStaffIds = new Set(
-            todayData.map(a => a.staffId)
-          );
+            // Present count
+            this.todayPresentCount = todayData.filter(a => a.status === 'Present').length;
 
-          // Not marked at all today
-          const notMarkedCount =
-            activeStaff.filter(s => !markedStaffIds.has(s.staffId)).length;
+            // Half Day count
+            this.todayHalfDayCount = todayData.filter(a => a.status === 'Half Day').length;
 
-          // ✅ FINAL Absent count
-          this.todayAbsentCount =
-            explicitAbsentCount + notMarkedCount;
-        }
-      });
-    }
-  });
-}
+            // Explicit Absent
+            const explicitAbsentCount = todayData.filter(a => a.status === 'Absent').length;
+
+            // Staff who marked ANY attendance today
+            const markedStaffIds = new Set(todayData.map(a => a.staffId));
+
+            // Not marked at all today
+            const notMarkedCount = activeStaff.filter(s => !markedStaffIds.has(s.staffId)).length;
+
+            // ✅ FINAL Absent count
+            this.todayAbsentCount = explicitAbsentCount + notMarkedCount;
+
+            // ✅ Overtime count - FIXED: Use optional property
+            this.todayOvertimeCount = todayData.filter(a => 
+              a.overtimeMinutes && a.overtimeMinutes > 0
+            ).length;
+          }
+        });
+      }
+    });
+  }
 
   loadStaff(): void {
     this.staffService.getActiveStaff().subscribe({
@@ -194,20 +216,19 @@ loadTodaySummary(): void {
     });
   }
 
-get presentCount(): number {
-  return this.filteredData.filter(a => a.status === 'Present').length;
-}
+  get presentCount(): number {
+    return this.filteredData.filter(a => a.status === 'Present').length;
+  }
 
-get absentCount(): number {
-  return this.filteredData.filter(a => a.status === 'Absent').length;
-}
+  get absentCount(): number {
+    return this.filteredData.filter(a => a.status === 'Absent').length;
+  }
 
-get halfDayCount(): number {
-  return this.filteredData.filter(a => a.status === 'Half Day').length;
-}
+  get halfDayCount(): number {
+    return this.filteredData.filter(a => a.status === 'Half Day').length;
+  }
 
-
-  getDuration(minutes?: number, outTime?: string): string {
+  getDuration(minutes?: number, outTime?: Date | string): string {
     if (!outTime) return 'Ongoing';
     if (!minutes) return '0h 0m';
     
@@ -227,20 +248,19 @@ get halfDayCount(): number {
     }
   }
 
-   loadAttendance(): void {
+  loadAttendance(): void {
     this.isLoading = true;
 
     const fv = this.filterForm.value;
     const filter: AttendanceFilter = {};
 
     // Fix: Use Date objects instead of strings
-if (fv.startDate) {
-  filter.startDate = this.formatDateLocal(fv.startDate);
-}
-if (fv.endDate) {
-  filter.endDate = this.formatDateLocal(fv.endDate);
-}
-
+    if (fv.startDate) {
+      filter.startDate = this.formatDateLocal(fv.startDate);
+    }
+    if (fv.endDate) {
+      filter.endDate = this.formatDateLocal(fv.endDate);
+    }
 
     if (fv.staffId) {
       filter.staffId = fv.staffId;
@@ -248,28 +268,25 @@ if (fv.endDate) {
     if (fv.jobRole) {
       filter.jobRole = fv.jobRole;
     }
-
-    console.log('Filter criteria:', filter); // Debug log
+    if (fv.shiftId) {
+      filter.shiftId = fv.shiftId; // ✅ ADD SHIFT FILTER
+    }
 
     this.updateSelectedFilters(fv);
 
     this.attendanceService.getAttendanceByDateRange(filter).subscribe({
       next: (res) => {
-    this.attendanceData = res.data || [];
-this.filteredData = [...this.attendanceData];
-this.totalRecords = this.filteredData.length;
-
-// ✅ SAFE async update (prevents NG0100)
-Promise.resolve().then(() => {
-  this.dataSource.data = this.filteredData;
-});
-
+        this.attendanceData = res.data || [];
+        this.filteredData = [...this.attendanceData];
+        this.totalRecords = this.filteredData.length;
         
-        // Reinitialize paginator and sort
-        // setTimeout(() => {
-        //   this.dataSource.paginator = this.paginator;
-        //   this.dataSource.sort = this.sort;
-        // });
+        // ✅ CALCULATE SUMMARY STATS
+        this.calculateSummaryStats();
+
+        // ✅ SAFE async update (prevents NG0100)
+        Promise.resolve().then(() => {
+          this.dataSource.data = this.filteredData;
+        });
         
         this.isLoading = false;
       },
@@ -281,42 +298,79 @@ Promise.resolve().then(() => {
     });
   }
 
+  // ✅ CALCULATE SUMMARY STATISTICS - FIXED VERSION
+  calculateSummaryStats(): void {
+    let totalMinutes = 0;
+    let totalOvertime = 0;
+    let recordCount = 0;
 
+    this.filteredData.forEach(record => {
+      if (record.totalMinutes) {
+        totalMinutes += record.totalMinutes;
+        recordCount++;
+      }
+      // ✅ FIX: Check if overtimeMinutes exists before using it
+      if (record.overtimeMinutes) {
+        totalOvertime += record.overtimeMinutes;
+      }
+    });
 
-updateSelectedFilters(formValue: any): void {
-  this.selectedFilters = [];
-  
-  if (formValue.startDate) {
-    const date = new Date(formValue.startDate);
-    const formattedDate = date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-    this.selectedFilters.push(`From: ${formattedDate}`);
+    this.totalOvertimeHours = Math.round(totalOvertime / 60 * 10) / 10; // Rounded to 1 decimal
+    this.avgAttendanceHours = recordCount > 0 ? 
+      Math.round((totalMinutes / recordCount / 60) * 10) / 10 : 0;
   }
-  
-  if (formValue.endDate) {
-    const date = new Date(formValue.endDate);
-    const formattedDate = date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-    this.selectedFilters.push(`To: ${formattedDate}`);
+
+  // ✅ FORMAT OVERTIME DISPLAY
+  getOvertimeDisplay(overtimeMinutes?: number): string {
+    if (!overtimeMinutes || overtimeMinutes <= 0) return '-';
+    
+    const h = Math.floor(overtimeMinutes / 60);
+    const m = overtimeMinutes % 60;
+    return `+${h}h ${m}m`;
   }
-  
-  if (formValue.staffId) {
-    const staff = this.staffList.find(s => s.staffId === formValue.staffId);
-    if (staff) {
-      this.selectedFilters.push(`Staff: ${staff.name}`);
+
+  updateSelectedFilters(formValue: any): void {
+    this.selectedFilters = [];
+    
+    if (formValue.startDate) {
+      const date = new Date(formValue.startDate);
+      const formattedDate = date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      this.selectedFilters.push(`From: ${formattedDate}`);
+    }
+    
+    if (formValue.endDate) {
+      const date = new Date(formValue.endDate);
+      const formattedDate = date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      this.selectedFilters.push(`To: ${formattedDate}`);
+    }
+    
+    if (formValue.staffId) {
+      const staff = this.staffList.find(s => s.staffId === formValue.staffId);
+      if (staff) {
+        this.selectedFilters.push(`Staff: ${staff.name}`);
+      }
+    }
+    
+    if (formValue.jobRole) {
+      this.selectedFilters.push(`Role: ${formValue.jobRole}`);
+    }
+    
+    if (formValue.shiftId) {
+      const shift = this.shifts.find(s => s._id === formValue.shiftId);
+      if (shift) {
+        this.selectedFilters.push(`Shift: ${shift.name}`);
+      }
     }
   }
-  
-  if (formValue.jobRole) {
-    this.selectedFilters.push(`Role: ${formValue.jobRole}`);
-  }
-}
+
   clearFilters(): void {
     // Reset to default dates (last 30 days)
     const endDate = new Date();
@@ -328,51 +382,56 @@ updateSelectedFilters(formValue: any): void {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       staffId: '',
-      jobRole: ''
+      jobRole: '',
+      shiftId: ''
     });
 
     this.selectedFilters = [];
     this.loadAttendance();
   }
 
-removeFilter(filter: string): void {
-  const filterParts = filter.split(': ');
-  const filterType = filterParts[0];
-  
-  if (filterType === 'From') {
-    // Set start date to 30 days ago from current end date
-    const endDate = this.filterForm.value.endDate || new Date();
-    const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - 30);
-    this.filterForm.patchValue({ startDate });
-  } 
-  else if (filterType === 'To') {
-    // Set end date to today
-    this.filterForm.patchValue({ endDate: new Date() });
-  } 
-  else if (filterType === 'Staff') {
-    this.filterForm.patchValue({ staffId: '' });
-  } 
-  else if (filterType === 'Role') {
-    this.filterForm.patchValue({ jobRole: '' });
+  removeFilter(filter: string): void {
+    const filterParts = filter.split(': ');
+    const filterType = filterParts[0];
+    
+    if (filterType === 'From') {
+      // Set start date to 30 days ago from current end date
+      const endDate = this.filterForm.value.endDate || new Date();
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 30);
+      this.filterForm.patchValue({ startDate });
+    } 
+    else if (filterType === 'To') {
+      // Set end date to today
+      this.filterForm.patchValue({ endDate: new Date() });
+    } 
+    else if (filterType === 'Staff') {
+      this.filterForm.patchValue({ staffId: '' });
+    } 
+    else if (filterType === 'Role') {
+      this.filterForm.patchValue({ jobRole: '' });
+    }
+    else if (filterType === 'Shift') {
+      this.filterForm.patchValue({ shiftId: '' });
+    }
+
+    // Remove the filter from the selected filters array
+    this.selectedFilters = this.selectedFilters.filter(f => f !== filter);
+    
+    // Reload data with updated filters
+    this.loadAttendance();
   }
 
-  // Remove the filter from the selected filters array
-  this.selectedFilters = this.selectedFilters.filter(f => f !== filter);
-  
-  // Reload data with updated filters
-  this.loadAttendance();
-}
-private formatDateLocal(date: Date): string {
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = ('0' + (d.getMonth() + 1)).slice(-2);
-  const day = ('0' + d.getDate()).slice(-2);
-  return `${year}-${month}-${day}`;
-}
+  private formatDateLocal(date: Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = ('0' + (d.getMonth() + 1)).slice(-2);
+    const day = ('0' + d.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
+  }
 
-   exportData(format: 'excel' | 'pdf'): void {
-    const { startDate, endDate, staffId, jobRole } = this.filterForm.value;
+  exportData(format: 'excel' | 'pdf'): void {
+    const { startDate, endDate, staffId, jobRole, shiftId } = this.filterForm.value;
 
     if (!startDate || !endDate) {
       this.snackBar.open('Please select date range', 'Close', { duration: 3000 });
@@ -380,15 +439,14 @@ private formatDateLocal(date: Date): string {
     }
 
     // Fix: Get formatted Date objects
-const formattedStartDate = this.formatDateLocal(startDate);
-const formattedEndDate = this.formatDateLocal(endDate);
-
+    const formattedStartDate = this.formatDateLocal(startDate);
+    const formattedEndDate = this.formatDateLocal(endDate);
 
     this.isLoading = true;
 
     // Pass Date objects to service
     this.attendanceService
-      .exportAttendance(formattedStartDate, formattedEndDate, format, staffId, jobRole)
+      .exportAttendance(formattedStartDate, formattedEndDate, format, staffId, jobRole, shiftId )
       .subscribe({
         next: (blob) => {
           const url = window.URL.createObjectURL(blob);
@@ -409,96 +467,6 @@ const formattedEndDate = this.formatDateLocal(endDate);
       });
   }
 
-  printReport(): void {
-    // Create a printable version of the report
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const title = 'Attendance Report';
-      const dateRange = `From ${this.filterForm.value.startDate?.toLocaleDateString()} To ${this.filterForm.value.endDate?.toLocaleDateString()}`;
-      
-      const htmlContent = `
-        <html>
-          <head>
-            <title>${title}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #333; }
-              .header { text-align: center; margin-bottom: 30px; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f5f5f5; }
-              .summary { display: flex; justify-content: space-between; margin: 20px 0; }
-              .summary-card { border: 1px solid #ddd; padding: 15px; text-align: center; flex: 1; margin: 0 10px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>${title}</h1>
-              <p>${dateRange}</p>
-<p>Total Records: ${this.filteredData.length}</p>
-            </div>
-            
-            <div class="summary">
-              <div class="summary-card">
-                <h3>Present</h3>
-                <p>${this.presentCount}</p>
-              </div>
-              <div class="summary-card">
-                <h3>Absent</h3>
-                <p>${this.absentCount}</p>
-              </div>
-              <div class="summary-card">
-                <h3>Half Day</h3>
-                <p>${this.halfDayCount}</p>
-              </div>
-            </div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Staff Name</th>
-                  <th>Staff ID</th>
-                  <th>Role</th>
-                  <th>Shift</th>
-                  <th>In Time</th>
-                  <th>Out Time</th>
-                  <th>Status</th>
-                  <th>Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.filteredData.map(record => `
-                  <tr>
-                    <td>${new Date(record.date).toLocaleDateString()}</td>
-                    <td>${record.staffName}</td>
-                    <td>${record.staffId}</td>
-                    <td>${record.jobRole}</td>
-                    <td>${record.shiftId}</td>
-                    <td>${record.inTime}</td>
-                    <td>${record.outTime || '-'}</td>
-                    <td>${record.status}</td>
-                    <td>${record.remarks || '-'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            <script>
-              window.onload = function() {
-                window.print();
-                setTimeout(() => window.close(), 500);
-              }
-            </script>
-          </body>
-        </html>
-      `;
-      
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-    }
-  }
-
   getStatusIcon(status: string): string {
     switch (status) {
       case 'Present': return 'check_circle';
@@ -516,41 +484,40 @@ const formattedEndDate = this.formatDateLocal(endDate);
       default: return '';
     }
   }
-pendingLogoutCount = 0;
 
-openPendingLogoutDialog(): void {
-  const ref = this.dialog.open(PendingLogoutDialogComponent, {
-    width: '900px',
-    disableClose: true
-  });
+  pendingLogoutCount = 0;
 
-  ref.afterClosed().subscribe(() => {
-    this.loadPendingLogoutCount();
-    this.loadAttendance();
-  });
-}
-loadPendingLogoutCount(): void {
-  this.attendanceService.getPendingLogout().subscribe({
-    next: (res) => {
-      this.pendingLogoutCount = res.data.length;
-    },
-    error: (err) => {
-      console.error('Error loading pending logout count', err);
-      this.pendingLogoutCount = 0;
-    }
-  });
-}
+  openPendingLogoutDialog(): void {
+    const ref = this.dialog.open(PendingLogoutDialogComponent, {
+      width: '900px',
+      disableClose: true
+    });
 
-
-
-getShiftIcon(shift: any): string {
-  const name = shift?.name?.toLowerCase() || '';
-
-  if (name.includes('morning')) return 'wb_sunny';
-  if (name.includes('evening')) return 'nights_stay';
-  if (name.includes('night')) return 'dark_mode';
-
-  return 'schedule';
-}
-
+    ref.afterClosed().subscribe(() => {
+      this.loadPendingLogoutCount();
+      this.loadAttendance();
+    });
   }
+
+  loadPendingLogoutCount(): void {
+    this.attendanceService.getPendingLogout().subscribe({
+      next: (res) => {
+        this.pendingLogoutCount = res.data.length;
+      },
+      error: (err) => {
+        console.error('Error loading pending logout count', err);
+        this.pendingLogoutCount = 0;
+      }
+    });
+  }
+
+  getShiftIcon(shift: any): string {
+    const name = shift?.name?.toLowerCase() || '';
+
+    if (name.includes('morning')) return 'wb_sunny';
+    if (name.includes('evening')) return 'nights_stay';
+    if (name.includes('night')) return 'dark_mode';
+
+    return 'schedule';
+  }
+}

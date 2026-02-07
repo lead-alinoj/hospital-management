@@ -207,10 +207,10 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
             <mat-icon>edit</mat-icon>
             Edit Vitals
           </button>
-          <button mat-raised-button color="accent" (click)="printVitals()" *ngIf="vitals">
+          <!-- <button mat-raised-button color="accent" (click)="printVitals()" *ngIf="vitals">
             <mat-icon>print</mat-icon>
             Print
-          </button>
+          </button> -->
         </mat-card-actions>
       </mat-card>
     </div>

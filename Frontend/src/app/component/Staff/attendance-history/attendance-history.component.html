@@ -66,7 +66,36 @@
 <div class="summary-label">Today Half Day</div>
             </mat-card-content>
           </mat-card>
-
+  <!-- Overtime Summary Card -->
+    <mat-card class="summary-card overtime-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>timer</mat-icon>
+          Overtime
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-value overtime">{{ totalOvertimeHours }}h</div>
+        <div class="summary-label">Total Overtime</div>
+        <div class="summary-subtext">
+          Avg: {{ avgAttendanceHours }}h per day
+        </div>
+      </mat-card-content>
+    </mat-card>
+    
+    <!-- Today's Overtime -->
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>update</mat-icon>
+          Today OT
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-value">{{ todayOvertimeCount }}</div>
+        <div class="summary-label">Staff with OT</div>
+      </mat-card-content>
+    </mat-card>
           
         </div>
       </div>
@@ -87,7 +116,16 @@
   <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
   <mat-datepicker #startPicker></mat-datepicker>
 </mat-form-field>
-
+<!-- <mat-form-field appearance="outline" class="filter-field">
+  <mat-label>Shift</mat-label>
+  <mat-select formControlName="shiftId">
+    <mat-option value="">All Shifts</mat-option>
+    <mat-option *ngFor="let shift of shifts" [value]="shift._id">
+      {{ shift.name }} ({{ shift.startTime }} - {{ shift.endTime }})
+    </mat-option>
+  </mat-select>
+  <mat-icon matSuffix>schedule</mat-icon>
+</mat-form-field> -->
 <mat-form-field appearance="outline" class="filter-field">
   <mat-label>To Date</mat-label>
   <input matInput 
@@ -281,7 +319,18 @@
     </div>
   </td>
 </ng-container>
-
+<ng-container matColumnDef="overtime">
+  <th mat-header-cell *matHeaderCellDef>Overtime</th>
+  <td mat-cell *matCellDef="let record">
+    <div class="overtime-cell" *ngIf="record.overtimeMinutes > 0; else noOvertime">
+      <mat-icon>timer</mat-icon>
+      <span class="overtime-text">{{ getOvertimeDisplay(record.overtimeMinutes) }}</span>
+    </div>
+    <ng-template #noOvertime>
+      <span class="no-overtime">-</span>
+    </ng-template>
+  </td>
+</ng-container>
 
             <!-- Duration Column -->
             <ng-container matColumnDef="duration">

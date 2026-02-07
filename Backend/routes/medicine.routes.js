@@ -11,6 +11,8 @@ router.get('/available', medicineController.getAvailableMedicines);
 
 router.get('/billable-items', protect, medicineController.getBillableItems);
 router.get('/reception-ip', medicineController.getBillableItems);
+router.get('/near-expiry', protect, medicineController.getNearExpiryMedicines);
+router.get('/expired', protect, medicineController.getExpiredMedicines);
 
 // ✅ FIXED ORDER
 router.get('/doctor/medicines', medicineController.getDoctorMedicines);

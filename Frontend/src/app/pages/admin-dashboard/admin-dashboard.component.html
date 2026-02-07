@@ -1,0 +1,287 @@
+
+
+    <!-- Header -->
+<div class="dashboard-header">
+  <div>
+    <h1 class="welcome">Welcome back, Admin 👋</h1>
+    <p class="subtitle">Comprehensive overview of hospital metrics & performance</p>
+  </div>
+
+  <div class="header-actions">
+    <!-- future actions -->
+  </div>
+</div>
+
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading" class="dashboard-content">
+    
+<mat-card class="dashboard-card staff-overview-card">
+  <mat-card-header>
+    <mat-icon mat-card-avatar class="card-icon blue">groups</mat-icon>
+    <mat-card-title>Staff Overview</mat-card-title>
+    <mat-card-subtitle>Today's attendance & status</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="staff-overview-layout">
+      <!-- LEFT: METRICS & ATTENDANCE -->
+      <div class="staff-metrics">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-icon-container blue">
+              <mat-icon class="metric-icon">groups</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3>{{ totalStaff }}</h3>
+              <p>Total Staff</p>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon-container green">
+              <mat-icon class="metric-icon">check_circle</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3>{{ presentToday }}</h3>
+              <p>Present Today</p>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon-container red">
+              <mat-icon class="metric-icon">cancel</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3>{{ absentToday }}</h3>
+              <p>Absent / On Leave</p>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon-container purple">
+              <mat-icon class="metric-icon">logout</mat-icon>
+            </div>
+            <div class="metric-content">
+              <h3>{{ pendingLogout }}</h3>
+              <p>Pending Logout</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- One Line Attendance Summary -->
+        <div class="attendance-summary">
+          <div class="attendance-info">
+            <h4>Attendance Rate:</h4>
+            <div class="attendance-rate">{{ attendanceRate }}%</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="attendanceRate"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: QUICK ACTIONS -->
+      <div class="quick-actions">
+        <h4>Quick Actions</h4>
+        <div class="qa-actions">
+          <button mat-raised-button class="qa-btn blue"
+  [routerLink]="['/admin/users']">
+  <mat-icon>manage_accounts</mat-icon>
+  User Management
+</button>
+
+<button mat-raised-button class="qa-btn green"
+  [routerLink]="['/admin/attendance/history']">
+  <mat-icon>history</mat-icon>
+  Attendance History
+</button>
+
+<button mat-raised-button class="qa-btn purple"
+  [routerLink]="['/reception/patient/search']">
+  <mat-icon>search</mat-icon>
+  Patient Search
+</button>
+
+<button mat-raised-button class="qa-btn teal"
+  [routerLink]="['/ip-dashboard']">
+  <mat-icon>hotel</mat-icon>
+  IP Dashboard
+</button>
+
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+    <!-- ===== 2️⃣ TODAY'S PATIENT FLOW ===== -->
+    <mat-card class="dashboard-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="card-icon pink">local_hospital</mat-icon>
+        <mat-card-title>Today's Patient Flow</mat-card-title>
+        <mat-card-subtitle>Clinic workload overview</mat-card-subtitle>
+      </mat-card-header>
+      
+      <div class="chart-container">
+        <canvas #patientFlowChart></canvas>
+      </div>
+      
+      <div class="patient-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Visits</span>
+          <span class="stat-value">{{ totalVisitsToday }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Waiting Vitals</span>
+          <span class="stat-value yellow">{{ waitingForVitals }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Waiting Consultation</span>
+          <span class="stat-value red">{{ waitingForConsultation }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Completed</span>
+          <span class="stat-value green">{{ consultationCompleted }}</span>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- ===== 3️⃣ PHARMACY SNAPSHOT ===== -->
+    <mat-card class="dashboard-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="card-icon orange">medication</mat-icon>
+        <mat-card-title>Pharmacy Snapshot</mat-card-title>
+        <mat-card-subtitle>Medicine inventory status</mat-card-subtitle>
+      </mat-card-header>
+      
+      <div class="chart-container">
+        <canvas #medicineChart></canvas>
+      </div>
+      
+      <div class="medicine-stats">
+        <div class="stat-item">
+          <mat-icon class="stat-icon" [style.color]="'#8b5cf6'">inventory</mat-icon>
+          <div>
+            <p class="stat-label">Total Medicines</p>
+            <h3>{{ totalMedicines }}</h3>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon class="stat-icon" [style.color]="'#f59e0b'">warning</mat-icon>
+          <div>
+            <p class="stat-label">Low Stock</p>
+            <h3>{{ lowStockMedicines }}</h3>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon class="stat-icon" [style.color]="'#ef4444'">error</mat-icon>
+          <div>
+            <p class="stat-label">Near Expiry</p>
+            <h3>{{ nearExpiryMedicines }}</h3>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- ===== 4️⃣ IP / BED STATUS ===== -->
+    <mat-card class="dashboard-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="card-icon teal">hotel</mat-icon>
+        <mat-card-title>Bed Occupancy</mat-card-title>
+        <mat-card-subtitle>IP admission tracking</mat-card-subtitle>
+      </mat-card-header>
+      
+      <div class="chart-container">
+        <canvas #bedBar></canvas>
+      </div>
+      
+      <div class="bed-stats">
+        <div class="stat-item">
+          <mat-icon class="stat-icon" [style.color]="'#38bdf8'">bed</mat-icon>
+          <div>
+            <p class="stat-label">Total Beds</p>
+            <h3>{{ totalBeds }}</h3>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon class="stat-icon" [style.color]="'#6366f1'">person</mat-icon>
+          <div>
+            <p class="stat-label">Occupied</p>
+            <h3>{{ occupiedBeds }}</h3>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon class="stat-icon" [style.color]="'#0ea5e9'">people</mat-icon>
+          <div>
+            <p class="stat-label">IP Patients</p>
+            <h3>{{ currentIPPatients }}</h3>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- ===== 5️⃣ ALERTS & WARNINGS ===== -->
+    <mat-card class="dashboard-card alerts-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="card-icon red">notifications_active</mat-icon>
+        <mat-card-title>Alerts & Warnings</mat-card-title>
+        <mat-card-subtitle>Critical issues requiring attention</mat-card-subtitle>
+      </mat-card-header>
+      
+      <div class="alerts-container">
+        <div *ngIf="alerts.length === 0" class="no-alerts">
+          <mat-icon>check_circle</mat-icon>
+          <p>All systems operational. No critical alerts.</p>
+        </div>
+        
+        <mat-list *ngIf="alerts.length > 0">
+          <mat-list-item *ngFor="let alert of alerts" class="alert-item">
+            <mat-icon matListItemIcon [style.color]="alert.color">{{ alert.icon }}</mat-icon>
+            <div matListItemTitle>{{ alert.message }}</div>
+            <div matListItemLine class="alert-type">{{ alert.type | uppercase }}</div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </mat-card>
+
+    <!-- ===== 6️⃣ ATTENDANCE DISTRIBUTION ===== -->
+    <mat-card class="dashboard-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="card-icon green">pie_chart</mat-icon>
+        <mat-card-title>Attendance Distribution</mat-card-title>
+        <mat-card-subtitle>Today's staff attendance breakdown</mat-card-subtitle>
+      </mat-card-header>
+      
+      <div class="chart-container">
+        <canvas #attendancePie></canvas>
+      </div>
+      
+      <div class="attendance-breakdown">
+        <div class="breakdown-item">
+          <span class="dot green"></span>
+          <span>Present: {{ presentToday }}</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="dot red"></span>
+          <span>Absent: {{ absentToday }}</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="dot orange"></span>
+          <span>Half Day: {{ halfDayToday }}</span>
+        </div>
+      </div>
+    </mat-card>
+
+  </div>

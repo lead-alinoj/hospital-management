@@ -188,18 +188,18 @@ export class MainLayoutComponent implements OnInit {
       route: '/reception/attendance',
       roles: ['Reception']
     },
-    {
-      icon: 'schedule',
-      label: 'Shift Master',
-      route: '/reception/shift-master',
-      roles: ['Reception']
-    },
-    {
-  icon: 'history',
-  label: 'Attendance History',
-  route: '/reception/attendance/history',
-  roles: ['Reception']
-}
+    // {
+    //   icon: 'schedule',
+    //   label: 'Shift Master',
+    //   route: '/reception/shift-master',
+    //   roles: ['Reception']
+    // },
+//     {
+//   icon: 'history',
+//   label: 'Attendance History',
+//   route: '/reception/attendance/history',
+//   roles: ['Reception']
+// }
 
   ]
 },

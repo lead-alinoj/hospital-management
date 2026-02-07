@@ -1036,6 +1036,17 @@ async saveConsultation(): Promise<void> {
     this.isLoading = false;
   }
 }
+onManualMedicine(event: Event, index: number) {
+  const value = (event.target as HTMLInputElement).value;
+
+  const medGroup = this.medications.at(index);
+  medGroup.patchValue({
+    medicineId: null,
+    name: value,
+    isManual: true
+  }, { emitEvent: false });
+}
+
 // In consultation.component.ts - Update the openIpRecommendation method
 openIpRecommendation(visit: any) {
   console.log('🟢 Recommend IP clicked');

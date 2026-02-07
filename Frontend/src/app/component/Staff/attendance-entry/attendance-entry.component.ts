@@ -355,15 +355,14 @@ getCurrentTime(): string {
     }
   }
 
-  getShiftIcon(shift: string): string {
-    switch (shift) {
-      case 'Morning': return 'wb_sunny';
-      case 'Evening': return 'nights_stay';
-      case 'Full Day': return 'all_inclusive';
-      case 'On Call': return 'phone_in_talk';
-      default: return 'schedule';
-    }
-  }
+getShiftIcon(shift: any): string {
+  const name = shift?.name?.toLowerCase() || '';
+  if (name.includes('morning')) return 'wb_sunny';
+  if (name.includes('evening')) return 'nights_stay';
+  if (name.includes('night')) return 'dark_mode';
+  return 'schedule';
+}
+
 
  canMarkOut(attendance: Attendance): boolean {
   return !attendance.outTime;

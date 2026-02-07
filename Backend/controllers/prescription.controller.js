@@ -61,15 +61,10 @@ if (!med.medicineId) {
 med.type = 'STOCK';
       med.medicineName = medicine.name;
       med.strength = medicine.strength;
-  med.unitPrice = medicine.price;
-    med.isOutOfStock = medicine.stockQty < (med.quantity || 0);
+med.unitPrice = 0;              // ❌ doctor side never prices
+med.totalPrice = 0;             // ❌ no billing here
+med.isOutOfStock = medicine.stockQty < (med.quantity || 0);
 
-// 🔥 Important: price only if stock is available
-   if (med.isOutOfStock) {
-      med.totalPrice = 0;
-    } else {
-      med.totalPrice = medicine.price * (med.quantity || 0);
-    }
   }}
 
     const prescription = await Prescription.create({
@@ -208,8 +203,9 @@ exports.dispensePrescription = async (req, res) => {
       });
     }
 const hasStockMedicines = prescription.medicines.some(
-  m => m.medicineId
+  m => m.medicineId && !m.isOutOfStock
 );
+
 
 // ✅ If no stock medicines → allow dispense without payment
 if (!hasStockMedicines) {
@@ -232,12 +228,31 @@ if (!hasStockMedicines) {
 let medicineAmount = 0;
 
 for (const med of prescription.medicines) {
-  // ✅ Only include medicines that have stock and are not out of stock
-  if (!med.medicineId) continue;        // manual / outside
-  if (med.isOutOfStock) continue;       // out of stock
-  if (!med.unitPrice) continue;         // zero price medicines
-  medicineAmount += (med.unitPrice || 0) * (med.quantity || 0);
+
+  // ❌ Skip manual / outside medicines
+  if (!med.medicineId) continue;
+
+  // ❌ Skip out-of-stock
+  if (med.isOutOfStock) continue;
+
+  // ❌ Skip invalid quantity
+  if (!med.quantity || med.quantity <= 0) continue;
+
+  const medicine = await Medicine.findById(med.medicineId);
+  if (!medicine) continue;
+
+  // 🔥 FINAL CHECK
+  if (medicine.stockQty < med.quantity) {
+    return res.status(400).json({
+      success: false,
+      message: `Insufficient stock for ${medicine.name}`
+    });
+  }
+
+  // ✅ Bill ONLY here
+  medicineAmount += medicine.price * med.quantity;
 }
+
 
 const totalWithCharges =
   medicineAmount +

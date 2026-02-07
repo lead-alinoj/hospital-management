@@ -44,4 +44,12 @@ exports.deactivateShift = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+exports.getAllShifts = async (req, res) => {
+  try {
+    const shifts = await Shift.find();
+    res.json({ success: true, data: shifts });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 

@@ -33,6 +33,12 @@ router.put(
   authorize('Admin'),
   attendanceController.adminCloseAttendance
 );
+router.get(
+  '/summary-live',
+  protect,
+  authorize('Admin'),
+  attendanceController.getAttendanceSummaryLive
+);
 
 // Export should be admin only
 router.get(

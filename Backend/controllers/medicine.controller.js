@@ -290,6 +290,58 @@ exports.searchMedicines = async (req, res) => {
   }
 };
 
+// ✅ Get near-expiry medicines (within next 30 days)
+exports.getNearExpiryMedicines = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const nearExpiryDate = new Date();
+    nearExpiryDate.setDate(nearExpiryDate.getDate() + 30);
+    nearExpiryDate.setHours(23, 59, 59, 999);
+
+    const medicines = await Medicine.find({
+      expiryDate: {
+        $gte: today,
+        $lte: nearExpiryDate
+      },
+      isActive: true
+    }).populate('category', 'name type');
+
+    res.status(200).json({
+      success: true,
+      data: medicines
+    });
+  } catch (error) {
+    console.error('Near expiry error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+// ✅ Get expired medicines
+exports.getExpiredMedicines = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const medicines = await Medicine.find({
+      expiryDate: { $lt: today },
+      isActive: true
+    }).populate('category', 'name type');
+
+    res.status(200).json({
+      success: true,
+      data: medicines
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 // Get available medicines
 exports.getAvailableMedicines = async (req, res) => {

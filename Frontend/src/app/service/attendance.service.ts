@@ -87,13 +87,29 @@ adminCloseAttendance(attendanceId: string, payload: {
     payload
   );
 }
+getAttendanceSummaryLive(
+  startDate?: string,
+  endDate?: string
+): Observable<{ success: boolean; data: any[] }> {
+
+  let params = new HttpParams();
+  if (startDate) params = params.set('startDate', startDate);
+  if (endDate) params = params.set('endDate', endDate);
+
+  return this.http.get<{ success: boolean; data: any[] }>(
+    `${this.apiUrl}/summary-live`,
+    { params }
+  );
+}
 
 exportAttendance(
   startDate: string,
   endDate: string,
   format: 'excel' | 'pdf',
   staffId?: string,
-  jobRole?: string
+  jobRole?: string,
+    shiftId?: string // ✅ ADD THIS
+
 ): Observable<Blob> {
 
   let params = new HttpParams()
@@ -104,6 +120,7 @@ exportAttendance(
 
   if (staffId) params = params.set('staffId', staffId);
   if (jobRole) params = params.set('jobRole', jobRole);
+  if (shiftId) params = params.set('shiftId', shiftId); // ✅ ADD THIS
 
   return this.http.get(`${this.apiUrl}/export`, {
     params,
