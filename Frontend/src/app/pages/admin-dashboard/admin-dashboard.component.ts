@@ -110,20 +110,84 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     this.loading = true;
     
     // Load all data in parallel
-    Promise.all([
-      this.loadStaffData(),
-      this.loadPatientFlowData(),
-      this.loadPharmacyData(),
-      this.loadBedData(),
-      this.loadAlerts()
-    ]).then(() => {
-      this.loading = false;
-    }).catch(error => {
-      console.error('Error loading dashboard data:', error);
-      this.loading = false;
+Promise.all([
+  this.loadStaffData(),
+  this.loadPatientFlowData(),
+  this.loadPharmacyData(),
+  this.loadBedData()
+]).then(() => {
+  this.buildAlerts();   // ✅ call AFTER data ready
+  this.loading = false;
+});
+
+  }
+buildAlerts(): void {
+  this.alerts = [];
+
+  // 🔴 EXPIRED MEDICINES – CRITICAL
+  if (this.expiredMedicines > 0) {
+    this.alerts.push({
+      type: 'danger',
+      icon: 'error',
+      message: `${this.expiredMedicines} medicines are expired`,
+      color: '#dc2626'
     });
   }
-  
+
+  // 🟠 NEAR EXPIRY MEDICINES
+  if (this.nearExpiryMedicines > 0) {
+    this.alerts.push({
+      type: 'warning',
+      icon: 'event',
+      message: `${this.nearExpiryMedicines} medicines nearing expiry`,
+      color: '#f59e0b'
+    });
+  }
+
+  // 🟡 LOW STOCK
+  if (this.lowStockMedicines > 0) {
+    this.alerts.push({
+      type: 'warning',
+      icon: 'warning',
+      message: `${this.lowStockMedicines} medicines are low in stock`,
+      color: '#f59e0b'
+    });
+  }
+
+  // 🔵 PENDING LOGOUT
+  if (this.pendingLogout > 0) {
+    this.alerts.push({
+      type: 'info',
+      icon: 'logout',
+      message: `${this.pendingLogout} staff members haven't logged out`,
+      color: '#8b5cf6'
+    });
+  }
+
+  // 🔴 BED OCCUPANCY
+  const occupancyRate =
+    this.totalBeds > 0 ? (this.occupiedBeds / this.totalBeds) * 100 : 0;
+
+  if (occupancyRate > 90) {
+    this.alerts.push({
+      type: 'warning',
+      icon: 'hotel',
+      message: 'Bed occupancy rate is high',
+      color: '#ef4444'
+    });
+  }
+
+  // ℹ️ NO IP PATIENTS
+  if (this.currentIPPatients === 0 && this.totalBeds > 0) {
+    this.alerts.push({
+      type: 'info',
+      icon: 'info',
+      message: 'No IP patients currently',
+      color: '#3b82f6'
+    });
+  }
+}
+
   loadStaffData(): Promise<void> {
     return new Promise((resolve) => {
       // Get total staff
@@ -189,7 +253,10 @@ loadPatientFlowData(): Promise<void> {
           (groupedVisits.waiting?.length || 0) + 
           (groupedVisits.vitals_in_progress?.length || 0);
         this.waitingForConsultation = groupedVisits.consultation_in_progress?.length || 0;
-        this.consultationCompleted = groupedVisits.consultation_completed?.length || 0;
+this.consultationCompleted =
+  (groupedVisits.consultation_completed?.length || 0) +
+  (groupedVisits.pharmacy?.length || 0) +
+  (groupedVisits.completed?.length || 0);
         
         resolve();
       },

@@ -265,6 +265,29 @@ import { CategoryService } from '../../service/category.service';
             </div>
           </mat-card-content>
         </mat-card>
+<mat-card class="stat-card">
+  <mat-card-content>
+    <div class="stat-content">
+      <mat-icon color="accent">event</mat-icon>
+      <div class="stat-details">
+        <span class="stat-value">{{ nearExpiryCount }}</span>
+        <span class="stat-label">Near Expiry</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="stat-card">
+  <mat-card-content>
+    <div class="stat-content">
+      <mat-icon color="warn">event_busy</mat-icon>
+      <div class="stat-details">
+        <span class="stat-value">{{ expiredCount }}</span>
+        <span class="stat-label">Expired</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
 
         <mat-card class="stat-card">
           <mat-card-content>
@@ -363,6 +386,33 @@ import { CategoryService } from '../../service/category.service';
                   </div>
                 </td>
               </ng-container>
+
+              <ng-container matColumnDef="expiry">
+  <th mat-header-cell *matHeaderCellDef mat-sort-header>Expiry</th>
+  <td mat-cell *matCellDef="let medicine">
+    <div class="expiry-cell">
+      <span>{{ medicine.expiryDate | date:'dd MMM yyyy' }}</span>
+
+      <span
+        *ngIf="getExpiryStatus(medicine) === 'expired'"
+        class="expiry-badge expired">
+        Expired
+      </span>
+
+      <span
+        *ngIf="getExpiryStatus(medicine) === 'near'"
+        class="expiry-badge near">
+        Near Expiry
+      </span>
+
+      <span
+        *ngIf="getExpiryStatus(medicine) === 'valid'"
+        class="expiry-badge valid">
+        Valid
+      </span>
+    </div>
+  </td>
+</ng-container>
 
               <!-- Price Column -->
               <ng-container matColumnDef="price">
@@ -543,6 +593,23 @@ mat-card {
   background: linear-gradient(135deg, #fee2e2, #fff1f2);
   border: 1px solid #fca5a5;
 }
+/* 5️⃣ Near Expiry – yellow */
+.stats-cards mat-card:nth-child(5) {
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  border: 1px solid #fde68a;
+}
+.stats-cards mat-card:nth-child(5) mat-icon {
+  color: #d97706;
+}
+
+/* 6️⃣ Expired – deep red */
+.stats-cards mat-card:nth-child(6) {
+  background: linear-gradient(135deg, #fee2e2, #fff1f2);
+  border: 1px solid #fecaca;
+}
+.stats-cards mat-card:nth-child(6) mat-icon {
+  color: #b91c1c;
+}
 
 .stat-card:hover {
   transform: translateY(-4px);
@@ -634,6 +701,34 @@ mat-card {
   background: #e0edff !important;
   color: #1e40af !important;
   font-weight: 500;
+}
+.expiry-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.expiry-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  width: fit-content;
+  font-weight: 600;
+}
+
+.expiry-badge.valid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.expiry-badge.near {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.expiry-badge.expired {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
     /* Add to medicine-management.component.css */
@@ -783,7 +878,7 @@ private categoryService = inject(CategoryService);
   @ViewChild(MatSort) sort!: MatSort;
 
   dataSource = new MatTableDataSource<Medicine>();
-  displayedColumns: string[] = ['name', 'category', 'stock', 'price', 'status', 'actions'];
+  displayedColumns: string[] = ['name', 'category', 'stock', 'expiry', 'price', 'status', 'actions'];
 
   medicineForm!: FormGroup;
   stockForm!: FormGroup;
@@ -793,7 +888,12 @@ private categoryService = inject(CategoryService);
   inStockCount = 0;
   lowStockCount = 0;
   outOfStockCount = 0;
-  
+  nearExpiryCount = 0;
+expiredCount = 0;
+
+nearExpiryMedicines: Medicine[] = [];
+expiredMedicines: Medicine[] = [];
+
   lowStockMedicines: any[] = [];
 
   
@@ -819,6 +919,9 @@ selectedStockStatus = '';
     this.loadMedicines();
      this.loadCategories();
     this.loadLowStockAlerts();
+     this.loadNearExpiryMedicines();
+  this.loadExpiredMedicines();
+
   }
 
   private initForms(): void {
@@ -1218,7 +1321,30 @@ saveMedicine() {
   }
 }
 
-  
+  private loadNearExpiryMedicines(): void {
+  this.medicineService.getNearExpiryMedicines().subscribe({
+    next: (res: any) => {
+      if (res?.success) {
+        this.nearExpiryMedicines = res.data || [];
+        this.nearExpiryCount = this.nearExpiryMedicines.length;
+      }
+    },
+    error: err => console.error('Near expiry error', err)
+  });
+}
+
+private loadExpiredMedicines(): void {
+  this.medicineService.getExpiredMedicines().subscribe({
+    next: (res: any) => {
+      if (res?.success) {
+        this.expiredMedicines = res.data || [];
+        this.expiredCount = this.expiredMedicines.length;
+      }
+    },
+    error: err => console.error('Expired error', err)
+  });
+}
+
   updateStock(): void {
     if (this.stockForm.invalid || !this.selectedMedicine) return;
     
@@ -1260,6 +1386,23 @@ toggleAddForm(): void {
     'batchNumber',
     'supplier'
   ]);
+}
+getExpiryStatus(medicine: Medicine): 'expired' | 'near' | 'valid' {
+  if (!medicine.expiryDate) return 'valid';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expiry = new Date(medicine.expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+
+  const diffDays =
+    (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (diffDays < 0) return 'expired';
+  if (diffDays <= 30) return 'near';
+
+  return 'valid';
 }
 
   toggleMedicineStatus(medicine: Medicine): void {
