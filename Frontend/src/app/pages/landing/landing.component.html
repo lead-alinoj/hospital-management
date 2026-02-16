@@ -1,4 +1,3 @@
-<!-- landing.component.html - Updated with compact layout -->
 <!-- Top Info Bar -->
 <div class="top-bar">
   <div class="ticker-wrapper">
@@ -12,9 +11,9 @@
   </div>
 </div>
 
-<!-- Header -->
+<!-- Header with Navigation -->
 <mat-toolbar class="main-header">
-  <div class="logo">
+  <div class="logo" (click)="scrollToSection('hero')">
     <img
       src="assets/images/logo.png"
       alt="MediCare Hospital Logo"
@@ -22,18 +21,20 @@
     />
     <div class="logo-text">
       <span class="hospital-name">MediCare</span>
-      <span class="sub">Multi Speciality Hospital</span>
+      <span class="sub">Family Health & Wellness Hospital</span>
     </div>
   </div>
 
   <span class="spacer"></span>
-
-  <nav class="menu">
-    <a>About Us</a>
-    <a>Departments</a>
-    <a>Doctors</a>
-    <a>Contact</a>
-    <button mat-raised-button color="warn" class="book-btn">
+<button mat-icon-button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+  <mat-icon>menu</mat-icon>
+</button>
+<nav class="menu" [class.mobile-open]="mobileMenuOpen">
+      <a (click)="scrollToSection('about')">About Us</a>
+    <a (click)="scrollToSection('why-choose-us')">Why Choose Us</a>
+    <a (click)="scrollToSection('doctors')">Doctors</a>
+    <a (click)="scrollToSection('contact')">Contact</a>
+    <button mat-raised-button color="warn" class="book-btn" (click)="scrollToSection('appointment')">
       Book Appointment
     </button>
     <button
@@ -59,8 +60,7 @@
 </mat-toolbar>
 
 <!-- Hero Section -->
-<section class="hero">
-  <!-- Left: Content -->
+<section id="hero" class="hero">
   <div class="hero-content">
     <h1 class="hero-title">
       Quality Care for <span class="highlight">You & Your Family</span>
@@ -68,14 +68,14 @@
     <p class="hero-subtitle">
       Expert medical care with compassion. Your health is our priority.
     </p>
-      <!-- Hero Image -->
-  <div class="hero-image-wrapper">
-    <img
-      src="assets/images/dd.png"
-      alt="Quality healthcare for family"
-      class="hero-main-image"
-    />
-  </div>
+    
+    <div class="hero-image-wrapper">
+      <img
+        src="assets/images/dd.png"
+        alt="Quality healthcare for family"
+        class="hero-main-image"
+      />
+    </div>
 
     <div class="hero-features">
       <div class="feature">
@@ -95,17 +95,31 @@
         <span>Multi-speciality</span>
       </div>
     </div>
+
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-number">25+</span>
+        <span class="stat-label">Years Experience</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">5+</span>
+        <span class="stat-label">Expert Doctors</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">100K+</span>
+        <span class="stat-label">Happy Patients</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Right: Appointment Form -->
-  <div class="appointment-card">
+  <!-- Appointment Form -->
+  <div id="appointment" class="appointment-card">
     <div class="appointment-header">
       <h2>Book Appointment</h2>
       <p>Quick & easy online booking</p>
     </div>
     
     <form [formGroup]="appointmentForm" (ngSubmit)="submitAppointment()">
-      <!-- Patient Name -->
       <mat-form-field appearance="outline">
         <mat-label>Patient Name *</mat-label>
         <input matInput formControlName="patientName">
@@ -114,7 +128,6 @@
         </mat-error>
       </mat-form-field>
 
-      <!-- Contact Number -->
       <mat-form-field appearance="outline">
         <mat-label>Contact Number *</mat-label>
         <input matInput formControlName="contactNumber">
@@ -126,19 +139,16 @@
         </mat-error>
       </mat-form-field>
 
-      <!-- Email (Optional) -->
       <mat-form-field appearance="outline">
         <mat-label>Email (Optional)</mat-label>
         <input matInput formControlName="email">
       </mat-form-field>
 
-      <!-- Description -->
       <mat-form-field appearance="outline">
         <mat-label>Description *</mat-label>
         <input matInput formControlName="description">
       </mat-form-field>
 
-      <!-- Appointment Date -->
       <mat-form-field appearance="outline">
         <mat-label>Date *</mat-label>
         <input matInput [matDatepicker]="picker" formControlName="appointmentDate">
@@ -146,7 +156,6 @@
         <mat-datepicker #picker></mat-datepicker>
       </mat-form-field>
 
-      <!-- Appointment Time -->
       <div class="time-picker">
         <label>Time *</label>
         <div>
@@ -174,42 +183,230 @@
   </div>
 </section>
 
-<!-- Features Section -->
-<section class="features-section">
-  <h2 class="section-title">Our Services</h2>
-  <p class="section-subtitle">Comprehensive healthcare services for all your needs</p>
-  
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon-container">
-        <mat-icon>medical_services</mat-icon>
-      </div>
-      <h3>Expert Doctors</h3>
-      <p>Experienced specialists for accurate diagnosis</p>
-    </div>
+<!-- Why Choose Us Section -->
+<section id="why-choose-us" class="why-choose-section">
+  <div class="section-container">
+    <h2 class="section-title">Why Choose Us</h2>
+    <p class="section-subtitle">Experience the difference with our comprehensive healthcare approach</p>
     
-    <div class="feature-card">
-      <div class="feature-icon-container">
-        <mat-icon>hearing</mat-icon>
-      </div>
-      <h3>OPD Consultation</h3>
-      <p>Personalized care for every patient</p>
+    <div class="benefits-grid">
+     <div class="benefit-card">
+  <div class="benefit-icon">🩺</div>
+  <h3>Experienced General Physician</h3>
+  <p>Comprehensive diagnosis and treatment for common illnesses and health concerns.</p>
+</div>
+
+<div class="benefit-card">
+  <div class="benefit-icon">👨‍👩‍👧</div>
+  <h3>Family Healthcare</h3>
+  <p>Complete medical care for children, adults, and senior citizens under one roof.</p>
+</div>
+
+<div class="benefit-card">
+  <div class="benefit-icon">💊</div>
+  <h3>In-Clinic Pharmacy</h3>
+  <p>Convenient access to prescribed medicines with proper guidance and support.</p>
+</div>
+
+<div class="benefit-card">
+  <div class="benefit-icon">🧪</div>
+  <h3>Basic Lab Services</h3>
+  <p>On-site basic diagnostic tests for quick and accurate medical decisions.</p>
+</div>
+
+<div class="benefit-card">
+  <div class="benefit-icon">📅</div>
+  <h3>Easy Appointment Booking</h3>
+  <p>Simple and quick online booking system for your convenience.</p>
+</div>
+
+<div class="benefit-card">
+  <div class="benefit-icon">🤝</div>
+  <h3>Personalized Care</h3>
+  <p>We treat every patient with attention, respect, and individualized treatment plans.</p>
+</div>
     </div>
-    
-    <div class="feature-card">
-      <div class="feature-icon-container">
-        <mat-icon>local_pharmacy</mat-icon>
+  </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="about-section">
+  <div class="section-container">
+    <div class="about-content">
+      <div class="about-text">
+        <h2 class="section-title">About MediCare Hospital</h2>
+        <p class="about-description">
+          Founded in 1998, MediCare Multi Speciality Hospital has been a beacon of hope and healing in Nagercoil for over two decades. We began with a simple mission: to provide world-class healthcare that's accessible, affordable, and compassionate.
+        </p>
+        
+        <div class="about-features">
+          <div class="about-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>NABH Accredited Hospital</span>
+          </div>
+          <div class="about-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>ISO 9001:2015 Certified</span>
+          </div>
+          <div class="about-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>20+ Years of Excellence</span>
+          </div>
+          <div class="about-feature">
+            <mat-icon>check_circle</mat-icon>
+            <span>10,000+ Successful Surgeries</span>
+          </div>
+        </div>
+
+        <div class="about-mission">
+          <h3>Our Mission</h3>
+          <p>To deliver exceptional healthcare services with integrity, innovation, and compassion, ensuring every patient receives personalized attention and the best possible outcomes.</p>
+        </div>
+
+        <div class="about-vision">
+          <h3>Our Vision</h3>
+          <p>To be the most trusted healthcare provider in the region, setting new standards in medical excellence and patient care.</p>
+        </div>
       </div>
-      <h3>Pharmacy</h3>
-      <p>Genuine medicines with guidance</p>
+      
+      <div class="about-image">
+        <img src="assets/images/hospital.jpg" alt="MediCare Hospital Building">
+        <div class="experience-badge">
+          <span class="years">25+</span>
+          <span class="text">Years of Excellence</span>
+        </div>
+      </div>
     </div>
+  </div>
+</section>
+
+
+
+<!-- Doctors Section -->
+<section id="doctors" class="doctors-section">
+  <div class="section-container">
+    <h2 class="section-title">Our Expert Doctors</h2>
+    <p class="section-subtitle">Meet our team of experienced medical professionals</p>
     
-    <div class="feature-card">
-      <div class="feature-icon-container">
-        <mat-icon>science</mat-icon>
+    <div class="doctors-grid">
+      <div class="doctor-card" *ngFor="let doctor of doctors">
+        <div class="doctor-image">
+          <img [src]="doctor.image" [alt]="doctor.name">
+        </div>
+        <div class="doctor-info">
+          <h3>{{ doctor.name }}</h3>
+          <p class="doctor-specialty">{{ doctor.specialty }}</p>
+          <p class="doctor-experience">{{ doctor.experience }} years experience</p>
+          <p class="doctor-qualification">{{ doctor.qualification }}</p>
+          <button mat-stroked-button color="primary" (click)="scrollToSection('appointment')">Book Appointment</button>
+        </div>
       </div>
-      <h3>Lab Tests</h3>
-      <p>Accurate diagnostics with quick results</p>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials-section">
+  <div class="section-container">
+    <h2 class="section-title">What Our Patients Say</h2>
+    <p class="section-subtitle">Real stories from patients who trusted us with their health</p>
+    
+    <div class="testimonials-grid">
+      <div class="testimonial-card" *ngFor="let testimonial of testimonials">
+        <div class="testimonial-rating">
+          <mat-icon *ngFor="let star of [1,2,3,4,5]" [class.filled]="star <= testimonial.rating">star</mat-icon>
+        </div>
+        <p class="testimonial-text">"{{ testimonial.text }}"</p>
+        <div class="testimonial-author">
+<div class="author-initials">{{ testimonial.name.charAt(0) }}{{ (testimonial.name.split(' ')[1] || '').charAt(0) }}</div>          <div class="author-info">
+            <h4>{{ testimonial.name }}</h4>
+            <p>{{ testimonial.patientType }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Emergency Banner -->
+<section class="emergency-banner">
+  <div class="emergency-content">
+    <h2>24/7 Emergency Services Available</h2>
+    <p>Immediate medical attention when you need it most</p>
+    <div class="emergency-contact">
+      <mat-icon>call</mat-icon>
+      <span class="emergency-number">98765 43210</span>
+    </div>
+    <button mat-raised-button color="warn" class="emergency-btn" (click)="scrollToSection('appointment')">
+      <mat-icon>emergency</mat-icon>
+      Book Emergency Appointment
+    </button>
+  </div>
+</section>
+
+<!-- Contact Section with Map -->
+<section id="contact" class="contact-section">
+  <div class="section-container">
+    <h2 class="section-title">Contact Us</h2>
+    <p class="section-subtitle">We're here to help and answer any questions you might have</p>
+    
+    <div class="contact-content">
+      <div class="contact-info">
+        <div class="contact-item">
+          <mat-icon>location_on</mat-icon>
+          <div>
+            <h3>Visit Us</h3>
+            <p>123 Main Street, Nagercoil<br>Tamil Nadu - 629001</p>
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <mat-icon>call</mat-icon>
+          <div>
+            <h3>Call Us</h3>
+            <p>Emergency: 98765 43210<br>Appointments: 98765 43211</p>
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <mat-icon>email</mat-icon>
+          <div>
+            <h3>Email Us</h3>
+            <p>info&#64;medicarehospital.com<br>appointments&#64;medicarehospital.com</p>
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <mat-icon>access_time</mat-icon>
+          <div>
+            <h3>Working Hours</h3>
+            <p>OPD: Mon-Sat: 8 AM - 8 PM<br>Emergency: 24/7, 365 days</p>
+          </div>
+        </div>
+        
+        <div class="social-links">
+          <h3>Follow Us</h3>
+          <div class="social-icons">
+            <a href="#" class="social-icon">📘</a>
+            <a href="#" class="social-icon">🐦</a>
+            <a href="#" class="social-icon">📷</a>
+            <a href="#" class="social-icon">🔗</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="map-container">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3945.987654321!2d77.4321!3d8.1778!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOMKwMTAnNDAuMCJOIDc3wrAyNSc1NS4yIkU!5e0!3m2!1sen!2sin!4v1234567890"
+          width="100%"
+          height="400"
+          style="border:0;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="MediCare Hospital Location">
+        </iframe>
+      </div>
     </div>
   </div>
 </section>
@@ -219,36 +416,55 @@
   <div class="footer-content">
     <div class="footer-section">
       <h3>MediCare Hospital</h3>
-      <p style="color: #cbd5e1; line-height: 1.5; font-size: 0.9rem;">
+      <p class="footer-description">
         Your trusted healthcare partner providing quality medical services with compassion.
       </p>
+      <div class="footer-social">
+        <a href="#" class="footer-social-icon" aria-label="Facebook">📘</a>
+        <a href="#" class="footer-social-icon" aria-label="Twitter">🐦</a>
+        <a href="#" class="footer-social-icon" aria-label="Instagram">📷</a>
+        <a href="#" class="footer-social-icon" aria-label="LinkedIn">🔗</a>
+      </div>
     </div>
     
-    <div class="footer-section contact-info">
-      <h3>Contact</h3>
+    <div class="footer-section">
+      <h3>Quick Links</h3>
+      <ul class="footer-links">
+        <li><a (click)="scrollToSection('about')">About Us</a></li>
+        <li><a (click)="scrollToSection('why-choose-us')">Why Choose Us</a></li>
+        <li><a (click)="scrollToSection('doctors')">Doctors</a></li>
+        <li><a (click)="scrollToSection('contact')">Contact</a></li>
+        <li><a (click)="scrollToSection('appointment')">Book Appointment</a></li>
+      </ul>
+    </div>
+    
+<div class="footer-section footer-contact-info">
+        <h3>Contact Us</h3>
       <p>
         <mat-icon>location_on</mat-icon>
-        123 Main Street, Nagercoil, Tamil Nadu
+        <span>123 Main Street, Nagercoil, Tamil Nadu - 629001</span>
       </p>
       <p>
         <mat-icon>call</mat-icon>
-        98765 43210
+        <span>+91 98765 43210</span>
       </p>
       <p>
         <mat-icon>email</mat-icon>
-info&#64;medicarehospital.com
+        <span>info&#64;medicarehospital.com</span>
       </p>
     </div>
     
     <div class="footer-section opening-hours">
-      <h3>Timings</h3>
-      <p><strong>OPD:</strong> 8 AM - 8 PM</p>
-      <p><strong>Emergency:</strong> 24/7</p>
-      <p><strong>Pharmacy:</strong> 7 AM - 11 PM</p>
+      <h3>Clinic Timings</h3>
+      <p><span class="day">OPD:</span> <span class="time">8:00 AM - 8:00 PM</span></p>
+      <p><span class="day">Emergency:</span> <span class="time">24/7</span></p>
+      <p><span class="day">Pharmacy:</span> <span class="time">7:00 AM - 11:00 PM</span></p>
     </div>
   </div>
   
-  <div class="copyright">
-    © 2024 MediCare Multi Speciality Hospital. All rights reserved.
+  <div class="footer-bottom">
+    <div class="copyright">
+      © 2024 MediCare Hospital. All rights reserved.
+    </div>
   </div>
 </footer>

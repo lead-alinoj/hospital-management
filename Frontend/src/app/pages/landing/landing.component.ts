@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Inject, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AppointmentService } from '../../service/appointment.service';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -18,6 +18,7 @@ import { MatMenuModule } from "@angular/material/menu";
 import { RegisterComponent } from '../../auth/register/register.component';
 import { ComponentType } from '@angular/cdk/portal';
 import { AuthService } from '../../auth/auth.service';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-landing',
@@ -35,60 +36,151 @@ import { AuthService } from '../../auth/auth.service';
     CommonModule,
     MatSelectModule,
     RouterModule,
-    MatMenuModule
-],
+    MatMenuModule,
+    MatDialogModule
+  ],
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss']
 })
-export class LandingComponent {
+export class LandingComponent implements OnInit {
   appointmentForm: FormGroup;
-hours = Array.from({length: 12}, (_, i) => i + 1); // 1-12
-  
-  constructor(private fb: FormBuilder, private appointmentService: AppointmentService,private dialog: MatDialog, public authService: AuthService) {
+  hours = Array.from({length: 12}, (_, i) => i + 1); // 1-12
+
+  mobileMenuOpen = false;
+
+  doctors = [
+    {
+      name: 'Dr. Rajesh Kumar',
+      specialty: 'Senior Cardiologist',
+      experience: 18,
+      qualification: 'MD, DM (Cardiology)',
+      image: 'assets/images/doctor1.jpg'
+    },
+    {
+      name: 'Dr. Suresh Menon',
+      specialty: 'Orthopedic Surgeon',
+      experience: 20,
+      qualification: 'MS (Ortho), MCh',
+      image: 'assets/images/doctor2.jpg'
+    }
+  ];
+
+  testimonials = [
+    {
+      name: 'Ramesh Kumar',
+      text: 'Excellent care and professional staff. The doctors are very knowledgeable and took time to explain everything.',
+      rating: 5,
+      patientType: 'Cardiology Patient'
+    },
+    {
+      name: 'Saraswathi Devi',
+      text: 'I had a great experience with the general medicine department. The treatment was successful and recovery was quick.',
+      rating: 5,
+      patientType: 'Orthopedic Patient'
+    },
+    {
+      name: 'Venkatesh Prasad',
+      text: 'The emergency response was quick and efficient. Thank you for saving my father\'s life.',
+      rating: 5,
+      patientType: 'Emergency Patient'
+    }
+  ];
+
+  constructor(
+    private fb: FormBuilder, 
+    private appointmentService: AppointmentService,
+    private dialog: MatDialog, 
+    public authService: AuthService,
+    @Inject(DOCUMENT) private document: Document
+  ) {
     this.appointmentForm = this.fb.group({
       patientName: ['', Validators.required],
       contactNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      email: ['', Validators.email], // Optional
+      email: ['', Validators.email],
       description: ['', Validators.required],
       appointmentDate: ['', Validators.required],
-        hour: [''],   // optional
-      ampm: [''],   // optional
+      hour: [''],
+      ampm: [''],
     });
   }
 
-openAuthDialog(type: 'login' | 'register') {
-  const component: ComponentType<any> =
-    type === 'login' ? LoginComponent : RegisterComponent;
-
-  this.dialog.open(component, {
-    width: '420px',
-    panelClass: 'custom-login-dialog',
-    backdropClass: 'login-backdrop',
-    disableClose: false
-  });
-}
-
-submitAppointment() {
-  if (this.appointmentForm.valid) {
-    const formValue = this.appointmentForm.value;
-
-    // ✅ OPTIONAL time logic
-    if (formValue.hour && formValue.ampm) {
-      formValue.appointmentTime = `${formValue.hour}:00 ${formValue.ampm}`;
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+    
+    // Prevent body scroll when mobile menu is open
+    if (this.mobileMenuOpen) {
+      this.document.body.style.overflow = 'hidden';
     } else {
-      formValue.appointmentTime = null; // ✅ better than empty string
+      this.document.body.style.overflow = 'auto';
     }
+  }
 
-    console.log('Sending payload:', formValue);
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    // Close mobile menu on window resize above 768px
+    if (event.target.innerWidth > 768 && this.mobileMenuOpen) {
+      this.mobileMenuOpen = false;
+      this.document.body.style.overflow = 'auto';
+    }
+  }
 
-    this.appointmentService.createAppointment(formValue).subscribe({
-      next: () => {
-        alert('Appointment booked successfully!');
-        this.appointmentForm.reset();
-      },
-      error: err => console.error(err)
+  ngOnInit() {
+    // Ensure body has proper overflow
+    this.document.body.style.overflow = 'auto';
+    this.document.body.style.height = 'auto';
+    this.document.documentElement.style.overflow = 'auto';
+    this.document.documentElement.style.height = 'auto';
+  }
+
+  scrollToSection(sectionId: string) {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      // Close mobile menu after clicking
+      if (this.mobileMenuOpen) {
+        this.mobileMenuOpen = false;
+        this.document.body.style.overflow = 'auto';
+      }
+
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }
+
+  openAuthDialog(type: 'login' | 'register') {
+    const component: ComponentType<any> =
+      type === 'login' ? LoginComponent : RegisterComponent;
+
+    this.dialog.open(component, {
+      width: '420px',
+      panelClass: 'custom-login-dialog',
+      backdropClass: 'login-backdrop',
+      disableClose: false,
+      maxWidth: '95vw',
+      maxHeight: '100vh'
     });
   }
-}
 
+  submitAppointment() {
+    if (this.appointmentForm.valid) {
+      const formValue = this.appointmentForm.value;
+
+      if (formValue.hour && formValue.ampm) {
+        formValue.appointmentTime = `${formValue.hour}:00 ${formValue.ampm}`;
+      } else {
+        formValue.appointmentTime = null;
+      }
+
+      console.log('Sending payload:', formValue);
+
+      this.appointmentService.createAppointment(formValue).subscribe({
+        next: () => {
+          alert('Appointment booked successfully!');
+          this.appointmentForm.reset();
+        },
+        error: err => console.error(err)
+      });
+    }
   }
+}
