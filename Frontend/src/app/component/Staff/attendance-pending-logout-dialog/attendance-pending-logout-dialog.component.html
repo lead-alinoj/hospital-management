@@ -1,50 +1,83 @@
-<h2 mat-dialog-title>Pending Logout Attendance</h2>
+<h2 mat-dialog-title>
+  Pending Logout Attendance
+  <span *ngIf="loading" class="loading-spinner">
+    <mat-spinner diameter="20"></mat-spinner>
+  </span>
+</h2>
 
-<table mat-table [dataSource]="data">
-  <ng-container matColumnDef="staff">
-    <th mat-header-cell *matHeaderCellDef>Staff</th>
-    <td mat-cell *matCellDef="let r">{{ r.staffName }}</td>
-  </ng-container>
+<div *ngIf="!loading; else loadingTemplate">
+  <table mat-table [dataSource]="data" class="full-width-table">
+    <!-- Staff Column -->
+    <ng-container matColumnDef="staff">
+      <th mat-header-cell *matHeaderCellDef>Staff</th>
+      <td mat-cell *matCellDef="let r">
+        <div class="staff-info">
+          <strong>{{ r.staffName }}</strong>
+          <small>{{ r.staffId }} - {{ r.jobRole }}</small>
+        </div>
+      </td>
+    </ng-container>
 
-  <ng-container matColumnDef="inTime">
-    <th mat-header-cell *matHeaderCellDef>In Time</th>
-    <td mat-cell *matCellDef="let r">{{ r.inTime | date:'HH:mm' }}</td>
-  </ng-container>
+    <!-- In Time Column -->
+    <ng-container matColumnDef="inTime">
+      <th mat-header-cell *matHeaderCellDef>In Time</th>
+      <td mat-cell *matCellDef="let r">
+        {{ r.inTime | date:'dd/MM/yyyy HH:mm' }}
+      </td>
+    </ng-container>
 
-<ng-container matColumnDef="action">
-  <th mat-header-cell *matHeaderCellDef>Action</th>
-  <td mat-cell *matCellDef="let r">
-    
-    <!-- SHOW BUTTON INITIALLY -->
-    <button mat-raised-button color="warn"
-      *ngIf="!r.showForce"
-      (click)="enableForce(r)">
-      Force Logout
-    </button>
+    <!-- Shift Column -->
+    <ng-container matColumnDef="shift">
+      <th mat-header-cell *matHeaderCellDef>Shift</th>
+      <td mat-cell *matCellDef="let r">
+        {{ r.shiftId?.name || '—' }} ({{ r.shiftId?.startTime }} - {{ r.shiftId?.endTime }})
+      </td>
+    </ng-container>
 
-    <!-- SHOW TIME + CONFIRM AFTER CLICK -->
-    <div *ngIf="r.showForce" class="force-box">
-      <input
-        type="datetime-local"
-        [(ngModel)]="r.forceOutTime"
-        class="time-input"
-        
-      />
+    <!-- Action Column -->
+    <ng-container matColumnDef="action">
+      <th mat-header-cell *matHeaderCellDef>Action</th>
+      <td mat-cell *matCellDef="let r">
+        <!-- SHOW BUTTON INITIALLY -->
+        <button mat-raised-button color="warn" *ngIf="!r.showForce" (click)="enableForce(r)" [disabled]="loading">
+          <mat-icon>logout</mat-icon>
+          Force Logout
+        </button>
 
-      <button mat-raised-button color="primary"
-        (click)="confirmForceLogout(r)">
-        Confirm
-      </button>
-    </div>
+        <!-- SHOW TIME + CONFIRM AFTER CLICK -->
+        <div *ngIf="r.showForce" class="force-box">
+          <input type="datetime-local" [(ngModel)]="r.forceOutTime" class="time-input" [disabled]="loading" />
+          <div class="force-actions">
+            <button mat-raised-button color="primary" (click)="confirmForceLogout(r)" [disabled]="loading">
+              <mat-icon>check</mat-icon>
+              Confirm
+            </button>
+            <button mat-button (click)="enableForce(r)" [disabled]="loading">
+              <mat-icon>close</mat-icon>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </td>
+    </ng-container>
 
-  </td>
-</ng-container>
+    <tr mat-header-row *matHeaderRowDef="['staff', 'inTime', 'shift', 'action']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['staff', 'inTime', 'shift', 'action']"></tr>
+  </table>
 
+  <div *ngIf="data.length === 0" class="empty-state">
+    <mat-icon>check_circle</mat-icon>
+    <p>No pending logouts found</p>
+  </div>
+</div>
 
-  <tr mat-header-row *matHeaderRowDef="['staff','inTime','action']"></tr>
-  <tr mat-row *matRowDef="let row; columns: ['staff','inTime','action']"></tr>
-</table>
+<ng-template #loadingTemplate>
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading pending logouts...</p>
+  </div>
+</ng-template>
 
-<div align="end" style="margin-top:16px">
-  <button mat-button (click)="close()">Close</button>
+<div align="end" style="margin-top: 16px; padding: 8px;">
+  <button mat-button (click)="close()" [disabled]="loading">Close</button>
 </div>

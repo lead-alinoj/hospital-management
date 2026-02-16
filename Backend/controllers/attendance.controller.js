@@ -155,121 +155,185 @@ exports.updateAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findById(req.params.id).populate('shiftId');
 
-    if (!attendance || attendance.outTime) {
-      return res.status(400).json({ error: 'Invalid logout' });
+    if (!attendance) {
+      return res.status(404).json({ error: 'Attendance not found' });
     }
 
-    // ✅ USE PROVIDED OUT TIME IF SENT
-let outTime;
+    if (attendance.outTime) {
+      return res.status(400).json({ error: 'Attendance already has out time' });
+    }
 
-if (req.body.outTime) {
-  // Expecting "HH:mm"
-  const [h, m] = req.body.outTime.split(':');
-
-  outTime = new Date(attendance.date);
-  outTime.setHours(+h, +m, 0, 0);
-} else {
-  outTime = new Date();
-}
+    // Get out time
+    let outTime;
+    if (req.body.outTime) {
+      const [h, m] = req.body.outTime.split(':');
+      outTime = new Date(attendance.date);
+      outTime.setHours(+h, +m, 0, 0);
+    } else {
+      outTime = new Date();
+    }
 
     const shift = attendance.shiftId;
+    
+    // Handle overnight shifts
     if (shift?.isOvernight && outTime < attendance.inTime) {
       outTime.setDate(outTime.getDate() + 1);
     }
 
+    // Calculate worked minutes
     const workedMinutes = Math.max(
       Math.floor((outTime - attendance.inTime) / 60000),
       1
     );
 
+    attendance.outTime = outTime;
     attendance.totalMinutes = workedMinutes;
 
-    // ✅ 3. ENHANCED OVERTIME CALCULATION
+    // Calculate overtime based on shift duration
     if (shift) {
-      const expectedDuration = shift.fullDayMinutes;
-      const tolerance = 15; // 15-minute tolerance
+      const shiftDuration = shift.fullDayMinutes || 480; // Default 8 hours
       
-      // Only calculate overtime if worked more than expected (with tolerance)
-      if (workedMinutes > (expectedDuration + tolerance)) {
-        attendance.overtimeMinutes = workedMinutes - expectedDuration;
+      if (workedMinutes > shiftDuration) {
+        attendance.overtimeMinutes = workedMinutes - shiftDuration;
       } else {
         attendance.overtimeMinutes = 0;
       }
-      
-      // Auto-update status based on worked minutes
-      if (workedMinutes >= shift.halfDayMinutes && workedMinutes < shift.fullDayMinutes) {
+
+      // Update status based on worked minutes
+      if (workedMinutes < shift.halfDayMinutes) {
+        attendance.status = 'Absent';
+      } else if (workedMinutes >= shift.halfDayMinutes && workedMinutes < shiftDuration) {
         attendance.status = 'Half Day';
-      } else if (workedMinutes >= shift.fullDayMinutes) {
+      } else {
         attendance.status = 'Present';
       }
     }
 
-    attendance.outTime = outTime;
     await attendance.save();
-    res.json({ success: true, data: attendance });
+
+    // Return populated data
+    const updatedAttendance = await Attendance.findById(attendance._id)
+      .populate('shiftId');
+
+    res.json({ success: true, data: updatedAttendance });
   } catch (error) {
+    console.error('Update attendance error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
 
 exports.adminCloseAttendance = async (req, res) => {
-  const { outTime, reason } = req.body;
+  try {
+    const { outTime, reason } = req.body;
+    const attendanceId = req.params.id;
 
-  const attendance = await Attendance.findById(req.params.id)
-    .populate('shiftId');
+    if (!outTime) {
+      return res.status(400).json({ error: 'Out time is required' });
+    }
 
-  if (!attendance || attendance.outTime) {
-    return res.status(400).json({ error: 'Attendance already closed' });
+    const attendance = await Attendance.findById(attendanceId).populate('shiftId');
+
+    if (!attendance) {
+      return res.status(404).json({ error: 'Attendance record not found' });
+    }
+
+    if (attendance.outTime) {
+      return res.status(400).json({ error: 'Attendance already closed' });
+    }
+
+    // Parse the out time
+    const forcedOut = new Date(outTime);
+    
+    // Validate date
+    if (isNaN(forcedOut.getTime())) {
+      return res.status(400).json({ error: 'Invalid out time format' });
+    }
+
+    const shift = attendance.shiftId;
+    
+    // Handle overnight shifts
+    if (shift?.isOvernight && forcedOut < attendance.inTime) {
+      forcedOut.setDate(forcedOut.getDate() + 1);
+    }
+
+    // Calculate worked minutes
+    const workedMinutes = Math.max(
+      Math.floor((forcedOut - attendance.inTime) / 60000),
+      1
+    );
+
+    // Update attendance record
+    attendance.outTime = forcedOut;
+    attendance.totalMinutes = workedMinutes;
+    attendance.adminLogout = true;
+    attendance.adminOutTime = forcedOut;
+    attendance.logoutReason = reason || 'Admin forced logout';
+    attendance.adminClosedBy = req.user?.email || 'Admin';
+
+    // Calculate overtime
+    if (shift) {
+      const shiftDuration = shift.fullDayMinutes || 480; // Default 8 hours if not set
+      
+      if (workedMinutes > shiftDuration) {
+        attendance.overtimeMinutes = workedMinutes - shiftDuration;
+      } else {
+        attendance.overtimeMinutes = 0;
+      }
+
+      // Update status based on worked minutes
+      if (workedMinutes < shift.halfDayMinutes) {
+        attendance.status = 'Absent'; // Less than half day
+      } else if (workedMinutes >= shift.halfDayMinutes && workedMinutes < shiftDuration) {
+        attendance.status = 'Half Day';
+      } else {
+        attendance.status = 'Present';
+      }
+    }
+
+    // Save with explicit fields
+    await attendance.save();
+
+    // Fetch the updated record with populated fields
+    const updatedAttendance = await Attendance.findById(attendanceId)
+      .populate('shiftId')
+      .lean();
+
+    res.json({ 
+      success: true, 
+      data: updatedAttendance,
+      message: 'Attendance closed successfully'
+    });
+
+  } catch (error) {
+    console.error('Admin close attendance error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to close attendance'
+    });
   }
-
-  // ✅ FORCE OUT TIME (EXACT)
-  const forcedOut = new Date(outTime);
-const shift = attendance.shiftId;
-if (shift?.isOvernight && forcedOut < attendance.inTime) {
-  forcedOut.setDate(forcedOut.getDate() + 1);
-}
- const workedMinutes = Math.max(
-  Math.floor((forcedOut - attendance.inTime) / 60000),
-  1
-);
-
-attendance.totalMinutes = workedMinutes;
-
-if (shift && workedMinutes > shift.fullDayMinutes) {
-  attendance.overtimeMinutes = workedMinutes - shift.fullDayMinutes;
-}
-
-
-  // ✅ VERY IMPORTANT: KEEP STATUS SAFE
-  attendance.status = attendance.status || 'Present';
-
-  attendance.adminLogout = true;
-  attendance.adminOutTime = forcedOut;
-  attendance.logoutReason = reason;
-  attendance.adminClosedBy = req.user?.email || 'Admin';
-
-  await attendance.save();
-
-  res.json({ success: true, data: attendance });
 };
-
 
 // Get pending logout attendance (Admin only)
 exports.getPendingLogoutAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.find({
-      outTime: null
+      outTime: null,  // Only records without outTime
+      status: { $ne: 'Absent' } // Exclude absent records
     })
     .populate('shiftId')
-    .sort({ date: 1, inTime: 1 });
+    .sort({ date: -1, inTime: 1 });
 
     res.json({
       success: true,
       data: attendance
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error fetching pending logouts:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 

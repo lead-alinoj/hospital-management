@@ -323,7 +323,7 @@ export class PaymentSummaryComponent implements OnInit, OnChanges {
 
   private checkUserPermissions(): void {
     const user = this.authService.getCurrentUser();
-    this.canAddPayment = user?.role === 'Reception' || user?.role === 'Admin';
+    this.canAddPayment = user?.role === 'Reception' ||user?.role === 'Pharmacy' || user?.role === 'Admin';
   }
 
   private loadPayments(): void {

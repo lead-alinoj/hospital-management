@@ -75,14 +75,12 @@ getAttendanceSummary(startDate?: string, endDate?: string): Observable<{ success
 
   return this.http.get<{ success: boolean; data: any[] }>(`${this.apiUrl}/summary`, { params });
 }
-
 // Admin force close attendance (forgot logout / emergency)
 adminCloseAttendance(attendanceId: string, payload: {
   outTime: Date;
   reason: string;
-}): Observable<{ success: boolean; data: Attendance }> {
-
-  return this.http.put<{ success: boolean; data: Attendance }>(
+}): Observable<{ success: boolean; data: Attendance; message?: string }> {
+  return this.http.put<{ success: boolean; data: Attendance; message?: string }>(
     `${this.apiUrl}/admin-close/${attendanceId}`,
     payload
   );

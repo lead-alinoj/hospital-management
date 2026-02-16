@@ -28,6 +28,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { PendingLogoutDialogComponent } from '../attendance-pending-logout-dialog/attendance-pending-logout-dialog.component';
 import { ShiftService } from '../../../service/shift.service';
 import { Shift } from '../../../models/shift.model';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-attendance-history',
@@ -102,7 +103,9 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
     private shiftService: ShiftService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+      private cdr: ChangeDetectorRef
+
   ) {
     // Set default date range (last 30 days)
     const endDate = new Date();
@@ -248,55 +251,46 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
     }
   }
 
-  loadAttendance(): void {
-    this.isLoading = true;
+loadAttendance(): void {
+  this.isLoading = true;
+  this.cdr.detectChanges();
 
-    const fv = this.filterForm.value;
-    const filter: AttendanceFilter = {};
+  const fv = this.filterForm.value;
+  const filter: AttendanceFilter = {};
 
-    // Fix: Use Date objects instead of strings
-    if (fv.startDate) {
-      filter.startDate = this.formatDateLocal(fv.startDate);
-    }
-    if (fv.endDate) {
-      filter.endDate = this.formatDateLocal(fv.endDate);
-    }
-
-    if (fv.staffId) {
-      filter.staffId = fv.staffId;
-    }
-    if (fv.jobRole) {
-      filter.jobRole = fv.jobRole;
-    }
-    if (fv.shiftId) {
-      filter.shiftId = fv.shiftId; // ✅ ADD SHIFT FILTER
-    }
-
-    this.updateSelectedFilters(fv);
-
-    this.attendanceService.getAttendanceByDateRange(filter).subscribe({
-      next: (res) => {
-        this.attendanceData = res.data || [];
-        this.filteredData = [...this.attendanceData];
-        this.totalRecords = this.filteredData.length;
-        
-        // ✅ CALCULATE SUMMARY STATS
-        this.calculateSummaryStats();
-
-        // ✅ SAFE async update (prevents NG0100)
-        Promise.resolve().then(() => {
-          this.dataSource.data = this.filteredData;
-        });
-        
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading attendance:', error);
-        this.snackBar.open('Failed to load attendance records', 'Close', { duration: 3000 });
-        this.isLoading = false;
-      }
-    });
+  if (fv.startDate) {
+    filter.startDate = this.formatDateLocal(fv.startDate);
   }
+  if (fv.endDate) {
+    filter.endDate = this.formatDateLocal(fv.endDate);
+  }
+  if (fv.staffId) filter.staffId = fv.staffId;
+  if (fv.jobRole) filter.jobRole = fv.jobRole;
+  if (fv.shiftId) filter.shiftId = fv.shiftId;
+
+  this.updateSelectedFilters(fv);
+
+  this.attendanceService.getAttendanceByDateRange(filter).subscribe({
+    next: (res) => {
+      this.attendanceData = res.data || [];
+      this.filteredData = [...this.attendanceData];
+      this.totalRecords = this.filteredData.length;
+      
+      this.calculateSummaryStats();
+      
+      // Update data source and force change detection
+      this.dataSource.data = this.filteredData;
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    },
+    error: (error) => {
+      console.error('Error loading attendance:', error);
+      this.snackBar.open('Failed to load attendance records', 'Close', { duration: 3000 });
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
+  });
+}
 
   // ✅ CALCULATE SUMMARY STATISTICS - FIXED VERSION
   calculateSummaryStats(): void {
@@ -487,29 +481,34 @@ export class AttendanceHistoryComponent implements OnInit, AfterViewInit  {
 
   pendingLogoutCount = 0;
 
-  openPendingLogoutDialog(): void {
-    const ref = this.dialog.open(PendingLogoutDialogComponent, {
-      width: '900px',
-      disableClose: true
-    });
+openPendingLogoutDialog(): void {
+  const ref = this.dialog.open(PendingLogoutDialogComponent, {
+    width: '900px',
+    disableClose: true
+  });
 
-    ref.afterClosed().subscribe(() => {
+  ref.afterClosed().subscribe((refreshNeeded) => {
+    if (refreshNeeded) {
+      // Refresh both pending count and attendance history
       this.loadPendingLogoutCount();
-      this.loadAttendance();
-    });
-  }
+      this.loadAttendance(); // Refresh the main table
+      this.loadTodaySummary(); // Refresh summary stats
+    }
+  });
+}
 
-  loadPendingLogoutCount(): void {
-    this.attendanceService.getPendingLogout().subscribe({
-      next: (res) => {
-        this.pendingLogoutCount = res.data.length;
-      },
-      error: (err) => {
-        console.error('Error loading pending logout count', err);
-        this.pendingLogoutCount = 0;
-      }
-    });
-  }
+loadPendingLogoutCount(): void {
+  this.attendanceService.getPendingLogout().subscribe({
+    next: (res) => {
+      this.pendingLogoutCount = res.data?.length || 0;
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('Error loading pending logout count', err);
+      this.pendingLogoutCount = 0;
+    }
+  });
+}
 
   getShiftIcon(shift: any): string {
     const name = shift?.name?.toLowerCase() || '';

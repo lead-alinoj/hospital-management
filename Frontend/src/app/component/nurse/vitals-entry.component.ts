@@ -67,8 +67,10 @@ import { VitalsService } from "../../service/vitals.service";
             <!-- Basic Measurements -->
             <h3 class="section-title">Basic Measurements</h3>
             <div class="measurement-grid">
-             <mat-form-field appearance="outline" class="form-field">
+             <mat-form-field appearance="outline" class="form-field curved-field">
   <mat-label>Height (cm) *</mat-label>
+<mat-icon matPrefix class="cute-icon height-icon">height</mat-icon>
+
   <input matInput type="number" formControlName="height" min="50" max="250" step="0.1">
   <span matSuffix>cm</span>
   <mat-error *ngIf="vitalsForm.get('height')?.hasError('required')">
@@ -77,8 +79,10 @@ import { VitalsService } from "../../service/vitals.service";
 </mat-form-field>
 
 
-            <mat-form-field appearance="outline" class="form-field">
+            <mat-form-field appearance="outline" class="form-field curved-field">
   <mat-label>Weight (kg) *</mat-label>
+   <mat-icon matPrefix class="cute-icon weight-icon">monitor_weight</mat-icon>
+
   <input matInput type="number" formControlName="weight" min="2" max="300" step="0.1">
   <span matSuffix>kg</span>
   <mat-error *ngIf="vitalsForm.get('weight')?.hasError('required')">
@@ -101,8 +105,10 @@ import { VitalsService } from "../../service/vitals.service";
             <!-- Vital Signs -->
             <h3 class="section-title">Vital Signs</h3>
             <div class="measurement-grid">
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" class="form-field curved-field">
                 <mat-label>BP Systolic</mat-label>
+                <mat-icon matPrefix class="cute-icon heart-icon">favorite</mat-icon>
+
                 <input matInput type="number" formControlName="bpSystolic" min="50" max="250">
                 <span matSuffix>mmHg</span>
                 <mat-error *ngIf="vitalsForm.get('bpSystolic')?.hasError('required')">
@@ -110,22 +116,26 @@ import { VitalsService } from "../../service/vitals.service";
                 </mat-error>
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" class="form-field curved-field">
                 <mat-label>BP Diastolic</mat-label>
+                 <mat-icon matPrefix class="cute-icon heart-icon">favorite_border</mat-icon>
+
                 <input matInput type="number" formControlName="bpDiastolic" min="30" max="150">
                 <span matSuffix>mmHg</span>
                
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" class="form-field curved-field">
                 <mat-label>Pulse Rate</mat-label>
+<mat-icon matPrefix class="cute-icon pulse-icon">monitor_heart</mat-icon>
                 <input matInput type="number" formControlName="pulse" min="30" max="200">
                 <span matSuffix>bpm</span>
                 
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline"class="form-field curved-field">
                 <mat-label>Temperature</mat-label>
+<mat-icon matPrefix class="cute-icon temp-icon">thermostat</mat-icon>
 <input
   matInput
   type="number"
@@ -139,15 +149,17 @@ import { VitalsService } from "../../service/vitals.service";
                
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" class="form-field curved-field">
                 <mat-label>SpO₂</mat-label>
+<mat-icon matPrefix class="cute-icon oxygen-icon">air</mat-icon>
                 <input matInput type="number" formControlName="spo2" min="70" max="100">
                 <span matSuffix>%</span>
                 
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="form-field">
+              <mat-form-field appearance="outline" class="form-field curved-field">
                 <mat-label>Respiratory Rate</mat-label>
+<mat-icon matPrefix class="cute-icon resp-icon">lungs</mat-icon>
                 <input matInput type="number" formControlName="respiratoryRate" min="8" max="60">
                 <span matSuffix>breaths/min</span>
                 
@@ -159,12 +171,14 @@ import { VitalsService } from "../../service/vitals.service";
             <div class="form-row">
               <mat-form-field appearance="outline" class="form-field half-width">
                 <mat-label>Blood Sugar</mat-label>
+<mat-icon matPrefix class="cute-icon sugar-icon">bloodtype</mat-icon>
                 <input matInput type="number" formControlName="bloodSugarValue" min="30" max="600">
                 <span matSuffix>mg/dL</span>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="form-field half-width">
                 <mat-label>Type</mat-label>
+<mat-icon matPrefix class="cute-icon sugar-icon">science</mat-icon>
                 <mat-select formControlName="bloodSugarType">
                   <mat-option value="Random">Random</mat-option>
                   <mat-option value="Fasting">Fasting</mat-option>
@@ -177,6 +191,7 @@ import { VitalsService } from "../../service/vitals.service";
             <h3 class="section-title">Additional Information</h3>
             <mat-form-field appearance="outline" class="form-field full-width">
               <mat-label>Remarks</mat-label>
+<mat-icon matPrefix class="cute-icon remark-icon">notes</mat-icon>
               <textarea matInput formControlName="remarks" rows="3" 
                 placeholder="Enter any additional observations, symptoms, or notes..."></textarea>
             </mat-form-field>
@@ -245,8 +260,7 @@ import { VitalsService } from "../../service/vitals.service";
 
     .patient-header {
       margin-bottom: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);      color: white;
     }
 
     .patient-info {
@@ -271,7 +285,20 @@ import { VitalsService } from "../../service/vitals.service";
       font-size: 16px;
       font-weight: 500;
     }
+/* Fully rounded modern outline */
+.curved-field .mdc-notched-outline__leading,
+.curved-field .mdc-notched-outline__trailing {
+  border-radius: 20px !important;
+}
 
+.curved-field .mdc-text-field {
+  border-radius: 20px !important;
+}
+
+/* Soft focus glow */
+.curved-field.mat-focused .mdc-notched-outline {
+  box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.15);
+}
     .token-badge {
       background: white;
       color: #3f51b5;
@@ -287,7 +314,80 @@ import { VitalsService } from "../../service/vitals.service";
       padding: 30px;
       margin-bottom: 40px;
     }
+/* Base icon style */
+.field-icon {
+  margin-right: 8px;
+  font-size: 20px;
+}
 
+/* Cute base icon */
+.cute-icon {
+  font-size: 18px;
+  padding: 6px;
+  margin-right: 8px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+/* Height */
+.height-icon {
+  background: linear-gradient(135deg, #e3f2fd, #fce4ec);
+  color: #5c6bc0;
+}
+
+/* Weight */
+.weight-icon {
+  background: linear-gradient(135deg, #f3e5f5, #e8eaf6);
+  color: #7e57c2;
+}
+
+/* Heart / BP */
+.heart-icon {
+  background: linear-gradient(135deg, #ffe0e0, #fff3e0);
+  color: #ec407a;
+}
+
+/* Pulse */
+.pulse-icon {
+  background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+  color: #d81b60;
+}
+
+/* Temperature */
+.temp-icon {
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  color: #fb8c00;
+}
+
+/* Oxygen */
+.oxygen-icon {
+  background: linear-gradient(135deg, #e0f7fa, #e1f5fe);
+  color: #00acc1;
+}
+
+/* Respiratory */
+.resp-icon {
+  background: linear-gradient(135deg, #e8f5e9, #e0f2f1);
+  color: #26a69a;
+}
+
+/* Sugar */
+.sugar-icon {
+  background: linear-gradient(135deg, #ede7f6, #f3e5f5);
+  color: #8e24aa;
+}
+
+/* Remarks */
+.remark-icon {
+  background: linear-gradient(135deg, #eceff1, #f5f5f5);
+  color: #546e7a;
+}
+
+/* Hover effect */
+.form-field:hover .cute-icon {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
     .form-header {
       margin-bottom: 30px;
     }
@@ -312,12 +412,11 @@ import { VitalsService } from "../../service/vitals.service";
       padding-bottom: 8px;
     }
 
-    .measurement-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
+.measurement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
 
     .form-field {
       width: 100%;

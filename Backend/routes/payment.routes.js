@@ -13,7 +13,7 @@ router.get('/:visitId',
 
 // Create new payment
 router.post('/',
-  authorize('Reception', 'Admin'),
+  authorize('Reception', 'Admin', 'Pharmacy'),
   paymentController.createPayment
 );
 
