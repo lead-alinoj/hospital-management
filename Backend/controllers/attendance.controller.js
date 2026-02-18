@@ -337,27 +337,37 @@ exports.getPendingLogoutAttendance = async (req, res) => {
   }
 };
 
-// Get today's attendance
 exports.getTodayAttendance = async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const attendance = await Attendance.find({
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      }
+      $or: [
+        // Today's records
+        {
+          date: {
+            $gte: today,
+            $lt: tomorrow
+          }
+        },
+        // OR any open attendance (night shift case)
+        {
+          outTime: null
+        }
+      ]
     })
-    .populate('shiftId') 
+    .populate('shiftId')
     .sort({ inTime: 1 });
-    
+
     res.json({
       success: true,
       data: attendance
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -365,6 +375,7 @@ exports.getTodayAttendance = async (req, res) => {
     });
   }
 };
+
 
 // Get staff attendance history
 exports.getStaffAttendance = async (req, res) => {
