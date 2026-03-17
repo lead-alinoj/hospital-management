@@ -44,7 +44,7 @@ import { CategoryService } from '../../service/category.service';
     MatProgressSpinnerModule,
     MatDatepickerModule
   ],
-  template: `
+ template: `
 <div class="medicine-management">
   <div class="header-section">
     <h1>
@@ -57,7 +57,7 @@ import { CategoryService } from '../../service/category.service';
     </button>
   </div>
 
-  <!-- Inline Add/Edit Medicine Form -->
+  <!-- Inline Add/Edit Medicine Form - FIXED RESPONSIVE VERSION -->
   <mat-card *ngIf="showAddForm" class="add-medicine-form">
     <mat-card-header>
       <mat-card-title>
@@ -68,113 +68,110 @@ import { CategoryService } from '../../service/category.service';
     <mat-card-content>
       <form [formGroup]="medicineForm">
         <div class="form-grid">
-
-          <!-- Row 1: Name & Generic Name -->
-          <div class="row">
-            <mat-form-field appearance="outline" class="half-width">
+          <!-- Mobile-First Responsive Grid -->
+          
+          <!-- Row 1: Medicine Name (full width on mobile) -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
               <mat-label>Medicine Name *</mat-label>
-  <mat-icon matPrefix>medical_services</mat-icon>
-
+              <mat-icon matPrefix>medical_services</mat-icon>
               <input matInput formControlName="name" placeholder="e.g., Paracetamol">
               <mat-error *ngIf="medicineForm.get('name')?.hasError('required')">
                 Name is required
               </mat-error>
             </mat-form-field>
-
-<mat-form-field *ngIf="isMedicine" appearance="outline">
-  <!-- Generic Name -->
-<mat-icon matPrefix>science</mat-icon>
-
-  <mat-label>Generic Name</mat-label>
-  <input matInput formControlName="genericName">
-</mat-form-field>
-
           </div>
 
-          <!-- Row 2: Brand, Strength, Unit -->
-          <div class="row">
-            <mat-form-field appearance="outline" class="half-width">
-              <mat-icon matPrefix>branding_watermark</mat-icon>
+      <!-- Row 2: Brand Name + Category -->
+<div class="form-row responsive-row">
 
-            <mat-label>Brand Name</mat-label>
-              <input matInput formControlName="brandName" placeholder="e.g., Crocin">
+  <mat-form-field appearance="outline" class="responsive-field">
+    <mat-icon matPrefix>branding_watermark</mat-icon>
+    <mat-label>Brand Name</mat-label>
+    <input matInput formControlName="brandName" placeholder="e.g., Crocin">
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="responsive-field">
+    <mat-icon matPrefix>category</mat-icon>
+    <mat-label>Category *</mat-label>
+    <mat-select formControlName="category" (selectionChange)="categoryChanged($event.value)">
+      <mat-option *ngFor="let cat of categories" [value]="cat._id">
+        {{ cat.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+</div>
+<!-- Row 3: Generic Name (only for Medicine) -->
+<div class="form-row" *ngIf="isMedicine">
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-icon matPrefix>science</mat-icon>
+    <mat-label>Generic Name</mat-label>
+    <input matInput formControlName="genericName">
+  </mat-form-field>
+</div>
+          <!-- Row 3: Strength, Unit, Supplier (flex wrap) -->
+          <div class="form-row responsive-row">
+            <mat-form-field *ngIf="isMedicine" appearance="outline" class="responsive-field">
+              <mat-icon matPrefix>fitness_center</mat-icon>
+              <mat-label>Strength *</mat-label>
+              <input matInput formControlName="strength">
             </mat-form-field>
 
-<mat-form-field *ngIf="isMedicine" appearance="outline">
-  <mat-icon matPrefix>fitness_center</mat-icon>
+            <mat-form-field
+              *ngIf="isMedicine || isConsumable || isCleaning"
+              appearance="outline"
+              class="responsive-field">
+              <mat-icon matPrefix>straighten</mat-icon>
+              <mat-label>Unit *</mat-label>
+              <mat-select formControlName="unit">
+                <!-- Medicine units -->
+                <mat-option value="mg">mg</mat-option>
+                <mat-option value="ml">ml</mat-option>
+                <mat-option value="g">g</mat-option>
+                <mat-option value="mcg">mcg</mat-option>
+                <mat-option value="IU">IU</mat-option>
+                <!-- Non-medicine consumables -->
+                <mat-option value="piece">piece</mat-option>
+                <mat-option value="pack">pack</mat-option>
+                <mat-option value="box">box</mat-option>
+                <mat-option value="roll">roll</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-  <mat-label>Strength *</mat-label>
-  <input matInput formControlName="strength">
-</mat-form-field>
-
-
-<mat-form-field
-  *ngIf="isMedicine || isConsumable || isCleaning"
-  appearance="outline"
-  class="quarter-width">
-<mat-icon matPrefix>straighten</mat-icon>
-
-  <mat-label>Unit *</mat-label>
-  <mat-select formControlName="unit">
-
-    <!-- Medicine units -->
-    <mat-option value="mg">mg</mat-option>
-    <mat-option value="ml">ml</mat-option>
-    <mat-option value="g">g</mat-option>
-    <mat-option value="mcg">mcg</mat-option>
-    <mat-option value="IU">IU</mat-option>
-
-    <!-- Non-medicine consumables -->
-    <mat-option value="piece">piece</mat-option>
-    <mat-option value="pack">pack</mat-option>
-    <mat-option value="box">box</mat-option>
-    <mat-option value="roll">roll</mat-option>
-
-  </mat-select>
-</mat-form-field>
-
-
+            <mat-form-field *ngIf="!isEquipment || isEquipment" appearance="outline" class="responsive-field">
+              <mat-icon matPrefix>local_shipping</mat-icon>
+              <mat-label>Supplier</mat-label>
+              <input matInput formControlName="supplier">
+            </mat-form-field>
           </div>
 
-          <!-- Row 3: Category & Supplier -->
-          <div class="row">
-   <mat-form-field appearance="outline">
-      <mat-icon matPrefix>category</mat-icon>
-
-  <mat-label>Category</mat-label>
-<mat-select formControlName="category"
-  (selectionChange)="categoryChanged($event.value)">
-    <mat-option *ngFor="let cat of categories" [value]="cat._id">
-      {{ cat.name }}
-    </mat-option>
-  </mat-select>
-</mat-form-field>
-
-
-<mat-form-field *ngIf="!isEquipment || isEquipment"  appearance="outline">
-<mat-icon matPrefix>local_shipping</mat-icon>
-
-  <mat-label>Supplier</mat-label>
-  <input matInput formControlName="supplier">
-</mat-form-field>
-
+          <!-- Row 4: Category (full width) -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-icon matPrefix>category</mat-icon>
+              <mat-label>Category *</mat-label>
+              <mat-select formControlName="category" (selectionChange)="categoryChanged($event.value)">
+                <mat-option *ngFor="let cat of categories" [value]="cat._id">
+                  {{ cat.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
 
-          <!-- Row 4: Current Stock, Min Stock, Price (Min Stock & Price for Consumables only) -->
-          <div class="row">
-            <mat-form-field appearance="outline" class="third-width">
+          <!-- Row 5: Stock, Min Stock, Price (responsive grid) -->
+          <div class="form-row responsive-row">
+            <mat-form-field appearance="outline" class="responsive-field">
               <mat-icon matPrefix>inventory</mat-icon>
-  
-            <mat-label>Current Stock *</mat-label>
+              <mat-label>Current Stock *</mat-label>
               <input matInput formControlName="stockQty" type="number" min="0">
               <mat-error *ngIf="medicineForm.get('stockQty')?.hasError('required')">
                 Stock quantity is required
               </mat-error>
             </mat-form-field>
 
-<mat-form-field *ngIf="!isEquipment">
-  <mat-icon matPrefix>warning_amber</mat-icon>
-
+            <mat-form-field *ngIf="!isEquipment" appearance="outline" class="responsive-field">
+              <mat-icon matPrefix>warning_amber</mat-icon>
               <mat-label>Min Stock *</mat-label>
               <input matInput formControlName="minStock" type="number" min="0">
               <mat-error *ngIf="medicineForm.get('minStock')?.hasError('required')">
@@ -182,10 +179,9 @@ import { CategoryService } from '../../service/category.service';
               </mat-error>
             </mat-form-field>
 
-<mat-form-field *ngIf="isMedicine || isConsumable || isCleaning">
-  <mat-icon matPrefix>currency_rupee</mat-icon>
-            
-<mat-label>Price (₹) *</mat-label>
+            <mat-form-field *ngIf="isMedicine || isConsumable || isCleaning" appearance="outline" class="responsive-field">
+              <mat-icon matPrefix>currency_rupee</mat-icon>
+              <mat-label>Price (₹) *</mat-label>
               <input matInput formControlName="price" type="number" step="0.01" min="0">
               <mat-error *ngIf="medicineForm.get('price')?.hasError('required')">
                 Price is required
@@ -193,25 +189,22 @@ import { CategoryService } from '../../service/category.service';
             </mat-form-field>
           </div>
 
-          <!-- Row 5: Batch Number & Expiry Date  -->
-<div *ngIf="isMedicine || isConsumable">
-            <mat-form-field appearance="outline" class="half-width">
-             <mat-icon matPrefix>qr_code</mat-icon>
- 
-            <mat-label>Batch Number</mat-label>
+          <!-- Row 6: Batch Number & Expiry Date (responsive) -->
+          <div *ngIf="isMedicine || isConsumable" class="form-row responsive-row">
+            <mat-form-field appearance="outline" class="responsive-field">
+              <mat-icon matPrefix>qr_code</mat-icon>
+              <mat-label>Batch Number</mat-label>
               <input matInput formControlName="batchNumber" placeholder="e.g., BATCH-2024-001">
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="half-width">
-            <mat-icon matPrefix>event</mat-icon>
-  
-            <mat-label>Expiry Date</mat-label>
+            <mat-form-field appearance="outline" class="responsive-field">
+              <mat-icon matPrefix>event</mat-icon>
+              <mat-label>Expiry Date</mat-label>
               <input matInput [matDatepicker]="expiryPicker" formControlName="expiryDate">
               <mat-datepicker-toggle matSuffix [for]="expiryPicker"></mat-datepicker-toggle>
               <mat-datepicker #expiryPicker></mat-datepicker>
             </mat-form-field>
           </div>
-
         </div>
       </form>
     </mat-card-content>
@@ -515,47 +508,96 @@ import { CategoryService } from '../../service/category.service';
       </mat-card>
     
   `,
-  styles: [`
-    .medicine-management {
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
- background: linear-gradient(
-    180deg,
-    #f4f9ff 0%,
-    #edf4ff 40%,
-    #f7fbff 100%
-  );  color: #10233d;  
+ styles: [`
+  .medicine-management {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #f4f9ff 0%, #edf4ff 40%, #f7fbff 100%);
+    color: #10233d;
+  }
+
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .header-section h1 {
+    color: #093175;
+    flex: 1 1 auto;
+    min-width: 200px;
+    margin: 0;
+  }
+
+  .header-section button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Responsive Form Styles - FIXED */
+  .add-medicine-form {
+    margin-bottom: 30px;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 0;
+  }
+
+  .form-row {
+    width: 100%;
+  }
+
+  .responsive-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .full-width {
+    width: 100%;
+  }
+
+  .responsive-field {
+    width: 100%;
+  }
+
+  /* Tablet and Desktop Styles */
+  @media (min-width: 768px) {
+    .responsive-row {
+      flex-direction: row;
+      flex-wrap: wrap;
     }
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
 
-.header-section h1 {
-    color: #0f3d8c;
+    .responsive-field {
+      flex: 1 1 calc(50% - 8px);
+      min-width: 200px;
+    }
+  }
 
-  flex: 1 1 auto;
-  min-width: 200px;
-  margin: 0;
-}
+  @media (min-width: 1024px) {
+    .responsive-field {
+      flex: 1 1 calc(33.333% - 11px);
+    }
+  }
 
-.header-section button {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-mat-card {
-  background: linear-gradient(180deg, #ffffff, #f6faff);
-  border: 1px solid #e3efff;
-}
-/* Dark blue icons inside Add Medicine form */
-.add-medicine-form mat-icon[matPrefix] {
-  color: #1e40af;        /* dark blue */
-  opacity: 0.95;
-}
+  /* Dark blue icons inside Add Medicine form */
+  .add-medicine-form mat-icon[matPrefix] {
+    color: #1e40af;
+    opacity: 0.95;
+  }
+
+  mat-card {
+    background: linear-gradient(180deg, #ffffff, #f6faff);
+    border: 1px solid #e3efff;
+  }
 
     .stats-cards {
       display: grid;
