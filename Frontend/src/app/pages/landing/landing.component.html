@@ -288,10 +288,11 @@
     <h2 class="section-title">Our Expert Doctors</h2>
     <p class="section-subtitle">Meet our team of experienced medical professionals</p>
     
-    <div class="doctors-grid">
+    <div class="doctors-grid" *ngIf="!loadingDoctors">
       <div class="doctor-card" *ngFor="let doctor of doctors">
         <div class="doctor-image">
-          <img [src]="doctor.image" [alt]="doctor.name">
+          <!-- Updated image line - removed pipe, added method call -->
+          <img [src]="getImageUrl(doctor.image)" [alt]="doctor.name" onerror="this.src='assets/images/default-doctor.jpg'">
         </div>
         <div class="doctor-info">
           <h3>{{ doctor.name }}</h3>
@@ -301,6 +302,9 @@
           <button mat-stroked-button color="primary" (click)="scrollToSection('appointment')">Book Appointment</button>
         </div>
       </div>
+    </div>
+    <div class="loading-spinner" *ngIf="loadingDoctors">
+      <mat-spinner diameter="40"></mat-spinner>
     </div>
   </div>
 </section>

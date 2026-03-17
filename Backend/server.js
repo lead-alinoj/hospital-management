@@ -3,11 +3,27 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-
+const fs = require('fs');
 dotenv.config();
 
 const app = express();
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const doctorsDir = path.join(__dirname, 'uploads', 'doctors');
 
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('✅ Created uploads directory');
+  }
+  
+  if (!fs.existsSync(doctorsDir)) {
+    fs.mkdirSync(doctorsDir, { recursive: true });
+    console.log('✅ Created doctors upload directory');
+  }
+} catch (err) {
+  console.error('Error creating upload directories:', err);
+}
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -30,6 +46,7 @@ const ipBillRoutes = require('./routes/ipBill.routes');
 const bedRoutes = require('./routes/bed.routes');
 const careUnitRoutes = require('./routes/careUnit.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const doctorRoutes = require('./routes/doctor.routes');
 // Routes
 
 app.use('/api/auth', authRoutes);
@@ -37,6 +54,7 @@ app.use('/api/visits', visitRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/vitals', vitalsRoutes);
 app.use('/api/hospital', hospitalRoutes);
+app.use('/api/doctors', doctorRoutes);
 app.use(
   '/uploads',
   (req, res, next) => {

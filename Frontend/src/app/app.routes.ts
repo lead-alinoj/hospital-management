@@ -35,6 +35,7 @@ import { VitalsViewComponent } from './component/nurse/vitals -view.component';
 import { IpRecommendationDialogComponent } from './component/doctor/ip-recommendation-dialog.component';
 import { IpServiceBillComponent } from './component/IP/ip-service-bill.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
+import { DoctorManagementComponent } from './component/doctor/doctor-landingpage/doctor-management.component';
 
 export const routes: Routes = [
   // Public routes - No layout
@@ -257,7 +258,12 @@ canActivate: [ipAdmissionGuard],
   canActivate: [adminGuard],
   data: { roles: ['Admin'] }
 },
-
+{
+  path: 'admin/doctors',
+  component: DoctorManagementComponent,
+  canActivate: [adminGuard],
+  data: { roles: ['Admin'] }
+},
 // Reception
 {
   path: 'reception/care-units',
@@ -265,7 +271,11 @@ canActivate: [ipAdmissionGuard],
   canActivate: [receptionGuard],
   data: { roles: ['Admin', 'Reception'] }
 },
-
+{
+  path: 'reception/doctors',
+  component: DoctorManagementComponent,
+  data: { roles: ['Admin', 'Reception'] }
+},
 // Nurse
 {
   path: 'nurse/care-units',

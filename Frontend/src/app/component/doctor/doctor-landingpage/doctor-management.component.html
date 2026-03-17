@@ -1,0 +1,147 @@
+<div class="doctor-management-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Doctor Management</h1>
+    <p class="subtitle">Add, edit or remove doctors from the hospital system</p>
+  </div>
+
+  <!-- Add/Edit Doctor Form -->
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>{{ editingDoctor ? 'edit' : 'person_add' }}</mat-icon>
+        {{ editingDoctor ? 'Edit Doctor' : 'Add New Doctor' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="doctorForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Doctor Name *</mat-label>
+            <input matInput formControlName="name" placeholder="Dr. John Doe">
+            <mat-icon matSuffix>badge</mat-icon>
+            <mat-error *ngIf="doctorForm.get('name')?.hasError('required')">
+              Name is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Specialty *</mat-label>
+            <input matInput formControlName="specialty" placeholder="Cardiologist">
+            <mat-icon matSuffix>medical_services</mat-icon>
+            <mat-error *ngIf="doctorForm.get('specialty')?.hasError('required')">
+              Specialty is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Experience (years) *</mat-label>
+            <input matInput type="number" formControlName="experience" placeholder="15">
+            <mat-icon matSuffix>timeline</mat-icon>
+            <mat-error *ngIf="doctorForm.get('experience')?.hasError('required')">
+              Experience is required
+            </mat-error>
+            <mat-error *ngIf="doctorForm.get('experience')?.hasError('min')">
+              Minimum 0 years
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Qualification *</mat-label>
+            <input matInput formControlName="qualification" placeholder="MD, DM, FACC">
+            <mat-icon matSuffix>school</mat-icon>
+            <mat-error *ngIf="doctorForm.get('qualification')?.hasError('required')">
+              Qualification is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row image-upload-row">
+          <mat-form-field appearance="outline" class="image-url-field">
+            <mat-label>Image URL</mat-label>
+            <input matInput formControlName="image" placeholder="https://example.com/doctor.jpg">
+            <mat-icon matSuffix>image</mat-icon>
+            <mat-hint>Or upload file below</mat-hint>
+          </mat-form-field>
+
+          <div class="file-upload-area">
+            <label for="doctorImage" class="file-upload-label">
+              <mat-icon>cloud_upload</mat-icon>
+              <span>Choose File</span>
+            </label>
+            <input type="file" id="doctorImage" (change)="onFileSelected($event)" accept="image/*" hidden>
+            <span class="file-name" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+            <button type="button" mat-icon-button color="warn" *ngIf="selectedFile" (click)="clearFile()" matTooltip="Remove file">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Image Preview -->
+        <div class="image-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="Preview">
+          <button type="button" class="remove-preview" mat-mini-fab color="warn" (click)="clearFile()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="doctorForm.invalid || loading">
+            <mat-icon>{{ editingDoctor ? 'save' : 'add' }}</mat-icon>
+            {{ editingDoctor ? 'Update Doctor' : 'Add Doctor' }}
+          </button>
+          <button mat-button type="button" *ngIf="editingDoctor" (click)="cancelEdit()">
+            <mat-icon>cancel</mat-icon>
+            Cancel
+          </button>
+          <button mat-button type="button" (click)="resetForm()" *ngIf="!editingDoctor">
+            <mat-icon>refresh</mat-icon>
+            Clear Form
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Doctors List -->
+  <div class="doctors-list-section">
+    <h2>Current Doctors</h2>
+    
+    <div class="loading-spinner" *ngIf="loading && !doctors.length">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+
+    <div class="doctors-grid" *ngIf="!loading || doctors.length">
+      <mat-card class="doctor-card" *ngFor="let doctor of doctors">
+        <div class="doctor-image">
+          <img [src]="getImageUrl(doctor.image)" [alt]="doctor.name" 
+               onerror="this.src='assets/images/default-doctor.jpg'">
+        </div>
+        <mat-card-content>
+          <h3>{{ doctor.name }}</h3>
+          <p class="specialty">{{ doctor.specialty }}</p>
+          <p class="experience">{{ doctor.experience }} years experience</p>
+          <p class="qualification">{{ doctor.qualification }}</p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-icon-button color="primary" (click)="editDoctor(doctor)" matTooltip="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteDoctor(doctor)" matTooltip="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <div class="no-doctors" *ngIf="!doctors.length && !loading">
+        <mat-icon>person_off</mat-icon>
+        <p>No doctors found. Add your first doctor above.</p>
+      </div>
+    </div>
+  </div>
+</div>

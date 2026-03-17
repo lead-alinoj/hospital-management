@@ -1584,3 +1584,9 @@ button[type="submit"] {
 ::ng-deep .login-backdrop {
   background: rgba(0, 0, 0, 0.5) !important;
 }
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}

@@ -129,7 +129,19 @@ export class MainLayoutComponent implements OnInit {
   ]
 }
 ,
-
+// Add under Staff section or create new section
+{
+  icon: 'medical_services',
+  label: 'Doctors',
+  route: '/admin/doctors',
+  roles: ['Admin']
+},
+{
+  icon: 'medical_services',
+  label: 'Doctors',
+  route: '/reception/doctors',
+  roles: ['Reception']
+},
   // ================= STAFF =================
  {
   icon: 'groups',

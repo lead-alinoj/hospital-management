@@ -19,6 +19,9 @@ import { RegisterComponent } from '../../auth/register/register.component';
 import { ComponentType } from '@angular/cdk/portal';
 import { AuthService } from '../../auth/auth.service';
 import { DOCUMENT } from '@angular/common';
+import { DoctorService, Doctor } from '../../service/doctor.service';
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-landing',
@@ -37,8 +40,9 @@ import { DOCUMENT } from '@angular/common';
     MatSelectModule,
     RouterModule,
     MatMenuModule,
-    MatDialogModule
-  ],
+    MatDialogModule,
+    MatProgressSpinnerModule
+],
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss']
 })
@@ -48,22 +52,8 @@ export class LandingComponent implements OnInit {
 
   mobileMenuOpen = false;
 
-  doctors = [
-    {
-      name: 'Dr. Rajesh Kumar',
-      specialty: 'Senior Cardiologist',
-      experience: 18,
-      qualification: 'MD, DM (Cardiology)',
-      image: 'assets/images/doctor1.jpg'
-    },
-    {
-      name: 'Dr. Suresh Menon',
-      specialty: 'Orthopedic Surgeon',
-      experience: 20,
-      qualification: 'MS (Ortho), MCh',
-      image: 'assets/images/doctor2.jpg'
-    }
-  ];
+    doctors: Doctor[] = [];
+  loadingDoctors = true;
 
   testimonials = [
     {
@@ -89,6 +79,7 @@ export class LandingComponent implements OnInit {
   constructor(
     private fb: FormBuilder, 
     private appointmentService: AppointmentService,
+    private doctorService: DoctorService,
     private dialog: MatDialog, 
     public authService: AuthService,
     @Inject(DOCUMENT) private document: Document
@@ -125,11 +116,29 @@ export class LandingComponent implements OnInit {
   }
 
   ngOnInit() {
+      this.loadDoctors(); // ADD THIS LINE
+
     // Ensure body has proper overflow
     this.document.body.style.overflow = 'auto';
     this.document.body.style.height = 'auto';
     this.document.documentElement.style.overflow = 'auto';
     this.document.documentElement.style.height = 'auto';
+  }
+loadDoctors() {
+    this.loadingDoctors = true;
+    this.doctorService.getDoctors().subscribe({
+      next: (response) => {
+         console.log('Doctors loaded:', response); 
+        if (response.success) {
+          this.doctors = response.data;
+        }
+        this.loadingDoctors = false;
+      },
+      error: (error) => {
+        console.error('Error loading doctors:', error);
+        this.loadingDoctors = false;
+      }
+    });
   }
 
   scrollToSection(sectionId: string) {
@@ -161,7 +170,16 @@ export class LandingComponent implements OnInit {
       maxHeight: '100vh'
     });
   }
-
+// Add this method to your LandingComponent class
+getImageUrl(imagePath: string): string {
+  if (!imagePath) return 'assets/images/default-doctor.jpg';
+  if (imagePath.startsWith('http') || imagePath.startsWith('assets/')) {
+    return imagePath;
+  }
+  // Remove /api from the URL to get base URL
+  const baseUrl = environment.apiUrl.replace('/api', '');
+  return `${baseUrl}${imagePath}`;
+}
   submitAppointment() {
     if (this.appointmentForm.valid) {
       const formValue = this.appointmentForm.value;
